@@ -1,8 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines, defaultChildren } from '../data/defaultRoutines'
 import { getRewardImagesForChild } from '../data/rewardImages'
+import { assetUrl } from '../utils/assetUrl'
 
 interface PersistedState {
   children: Child[]
@@ -217,8 +218,15 @@ export function useAppState() {
     }))
   }, [setState])
 
+  // Resolve photo URLs with base path for GitHub Pages compatibility
+  const childrenWithPhotos = useMemo(
+    () => state.children.map(c => ({ ...c, photo: assetUrl(c.photo) })),
+    [state.children]
+  )
+
   return {
     ...state,
+    children: childrenWithPhotos,
     currentScreen,
     galleryChildId,
     galleryReturnScreen,

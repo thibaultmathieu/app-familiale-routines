@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { musicTracks } from '../data/musicManifest'
+import { assetUrl } from '../utils/assetUrl'
 
 export function useMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -9,7 +10,7 @@ export function useMusic() {
     if (musicTracks.length === 0) return
     // Pick random track
     const track = musicTracks[Math.floor(Math.random() * musicTracks.length)]
-    const audio = new Audio(track.src)
+    const audio = new Audio(assetUrl(track.src))
     audio.volume = 0.3
     audio.loop = true
     audio.play().catch(() => {
