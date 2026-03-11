@@ -85,7 +85,9 @@ export function useAppState() {
         id: `${templateId}-${childId}-${Date.now()}`,
         templateId,
         childId,
-        tasks: template.tasks.map(t => ({ taskId: t.id, done: false })),
+        tasks: template.tasks
+          .filter(t => !t.childIds || t.childIds.includes(childId))
+          .map(t => ({ taskId: t.id, done: false })),
         startedAt: new Date().toISOString(),
         completedAt: null,
       }))

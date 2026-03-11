@@ -2,6 +2,7 @@ export interface TaskTemplate {
   id: string
   label: string
   icon: string
+  childIds?: string[]
 }
 
 export interface RoutineTemplate {

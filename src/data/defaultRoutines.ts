@@ -33,6 +33,7 @@ export const defaultRoutines: RoutineTemplate[] = [
     tasks: [
       { id: 'e1', label: 'je débarrasse la table', icon: '🍽️' },
       { id: 'e2', label: 'je me lave les dents', icon: '🪥' },
+      { id: 'e3', label: 'j\'ai bien fait pipi 3 fois aujourd\'hui', icon: '🚽', childIds: ['evangelina'] },
     ],
   },
 ]
