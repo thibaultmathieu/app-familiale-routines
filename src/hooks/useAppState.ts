@@ -1,0 +1,228 @@
+import { useCallback } from 'react'
+import { useLocalStorage } from './useLocalStorage'
+import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
+import { defaultRoutines, defaultChildren } from '../data/defaultRoutines'
+import { getRewardImagesForChild } from '../data/rewardImages'
+
+interface PersistedState {
+  children: Child[]
+  routineTemplates: RoutineTemplate[]
+  activeRoutines: ActiveRoutine[]
+  activeTimers: ActiveTimer[]
+}
+
+const initialState: PersistedState = {
+  children: defaultChildren,
+  routineTemplates: defaultRoutines,
+  activeRoutines: [],
+  activeTimers: [],
+}
+
+// Migration V1→V2: detect old emoji-based reward IDs and reset them
+function migrateState(state: PersistedState): PersistedState {
+  let needsMigration = false
+
+  const children = state.children.map(child => {
+    // Add completedCycles if missing
+    const completedCycles = child.completedCycles ?? 0
+
+    // Detect V1 emoji IDs (r01, r02, etc.)
+    const hasOldIds = child.unlockedImages.some(id => /^r\d{2}$/.test(id))
+    if (hasOldIds) {
+      needsMigration = true
+      return { ...child, unlockedImages: [], completedCycles: 0 }
+    }
+
+    if (child.completedCycles === undefined) {
+      needsMigration = true
+      return { ...child, completedCycles }
+    }
+
+    return child
+  })
+
+  // Add activeTimers if missing
+  const activeTimers = state.activeTimers ?? []
+  if (!state.activeTimers) needsMigration = true
+
+  if (needsMigration) {
+    return { ...state, children, activeTimers }
+  }
+  return state
+}
+
+export function useAppState() {
+  const [rawState, setState] = useLocalStorage<PersistedState>('routines-familiales', initialState)
+  const state = migrateState(rawState)
+  // Persist migration if it changed something
+  if (state !== rawState) {
+    setState(state)
+  }
+
+  const [currentScreen, setCurrentScreen] = useLocalStorage<Screen>('routines-screen', 'home')
+  const [galleryChildId, setGalleryChildId] = useLocalStorage<string | null>('routines-gallery-child', null)
+  const [galleryReturnScreen, setGalleryReturnScreen] = useLocalStorage<Screen | null>('routines-gallery-return', null)
+
+  const launchRoutine = useCallback((templateId: string, childIds: string[]) => {
+    setState(prev => {
+      const template = prev.routineTemplates.find(r => r.id === templateId)
+      if (!template) return prev
+
+      const filteredRoutines = prev.activeRoutines.filter(
+        ar => !childIds.includes(ar.childId)
+      )
+
+      const newRoutines: ActiveRoutine[] = childIds.map(childId => ({
+        id: `${templateId}-${childId}-${Date.now()}`,
+        templateId,
+        childId,
+        tasks: template.tasks.map(t => ({ taskId: t.id, done: false })),
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+      }))
+
+      return {
+        ...prev,
+        activeRoutines: [...filteredRoutines, ...newRoutines],
+      }
+    })
+    setCurrentScreen('routine')
+  }, [setState, setCurrentScreen])
+
+  const toggleTask = useCallback((routineId: string, taskId: string) => {
+    setState(prev => ({
+      ...prev,
+      activeRoutines: prev.activeRoutines.map(ar => {
+        if (ar.id !== routineId) return ar
+        const task = ar.tasks.find(t => t.taskId === taskId)
+        if (!task || task.done) return ar
+        const updatedTasks = ar.tasks.map(t =>
+          t.taskId === taskId ? { ...t, done: true } : t
+        )
+        const allDone = updatedTasks.every(t => t.done)
+        return {
+          ...ar,
+          tasks: updatedTasks,
+          completedAt: allDone ? new Date().toISOString() : null,
+        }
+      }),
+    }))
+  }, [setState])
+
+  const resetChildRoutine = useCallback((childId: string) => {
+    setState(prev => ({
+      ...prev,
+      activeRoutines: prev.activeRoutines.map(ar => {
+        if (ar.childId !== childId) return ar
+        return {
+          ...ar,
+          tasks: ar.tasks.map(t => ({ ...t, done: false })),
+          completedAt: null,
+        }
+      }),
+    }))
+  }, [setState])
+
+  const stopRoutines = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      activeRoutines: [],
+    }))
+    setCurrentScreen('home')
+  }, [setState, setCurrentScreen])
+
+  const unlockReward = useCallback((childId: string): RewardImage | null => {
+    let unlockedImage: RewardImage | null = null
+    setState(prev => {
+      const child = prev.children.find(c => c.id === childId)
+      if (!child) return prev
+
+      const childImages = getRewardImagesForChild(childId)
+      if (childImages.length === 0) return prev
+
+      let currentUnlocked = [...child.unlockedImages]
+      let currentCycles = child.completedCycles
+
+      // If all images unlocked, reset for new cycle
+      if (currentUnlocked.length >= childImages.length) {
+        currentUnlocked = []
+        currentCycles += 1
+      }
+
+      // Pick random from available
+      const available = childImages.filter(img => !currentUnlocked.includes(img.id))
+      if (available.length === 0) return prev
+      const picked = available[Math.floor(Math.random() * available.length)]
+      unlockedImage = picked
+
+      return {
+        ...prev,
+        children: prev.children.map(c =>
+          c.id === childId
+            ? {
+                ...c,
+                unlockedImages: [...currentUnlocked, picked.id],
+                completedCycles: currentCycles,
+              }
+            : c
+        ),
+      }
+    })
+    return unlockedImage
+  }, [setState])
+
+  const addCustomRoutine = useCallback((name: string, tasks: { label: string; icon: string }[]) => {
+    const id = `custom-${Date.now()}`
+    const template: RoutineTemplate = {
+      id,
+      name,
+      icon: '📋',
+      type: 'custom',
+      tasks: tasks.map((t, i) => ({ id: `${id}-t${i}`, label: t.label, icon: t.icon })),
+    }
+    setState(prev => ({
+      ...prev,
+      routineTemplates: [...prev.routineTemplates, template],
+    }))
+    return id
+  }, [setState])
+
+  // Timer methods
+  const startTimer = useCallback((childIds: string[], durationSeconds: number) => {
+    const timer: ActiveTimer = {
+      id: `timer-${Date.now()}`,
+      childIds,
+      durationSeconds,
+      startedAt: new Date().toISOString(),
+    }
+    setState(prev => ({
+      ...prev,
+      activeTimers: [...(prev.activeTimers ?? []), timer],
+    }))
+  }, [setState])
+
+  const cancelTimer = useCallback((timerId: string) => {
+    setState(prev => ({
+      ...prev,
+      activeTimers: (prev.activeTimers ?? []).filter(t => t.id !== timerId),
+    }))
+  }, [setState])
+
+  return {
+    ...state,
+    currentScreen,
+    galleryChildId,
+    galleryReturnScreen,
+    setCurrentScreen,
+    setGalleryChildId,
+    setGalleryReturnScreen,
+    launchRoutine,
+    toggleTask,
+    resetChildRoutine,
+    stopRoutines,
+    unlockReward,
+    addCustomRoutine,
+    startTimer,
+    cancelTimer,
+  }
+}
