@@ -47,7 +47,7 @@ export default function CelebrationOverlay({ childName, reward, onClose }: Celeb
           </p>
         ) : (
           <p className="text-lg text-gray-500 mb-6">
-            Routine terminée !
+            Bravo, tu as tout terminé !
           </p>
         )}
         <button

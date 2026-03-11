@@ -41,9 +41,17 @@ function migrateState(state: PersistedState): PersistedState {
     return child
   })
 
-  // Add activeTimers if missing
-  const activeTimers = state.activeTimers ?? []
+  // Add activeTimers if missing + migrate timers without label
+  let activeTimers = state.activeTimers ?? []
   if (!state.activeTimers) needsMigration = true
+  const migratedTimers = activeTimers.map(t => {
+    if (!t.label) {
+      needsMigration = true
+      return { ...t, label: 'Minuteur' }
+    }
+    return t
+  })
+  if (needsMigration) activeTimers = migratedTimers
 
   if (needsMigration) {
     return { ...state, children, activeTimers }
@@ -188,12 +196,13 @@ export function useAppState() {
   }, [setState])
 
   // Timer methods
-  const startTimer = useCallback((childIds: string[], durationSeconds: number) => {
+  const startTimer = useCallback((childIds: string[], durationSeconds: number, label: string = 'Minuteur') => {
     const timer: ActiveTimer = {
       id: `timer-${Date.now()}`,
       childIds,
       durationSeconds,
       startedAt: new Date().toISOString(),
+      label,
     }
     setState(prev => ({
       ...prev,

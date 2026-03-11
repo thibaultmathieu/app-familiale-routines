@@ -2,13 +2,34 @@ import { useEffect, useRef } from 'react'
 import { ActiveTimer } from '../types'
 import { useTimerTick } from '../hooks/useTimer'
 
+type TimerSize = 'small' | 'medium' | 'large'
+
+const SIZE_MAP: Record<TimerSize, number> = {
+  small: 80,
+  medium: 120,
+  large: 180,
+}
+
+const STROKE_MAP: Record<TimerSize, number> = {
+  small: 6,
+  medium: 8,
+  large: 10,
+}
+
+const FONT_MAP: Record<TimerSize, string> = {
+  small: 'text-sm',
+  medium: 'text-xl',
+  large: 'text-3xl',
+}
+
 interface TimerDisplayProps {
   timer: ActiveTimer
   color: string
+  size?: TimerSize
   onExpired?: () => void
 }
 
-export default function TimerDisplay({ timer, color, onExpired }: TimerDisplayProps) {
+export default function TimerDisplay({ timer, color, size = 'small', onExpired }: TimerDisplayProps) {
   const { remaining, isExpired } = useTimerTick(timer)
   const hasNotified = useRef(false)
 
@@ -24,32 +45,32 @@ export default function TimerDisplay({ timer, color, onExpired }: TimerDisplayPr
   const seconds = Math.floor(remaining % 60)
   const timeStr = `${minutes}:${String(seconds).padStart(2, '0')}`
 
-  // SVG circle params
-  const size = 80
-  const strokeWidth = 6
-  const radius = (size - strokeWidth) / 2
+  const pixelSize = SIZE_MAP[size]
+  const strokeWidth = STROKE_MAP[size]
+  const radius = (pixelSize - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - progress)
 
   const ringColor = isExpired ? '#F59E0B' : color
   const ringOpacity = isExpired ? 1 : 0.4
 
+  // Vertical centering offset for text inside circle
+  const textOffset = Math.round(pixelSize * 0.675)
+
   return (
-    <div className="flex flex-col items-center mt-2">
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
+    <div className="flex flex-col items-center">
+      <svg width={pixelSize} height={pixelSize} className="transform -rotate-90">
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={pixelSize / 2}
+          cy={pixelSize / 2}
           r={radius}
           fill="none"
           stroke="#e5e7eb"
           strokeWidth={strokeWidth}
         />
-        {/* Progress circle */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={pixelSize / 2}
+          cy={pixelSize / 2}
           r={radius}
           fill="none"
           stroke={ringColor}
@@ -62,11 +83,20 @@ export default function TimerDisplay({ timer, color, onExpired }: TimerDisplayPr
         />
       </svg>
       <span
-        className="text-sm font-medium -mt-[54px] mb-[34px]"
-        style={{ color: isExpired ? '#F59E0B' : '#9CA3AF' }}
+        className={`${FONT_MAP[size]} font-medium`}
+        style={{
+          color: isExpired ? '#F59E0B' : '#9CA3AF',
+          marginTop: `-${textOffset}px`,
+          marginBottom: `${textOffset - pixelSize / 3}px`,
+        }}
       >
         {isExpired ? '✓' : timeStr}
       </span>
+      {size !== 'small' && timer.label && (
+        <p className={`text-center font-medium text-gray-600 mt-1 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
+          {timer.label}
+        </p>
+      )}
     </div>
   )
 }

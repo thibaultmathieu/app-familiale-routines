@@ -1,28 +1,55 @@
 import { useState, useRef, useCallback } from 'react'
-import { ActiveRoutine, Child, RoutineTemplate, Screen } from '../types'
+import { ActiveRoutine, ActiveTimer, RoutineTemplate, Screen, Child } from '../types'
 import ProgressBar from './ProgressBar'
+import TimerDisplay from './TimerDisplay'
+import TimerExpiredOverlay from './TimerExpiredOverlay'
+import { useSound } from '../hooks/useSound'
+import { useTimerTick } from '../hooks/useTimer'
 
 interface HomeScreenProps {
   children: Child[]
   routineTemplates: RoutineTemplate[]
   activeRoutines: ActiveRoutine[]
+  activeTimers: ActiveTimer[]
   setCurrentScreen: (screen: Screen) => void
   launchRoutine: (templateId: string, childIds: string[]) => void
   addCustomRoutine: (name: string, tasks: { label: string; icon: string }[]) => string
+  setGalleryChildId: (id: string | null) => void
+  setGalleryReturnScreen: (screen: Screen | null) => void
+  cancelTimer: (timerId: string) => void
+}
+
+function TimerExpirationWatcher({ timer, onExpired }: {
+  timer: ActiveTimer
+  onExpired: (timer: ActiveTimer) => void
+}) {
+  const { isExpired } = useTimerTick(timer)
+  const notifiedRef = useRef(false)
+  if (isExpired && !notifiedRef.current) {
+    notifiedRef.current = true
+    onExpired(timer)
+  }
+  return null
 }
 
 export default function HomeScreen({
   children,
   routineTemplates,
   activeRoutines,
+  activeTimers,
   setCurrentScreen,
   launchRoutine,
   addCustomRoutine,
+  setGalleryChildId,
+  setGalleryReturnScreen,
+  cancelTimer,
 }: HomeScreenProps) {
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName] = useState('')
   const [customTasks, setCustomTasks] = useState<string[]>([''])
   const [customTarget, setCustomTarget] = useState<'both' | 'evangelina' | 'noah'>('both')
+  const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
+  const { playTimerEnd } = useSound()
 
   // Appui long pour accéder à l'espace parent
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -38,7 +65,15 @@ export default function HomeScreen({
   const fixedRoutines = routineTemplates.filter(r => r.type === 'fixed')
   const hasActiveRoutine = activeRoutines.length > 0
 
+  // Get active template ID to detect "EN COURS"
+  const activeTemplateId = hasActiveRoutine ? activeRoutines[0]?.templateId : null
+
+  // Step 1: Don't relaunch if same routine is already active
   const handleLaunchFixed = (templateId: string) => {
+    if (activeTemplateId === templateId) {
+      setCurrentScreen('routine')
+      return
+    }
     const childIds = children.map(c => c.id)
     launchRoutine(templateId, childIds)
   }
@@ -46,6 +81,15 @@ export default function HomeScreen({
   const handleLaunchCustom = () => {
     const validTasks = customTasks.filter(t => t.trim())
     if (!customName.trim() || validTasks.length === 0) return
+
+    // Check if a custom routine with same name is already active
+    if (hasActiveRoutine) {
+      const activeTemplate = routineTemplates.find(r => r.id === activeTemplateId)
+      if (activeTemplate?.name === customName.trim()) {
+        setCurrentScreen('routine')
+        return
+      }
+    }
 
     const templateId = addCustomRoutine(
       customName.trim(),
@@ -62,28 +106,88 @@ export default function HomeScreen({
     setCustomTasks([''])
   }
 
+  const openGallery = (childId: string) => {
+    setGalleryChildId(childId)
+    setGalleryReturnScreen('home')
+    setCurrentScreen('gallery')
+  }
+
+  const handleTimerExpired = useCallback((timer: ActiveTimer) => {
+    playTimerEnd()
+    setExpiredTimer(timer)
+  }, [playTimerEnd])
+
+  const handleDismissExpired = useCallback(() => {
+    if (expiredTimer) {
+      cancelTimer(expiredTimer.id)
+    }
+    setExpiredTimer(null)
+  }, [expiredTimer, cancelTimer])
+
+  const safeTimers = activeTimers ?? []
+
   return (
-    <div className="h-full flex flex-col p-6">
-      {/* Titre */}
-      <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
+    <div className="h-full flex flex-col p-6 overflow-y-auto">
+      {/* Timer expiration watchers */}
+      {safeTimers.map(timer => (
+        <TimerExpirationWatcher
+          key={timer.id}
+          timer={timer}
+          onExpired={handleTimerExpired}
+        />
+      ))}
+
+      {/* 1. Titre */}
+      <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
         Routines Familiales
       </h1>
 
-      {/* Boutons de lancement rapide */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 max-w-3xl mx-auto w-full">
+      {/* 2. Zone mission/timer active */}
+      {safeTimers.length > 0 && (
+        <div className="mb-6 max-w-3xl mx-auto w-full">
+          {safeTimers.map(timer => {
+            const targetNames = timer.childIds
+              .map(id => children.find(c => c.id === id)?.name)
+              .filter(Boolean)
+              .join(' & ')
+            const targetChild = children.find(c => timer.childIds.includes(c.id))
+            return (
+              <div key={timer.id} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-amber-100 flex flex-col items-center mb-3">
+                <p className="text-sm font-medium text-amber-600 mb-1">Mission {targetNames}</p>
+                <TimerDisplay
+                  timer={timer}
+                  color={targetChild?.color ?? '#F59E0B'}
+                  size="large"
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* 3. Boutons routines */}
+      <div className="flex flex-col items-center gap-4 max-w-3xl mx-auto w-full">
         <div className="grid grid-cols-3 gap-4 w-full">
-          {fixedRoutines.map(routine => (
-            <button
-              key={routine.id}
-              onClick={() => handleLaunchFixed(routine.id)}
-              className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100
-                         active:scale-95 transition-transform flex flex-col items-center gap-3
-                         hover:border-gray-200"
-            >
-              <span className="text-5xl">{routine.icon}</span>
-              <span className="text-xl font-semibold text-gray-700">{routine.name}</span>
-            </button>
-          ))}
+          {fixedRoutines.map(routine => {
+            const isActive = activeTemplateId === routine.id
+            return (
+              <button
+                key={routine.id}
+                onClick={() => handleLaunchFixed(routine.id)}
+                className={`bg-white rounded-2xl p-6 shadow-sm border-2 relative
+                           active:scale-95 transition-transform flex flex-col items-center gap-3
+                           hover:border-gray-200 ${isActive ? 'border-green-300' : 'border-gray-100'}`}
+              >
+                {isActive && (
+                  <span className="absolute top-2 right-2 bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                    EN COURS
+                  </span>
+                )}
+                <span className="text-5xl">{routine.icon}</span>
+                <span className="text-xl font-semibold text-gray-700">{routine.name}</span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Bouton routine personnalisée */}
@@ -171,11 +275,11 @@ export default function HomeScreen({
         )}
       </div>
 
-      {/* Résumé routine en cours */}
+      {/* 4. Résumé routine en cours */}
       {hasActiveRoutine && (
-        <div className="mt-4 bg-white rounded-2xl p-4 shadow-sm border-2 border-gray-100 max-w-3xl mx-auto w-full">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-500">EN COURS</span>
+        <div className="mt-6 bg-white rounded-2xl p-5 shadow-sm border-2 border-green-100 max-w-3xl mx-auto w-full">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-bold text-green-600 uppercase tracking-wide">Routine en cours</span>
             <button
               onClick={() => setCurrentScreen('routine')}
               className="text-blue-500 text-sm font-medium"
@@ -203,6 +307,30 @@ export default function HomeScreen({
         </div>
       )}
 
+      {/* 5. Collections */}
+      <div className="mt-6 max-w-3xl mx-auto w-full">
+        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-3">Collections</h2>
+        <div className="flex gap-4">
+          {children.map(child => (
+            <button
+              key={child.id}
+              onClick={() => openGallery(child.id)}
+              className="flex-1 flex items-center gap-3 p-4 rounded-2xl active:scale-95 transition-transform"
+              style={{ backgroundColor: child.color + '15' }}
+            >
+              <img src={child.photo} alt={child.name} className="w-12 h-12 rounded-full object-cover border-2" style={{ borderColor: child.color }} />
+              <div className="text-left">
+                <p className="font-medium text-gray-700">{child.name}</p>
+                <p className="text-sm text-gray-400">{child.unlockedImages.length} images</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Spacer to make room for gear button */}
+      <div className="h-16" />
+
       {/* Bouton ⚙️ — appui long */}
       <button
         onMouseDown={handleGearDown}
@@ -215,6 +343,15 @@ export default function HomeScreen({
       >
         ⚙️
       </button>
+
+      {/* Timer expired overlay */}
+      {expiredTimer && (
+        <TimerExpiredOverlay
+          timer={expiredTimer}
+          children={children}
+          onDismiss={handleDismissExpired}
+        />
+      )}
     </div>
   )
 }

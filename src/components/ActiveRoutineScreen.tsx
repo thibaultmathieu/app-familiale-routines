@@ -4,6 +4,7 @@ import TaskCard from './TaskCard'
 import ProgressBar from './ProgressBar'
 import CelebrationOverlay from './CelebrationOverlay'
 import TimerDisplay from './TimerDisplay'
+import TimerExpiredOverlay from './TimerExpiredOverlay'
 import { useSound } from '../hooks/useSound'
 import { useMusic } from '../hooks/useMusic'
 
@@ -17,6 +18,7 @@ interface ActiveRoutineScreenProps {
   setGalleryReturnScreen: (screen: Screen | null) => void
   toggleTask: (routineId: string, taskId: string) => void
   unlockReward: (childId: string) => RewardImage | null
+  cancelTimer: (timerId: string) => void
 }
 
 export default function ActiveRoutineScreen({
@@ -29,8 +31,10 @@ export default function ActiveRoutineScreen({
   setGalleryReturnScreen,
   toggleTask,
   unlockReward,
+  cancelTimer,
 }: ActiveRoutineScreenProps) {
   const [celebration, setCelebration] = useState<{ childName: string; reward: RewardImage | null } | null>(null)
+  const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
   const { playTaskComplete, playRoutineComplete, playTimerEnd } = useSound()
   const music = useMusic()
   const musicTriggered = useRef(false)
@@ -88,6 +92,23 @@ export default function ActiveRoutineScreen({
     setGalleryReturnScreen('routine')
     setCurrentScreen('gallery')
   }, [setGalleryChildId, setGalleryReturnScreen, setCurrentScreen])
+
+  const handleTimerExpired = useCallback((timerId: string) => {
+    // Only show overlay if no celebration is showing
+    if (celebration) return
+    const timer = (activeTimers ?? []).find(t => t.id === timerId)
+    if (timer) {
+      playTimerEnd()
+      setExpiredTimer(timer)
+    }
+  }, [activeTimers, celebration, playTimerEnd])
+
+  const handleDismissExpired = useCallback(() => {
+    if (expiredTimer) {
+      cancelTimer(expiredTimer.id)
+    }
+    setExpiredTimer(null)
+  }, [expiredTimer, cancelTimer])
 
   if (activeRoutines.length === 0) {
     return (
@@ -184,6 +205,21 @@ export default function ActiveRoutineScreen({
                 )}
               </div>
 
+              {/* Timers — visible between header and tasks */}
+              {childTimers.length > 0 && (
+                <div className="flex justify-center gap-4 mb-3 py-2 bg-amber-50 rounded-xl">
+                  {childTimers.map(timer => (
+                    <TimerDisplay
+                      key={timer.id}
+                      timer={timer}
+                      color={child.color}
+                      size="medium"
+                      onExpired={() => handleTimerExpired(timer.id)}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* Liste des tâches */}
               <div className="flex-1 overflow-y-auto space-y-2">
                 {childRoutine.tasks.map(task => {
@@ -201,16 +237,6 @@ export default function ActiveRoutineScreen({
                   )
                 })}
               </div>
-
-              {/* Timers */}
-              {childTimers.map(timer => (
-                <TimerDisplay
-                  key={timer.id}
-                  timer={timer}
-                  color={child.color}
-                  onExpired={playTimerEnd}
-                />
-              ))}
             </div>
           )
         })}
@@ -222,6 +248,15 @@ export default function ActiveRoutineScreen({
           childName={celebration.childName}
           reward={celebration.reward}
           onClose={() => setCelebration(null)}
+        />
+      )}
+
+      {/* Timer expired overlay */}
+      {expiredTimer && !celebration && (
+        <TimerExpiredOverlay
+          timer={expiredTimer}
+          children={children}
+          onDismiss={handleDismissExpired}
         />
       )}
     </div>

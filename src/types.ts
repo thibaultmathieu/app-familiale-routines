@@ -45,6 +45,7 @@ export interface ActiveTimer {
   childIds: string[]
   durationSeconds: number
   startedAt: string
+  label: string
 }
 
 export type Screen = 'home' | 'routine' | 'parent' | 'gallery'
