@@ -54,8 +54,16 @@ function migrateState(state: PersistedState): PersistedState {
   })
   if (needsMigration) activeTimers = migratedTimers
 
+  // Always sync fixed routine templates from defaults (so new tasks are picked up)
+  const customRoutines = state.routineTemplates.filter(r => r.type === 'custom')
+  const freshFixed = defaultRoutines.filter(r => r.type === 'fixed')
+  const mergedTemplates = [...freshFixed, ...customRoutines]
+  if (JSON.stringify(mergedTemplates) !== JSON.stringify(state.routineTemplates)) {
+    needsMigration = true
+  }
+
   if (needsMigration) {
-    return { ...state, children, activeTimers }
+    return { ...state, children, activeTimers, routineTemplates: mergedTemplates }
   }
   return state
 }
