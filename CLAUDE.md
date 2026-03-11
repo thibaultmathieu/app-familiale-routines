@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git workflow
+
+After every meaningful change (new feature, bug fix, refactor), commit and push immediately:
+
+```bash
+git add <specific files>
+git commit -m "feat|fix|refactor|docs: short description"
+git push
+```
+
+Use conventional commit prefixes: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`. Never batch unrelated changes into a single commit. Always push after committing so GitHub stays up to date.
+
 ## Commands
 
 ```bash
