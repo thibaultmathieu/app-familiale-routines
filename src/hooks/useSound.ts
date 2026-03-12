@@ -2,12 +2,12 @@ import { useCallback, useRef } from 'react'
 
 let audioCtx: AudioContext | null = null
 
-function getAudioContext(): AudioContext {
-  if (!audioCtx) {
+async function getAudioContext(): Promise<AudioContext> {
+  if (!audioCtx || audioCtx.state === 'closed') {
     audioCtx = new AudioContext()
   }
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume()
+    await audioCtx.resume()
   }
   return audioCtx
 }
@@ -30,6 +30,10 @@ function playTone(
   gain.connect(ctx.destination)
   osc.start(startTime)
   osc.stop(startTime + duration)
+  osc.onended = () => {
+    osc.disconnect()
+    gain.disconnect()
+  }
 }
 
 // Variant A: sweep 880→1108Hz (original)
@@ -45,6 +49,10 @@ function taskSoundA(ctx: AudioContext, t: number) {
   gain.connect(ctx.destination)
   osc.start(t)
   osc.stop(t + 0.5)
+  osc.onended = () => {
+    osc.disconnect()
+    gain.disconnect()
+  }
 }
 
 // Variant B: two notes 660→880Hz
@@ -66,6 +74,10 @@ function taskSoundC(ctx: AudioContext, t: number) {
   gain.connect(ctx.destination)
   osc.start(t)
   osc.stop(t + 0.4)
+  osc.onended = () => {
+    osc.disconnect()
+    gain.disconnect()
+  }
 }
 
 // Variant D: triple bell 440-550-660Hz
@@ -77,22 +89,37 @@ function taskSoundD(ctx: AudioContext, t: number) {
 
 const taskSoundVariants = [taskSoundA, taskSoundB, taskSoundC, taskSoundD]
 
+// Call once from App root to unlock AudioContext on first user gesture (mobile)
+export function initAudioOnGesture(): () => void {
+  const handler = () => {
+    getAudioContext()
+    window.removeEventListener('touchstart', handler)
+    window.removeEventListener('click', handler)
+  }
+  window.addEventListener('touchstart', handler, { once: true })
+  window.addEventListener('click', handler, { once: true })
+  return () => {
+    window.removeEventListener('touchstart', handler)
+    window.removeEventListener('click', handler)
+  }
+}
+
 export function useSound() {
   const lastPlayRef = useRef(0)
 
-  const playTaskComplete = useCallback(() => {
+  const playTaskComplete = useCallback(async () => {
     const now = Date.now()
     if (now - lastPlayRef.current < 100) return
     lastPlayRef.current = now
 
-    const ctx = getAudioContext()
+    const ctx = await getAudioContext()
     const t = ctx.currentTime
     const variant = taskSoundVariants[Math.floor(Math.random() * taskSoundVariants.length)]
     variant(ctx, t)
   }, [])
 
-  const playRoutineComplete = useCallback(() => {
-    const ctx = getAudioContext()
+  const playRoutineComplete = useCallback(async () => {
+    const ctx = await getAudioContext()
     const t = ctx.currentTime
     // Arpège C5-E5-G5-C6
     const notes = [523.25, 659.25, 783.99, 1046.50]
@@ -101,8 +128,8 @@ export function useSound() {
     })
   }, [])
 
-  const playTimerEnd = useCallback(() => {
-    const ctx = getAudioContext()
+  const playTimerEnd = useCallback(async () => {
+    const ctx = await getAudioContext()
     const t = ctx.currentTime
     // Reinforced pattern: triangle wave, played twice with spacing
     const playPattern = (offset: number) => {
