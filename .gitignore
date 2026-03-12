@@ -31,7 +31,7 @@ npm-debug.log*
 
 # Source asset folders (large raw files — run npm run sync-assets to regenerate public/)
 images_rewards/
-music/
+/music/
 
 # Source photos at root
 *.JPEG
