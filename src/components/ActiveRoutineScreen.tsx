@@ -37,8 +37,10 @@ export default function ActiveRoutineScreen({
 }: ActiveRoutineScreenProps) {
   const [celebration, setCelebration] = useState<{ childName: string; reward: RewardImage | null } | null>(null)
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
+  const [showEndOfDay, setShowEndOfDay] = useState(false)
   const { playTaskComplete, playRoutineComplete, playTimerEnd } = useSound()
   const music = useMusic()
+  const { play: musicPlay } = music
   const musicTriggered = useRef(false)
 
   // Determine which template to view
@@ -66,9 +68,10 @@ export default function ActiveRoutineScreen({
 
     if (allCompleted && children.length >= 2) {
       musicTriggered.current = true
-      music.play()
+      musicPlay()
+      setShowEndOfDay(true)
     }
-  }, [activeRoutines, children, music])
+  }, [activeRoutines, children, musicPlay])
 
   // Reset music trigger when no evening routines
   useEffect(() => {
@@ -252,6 +255,32 @@ export default function ActiveRoutineScreen({
           )
         })}
       </div>
+
+      {/* Overlay fin de journée */}
+      {showEndOfDay && !celebration && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setShowEndOfDay(false)}
+        >
+          <div
+            className="bg-white rounded-3xl p-10 text-center shadow-xl max-w-md mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-7xl mb-4">🌙✨</div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">Bravo à tous !</h2>
+            <p className="text-xl text-gray-500 mb-6">
+              Toutes les routines sont terminées.<br />Bonne nuit !
+            </p>
+            <button
+              onClick={() => setShowEndOfDay(false)}
+              className="px-8 py-3 bg-indigo-400 text-white rounded-full text-lg font-medium active:scale-95 transition-transform"
+            >
+              Bonne nuit 🌙
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Overlay de célébration */}
       {celebration && (

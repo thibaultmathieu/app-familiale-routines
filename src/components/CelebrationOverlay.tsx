@@ -41,15 +41,8 @@ export default function CelebrationOverlay({ childName, reward, onClose }: Celeb
         <h2 className="text-3xl font-bold text-gray-800 mb-2">
           Bravo {childName} !
         </h2>
-        {reward ? (
-          <p className="text-lg text-gray-500 mb-6">
-            Tu as gagné une nouvelle image !
-          </p>
-        ) : (
-          <p className="text-lg text-gray-500 mb-6">
-            Bravo, tu as tout terminé !
-          </p>
-        )}
+        <p className="text-lg text-gray-500 mb-1">Tu as tout terminé !</p>
+        <p className="text-lg font-semibold text-green-500 mb-6">Tu as gagné une nouvelle image !</p>
         <button
           onClick={() => { setVisible(false); setTimeout(onClose, 300) }}
           className="px-8 py-3 bg-green-400 text-white rounded-full text-lg font-medium active:scale-95 transition-transform"
