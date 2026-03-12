@@ -16,6 +16,7 @@ interface HomeScreenProps {
   addCustomRoutine: (name: string, tasks: { label: string; icon: string }[]) => string
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
+  setActiveViewTemplateId: (id: string | null) => void
   cancelTimer: (timerId: string) => void
 }
 
@@ -42,6 +43,7 @@ export default function HomeScreen({
   addCustomRoutine,
   setGalleryChildId,
   setGalleryReturnScreen,
+  setActiveViewTemplateId,
   cancelTimer,
 }: HomeScreenProps) {
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -63,14 +65,14 @@ export default function HomeScreen({
   }, [])
 
   const fixedRoutines = routineTemplates.filter(r => r.type === 'fixed')
-  const hasActiveRoutine = activeRoutines.length > 0
 
-  // Get active template ID to detect "EN COURS"
-  const activeTemplateId = hasActiveRoutine ? activeRoutines[0]?.templateId : null
+  // Group active routines by templateId
+  const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
 
-  // Step 1: Don't relaunch if same routine is already active
   const handleLaunchFixed = (templateId: string) => {
-    if (activeTemplateId === templateId) {
+    // If routine already active, just navigate to it
+    if (activeTemplateIds.includes(templateId)) {
+      setActiveViewTemplateId(templateId)
       setCurrentScreen('routine')
       return
     }
@@ -81,15 +83,6 @@ export default function HomeScreen({
   const handleLaunchCustom = () => {
     const validTasks = customTasks.filter(t => t.trim())
     if (!customName.trim() || validTasks.length === 0) return
-
-    // Check if a custom routine with same name is already active
-    if (hasActiveRoutine) {
-      const activeTemplate = routineTemplates.find(r => r.id === activeTemplateId)
-      if (activeTemplate?.name === customName.trim()) {
-        setCurrentScreen('routine')
-        return
-      }
-    }
 
     const templateId = addCustomRoutine(
       customName.trim(),
@@ -169,7 +162,7 @@ export default function HomeScreen({
       <div className="flex flex-col items-center gap-4 max-w-3xl mx-auto w-full">
         <div className="grid grid-cols-3 gap-4 w-full">
           {fixedRoutines.map(routine => {
-            const isActive = activeTemplateId === routine.id
+            const isActive = activeTemplateIds.includes(routine.id)
             return (
               <button
                 key={routine.id}
@@ -275,35 +268,50 @@ export default function HomeScreen({
         )}
       </div>
 
-      {/* 4. Résumé routine en cours */}
-      {hasActiveRoutine && (
-        <div className="mt-6 bg-white rounded-2xl p-5 shadow-sm border-2 border-green-100 max-w-3xl mx-auto w-full">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-bold text-green-600 uppercase tracking-wide">Routine en cours</span>
-            <button
-              onClick={() => setCurrentScreen('routine')}
-              className="text-blue-500 text-sm font-medium"
-            >
-              Voir la routine →
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {children.map(child => {
-              const childRoutine = activeRoutines.find(ar => ar.childId === child.id)
-              if (!childRoutine) return null
-              const done = childRoutine.tasks.filter(t => t.done).length
-              const total = childRoutine.tasks.length
-              return (
-                <div key={child.id} className="flex items-center gap-3">
-                  <img src={child.photo} alt={child.name} className="w-8 h-8 rounded-full object-cover" />
-                  <span className="text-sm font-medium text-gray-700">{child.name}</span>
-                  <div className="flex-1">
-                    <ProgressBar done={done} total={total} color={child.color} />
-                  </div>
+      {/* 4. Résumé routines en cours — grouped by templateId */}
+      {activeTemplateIds.length > 0 && (
+        <div className="mt-6 space-y-4 max-w-3xl mx-auto w-full">
+          <span className="text-sm font-bold text-green-600 uppercase tracking-wide">Routines en cours</span>
+          {activeTemplateIds.map(templateId => {
+            const routinesForTemplate = activeRoutines.filter(ar => ar.templateId === templateId)
+            const template = routineTemplates.find(r => r.id === templateId)
+            if (!template) return null
+            return (
+              <div key={templateId} className="bg-white rounded-2xl p-5 shadow-sm border-2 border-green-100">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-base font-bold text-gray-800">
+                    {template.icon} {template.name}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setActiveViewTemplateId(templateId)
+                      setCurrentScreen('routine')
+                    }}
+                    className="text-blue-500 text-sm font-medium"
+                  >
+                    Voir la routine →
+                  </button>
                 </div>
-              )
-            })}
-          </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {children.map(child => {
+                    const childRoutine = routinesForTemplate.find(ar => ar.childId === child.id)
+                    if (!childRoutine) return null
+                    const done = childRoutine.tasks.filter(t => t.done).length
+                    const total = childRoutine.tasks.length
+                    return (
+                      <div key={child.id} className="flex items-center gap-3">
+                        <img src={child.photo} alt={child.name} className="w-8 h-8 rounded-full object-cover" />
+                        <span className="text-sm font-medium text-gray-700">{child.name}</span>
+                        <div className="flex-1">
+                          <ProgressBar done={done} total={total} color={child.color} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 

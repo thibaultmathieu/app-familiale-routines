@@ -13,7 +13,9 @@ interface ActiveRoutineScreenProps {
   routineTemplates: RoutineTemplate[]
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
+  activeViewTemplateId: string | null
   setCurrentScreen: (screen: Screen) => void
+  setActiveViewTemplateId: (id: string | null) => void
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
   toggleTask: (routineId: string, taskId: string) => void
@@ -26,7 +28,9 @@ export default function ActiveRoutineScreen({
   routineTemplates,
   activeRoutines,
   activeTimers,
+  activeViewTemplateId,
   setCurrentScreen,
+  setActiveViewTemplateId,
   setGalleryChildId,
   setGalleryReturnScreen,
   toggleTask,
@@ -39,18 +43,26 @@ export default function ActiveRoutineScreen({
   const music = useMusic()
   const musicTriggered = useRef(false)
 
-  const firstRoutine = activeRoutines[0]
-  const template = firstRoutine
-    ? routineTemplates.find(r => r.id === firstRoutine.templateId)
+  // Determine which template to view
+  const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
+  const viewTemplateId = activeViewTemplateId && activeTemplateIds.includes(activeViewTemplateId)
+    ? activeViewTemplateId
+    : activeTemplateIds[0] ?? null
+
+  const viewRoutines = activeRoutines.filter(ar => ar.templateId === viewTemplateId)
+  const template = viewTemplateId
+    ? routineTemplates.find(r => r.id === viewTemplateId)
     : null
 
   // Check if both children completed evening routine → play music
   useEffect(() => {
     if (musicTriggered.current) return
-    if (!firstRoutine || firstRoutine.templateId !== 'evening') return
+
+    const eveningRoutines = activeRoutines.filter(ar => ar.templateId === 'evening')
+    if (eveningRoutines.length === 0) return
 
     const allCompleted = children.every(child => {
-      const routine = activeRoutines.find(ar => ar.childId === child.id)
+      const routine = eveningRoutines.find(ar => ar.childId === child.id)
       return routine?.completedAt != null
     })
 
@@ -58,14 +70,15 @@ export default function ActiveRoutineScreen({
       musicTriggered.current = true
       music.play()
     }
-  }, [activeRoutines, children, firstRoutine, music])
+  }, [activeRoutines, children, music])
 
-  // Reset music trigger when routines change
+  // Reset music trigger when no evening routines
   useEffect(() => {
-    if (!firstRoutine || firstRoutine.templateId !== 'evening') {
+    const hasEvening = activeRoutines.some(ar => ar.templateId === 'evening')
+    if (!hasEvening) {
       musicTriggered.current = false
     }
-  }, [firstRoutine])
+  }, [activeRoutines])
 
   const handleToggle = useCallback((routineId: string, taskId: string, childId: string) => {
     toggleTask(routineId, taskId)
@@ -127,7 +140,7 @@ export default function ActiveRoutineScreen({
   return (
     <div className="h-full flex flex-col p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => setCurrentScreen('home')}
           className="text-gray-400 text-lg font-medium px-4 py-2"
@@ -150,10 +163,34 @@ export default function ActiveRoutineScreen({
         </div>
       </div>
 
+      {/* Tabs for multiple active routines */}
+      {activeTemplateIds.length > 1 && (
+        <div className="flex gap-2 mb-3 overflow-x-auto">
+          {activeTemplateIds.map(tid => {
+            const t = routineTemplates.find(r => r.id === tid)
+            if (!t) return null
+            const isViewing = tid === viewTemplateId
+            return (
+              <button
+                key={tid}
+                onClick={() => setActiveViewTemplateId(tid)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  isViewing
+                    ? 'bg-green-100 text-green-700 border-2 border-green-300'
+                    : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
+                }`}
+              >
+                {t.icon} {t.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Split-screen : 2 colonnes */}
       <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
         {children.map(child => {
-          const childRoutine = activeRoutines.find(ar => ar.childId === child.id)
+          const childRoutine = viewRoutines.find(ar => ar.childId === child.id)
           if (!childRoutine) return (
             <div key={child.id} className="flex items-center justify-center text-gray-300">
               Pas de routine
