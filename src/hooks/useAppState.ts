@@ -79,17 +79,22 @@ export function useAppState() {
   const [currentScreen, setCurrentScreen] = useLocalStorage<Screen>('routines-screen', 'home')
   const [galleryChildId, setGalleryChildId] = useLocalStorage<string | null>('routines-gallery-child', null)
   const [galleryReturnScreen, setGalleryReturnScreen] = useLocalStorage<Screen | null>('routines-gallery-return', null)
+  const [activeViewTemplateId, setActiveViewTemplateId] = useLocalStorage<string | null>('routines-active-view', null)
 
   const launchRoutine = useCallback((templateId: string, childIds: string[]) => {
     setState(prev => {
       const template = prev.routineTemplates.find(r => r.id === templateId)
       if (!template) return prev
 
-      const filteredRoutines = prev.activeRoutines.filter(
-        ar => !childIds.includes(ar.childId)
-      )
+      // Only create routines for children who don't already have this templateId active
+      const existingChildIds = prev.activeRoutines
+        .filter(ar => ar.templateId === templateId)
+        .map(ar => ar.childId)
+      const newChildIds = childIds.filter(id => !existingChildIds.includes(id))
 
-      const newRoutines: ActiveRoutine[] = childIds.map(childId => ({
+      if (newChildIds.length === 0) return prev
+
+      const newRoutines: ActiveRoutine[] = newChildIds.map(childId => ({
         id: `${templateId}-${childId}-${Date.now()}`,
         templateId,
         childId,
@@ -102,11 +107,12 @@ export function useAppState() {
 
       return {
         ...prev,
-        activeRoutines: [...filteredRoutines, ...newRoutines],
+        activeRoutines: [...prev.activeRoutines, ...newRoutines],
       }
     })
+    setActiveViewTemplateId(templateId)
     setCurrentScreen('routine')
-  }, [setState, setCurrentScreen])
+  }, [setState, setCurrentScreen, setActiveViewTemplateId])
 
   const toggleTask = useCallback((routineId: string, taskId: string) => {
     setState(prev => ({
@@ -128,11 +134,12 @@ export function useAppState() {
     }))
   }, [setState])
 
-  const resetChildRoutine = useCallback((childId: string) => {
+  const resetChildRoutine = useCallback((childId: string, templateId?: string) => {
     setState(prev => ({
       ...prev,
       activeRoutines: prev.activeRoutines.map(ar => {
         if (ar.childId !== childId) return ar
+        if (templateId && ar.templateId !== templateId) return ar
         return {
           ...ar,
           tasks: ar.tasks.map(t => ({ ...t, done: false })),
@@ -142,13 +149,35 @@ export function useAppState() {
     }))
   }, [setState])
 
+  const resetRoutine = useCallback((templateId: string) => {
+    setState(prev => ({
+      ...prev,
+      activeRoutines: prev.activeRoutines.map(ar => {
+        if (ar.templateId !== templateId) return ar
+        return {
+          ...ar,
+          tasks: ar.tasks.map(t => ({ ...t, done: false })),
+          completedAt: null,
+        }
+      }),
+    }))
+  }, [setState])
+
+  const resetAllRoutines = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      activeRoutines: [],
+    }))
+  }, [setState])
+
   const stopRoutines = useCallback(() => {
     setState(prev => ({
       ...prev,
       activeRoutines: [],
     }))
+    setActiveViewTemplateId(null)
     setCurrentScreen('home')
-  }, [setState, setCurrentScreen])
+  }, [setState, setCurrentScreen, setActiveViewTemplateId])
 
   const unlockReward = useCallback((childId: string): RewardImage | null => {
     let unlockedImage: RewardImage | null = null
@@ -188,6 +217,17 @@ export function useAppState() {
       }
     })
     return unlockedImage
+  }, [setState])
+
+  const removeReward = useCallback((childId: string, imageId: string) => {
+    setState(prev => ({
+      ...prev,
+      children: prev.children.map(c =>
+        c.id === childId
+          ? { ...c, unlockedImages: c.unlockedImages.filter(id => id !== imageId) }
+          : c
+      ),
+    }))
   }, [setState])
 
   const addCustomRoutine = useCallback((name: string, tasks: { label: string; icon: string }[]) => {
@@ -240,14 +280,19 @@ export function useAppState() {
     currentScreen,
     galleryChildId,
     galleryReturnScreen,
+    activeViewTemplateId,
     setCurrentScreen,
     setGalleryChildId,
     setGalleryReturnScreen,
+    setActiveViewTemplateId,
     launchRoutine,
     toggleTask,
     resetChildRoutine,
+    resetRoutine,
+    resetAllRoutines,
     stopRoutines,
     unlockReward,
+    removeReward,
     addCustomRoutine,
     startTimer,
     cancelTimer,

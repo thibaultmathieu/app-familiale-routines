@@ -3,6 +3,7 @@ import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../t
 import ProgressBar from './ProgressBar'
 import TimerDisplay from './TimerDisplay'
 import { useSound } from '../hooks/useSound'
+import { getRewardImagesForChild } from '../data/rewardImages'
 
 interface ParentPanelProps {
   children: Child[]
@@ -10,10 +11,14 @@ interface ParentPanelProps {
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
   setCurrentScreen: (screen: Screen) => void
+  setActiveViewTemplateId: (id: string | null) => void
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
-  resetChildRoutine: (childId: string) => void
+  resetChildRoutine: (childId: string, templateId?: string) => void
+  resetRoutine: (templateId: string) => void
+  resetAllRoutines: () => void
   stopRoutines: () => void
+  removeReward: (childId: string, imageId: string) => void
   startTimer: (childIds: string[], durationSeconds: number, label?: string) => void
   cancelTimer: (timerId: string) => void
 }
@@ -39,8 +44,11 @@ export default function ParentPanel({
   activeRoutines,
   activeTimers,
   setCurrentScreen,
-  resetChildRoutine,
+  setActiveViewTemplateId,
+  resetRoutine,
+  resetAllRoutines,
   stopRoutines,
+  removeReward,
   startTimer,
   cancelTimer,
 }: ParentPanelProps) {
@@ -49,13 +57,11 @@ export default function ParentPanel({
   const [timerLabel, setTimerLabel] = useState(MISSION_PRESETS[0])
   const [showCustomLabel, setShowCustomLabel] = useState(false)
   const [customLabelText, setCustomLabelText] = useState('')
+  const [sanctionChildId, setSanctionChildId] = useState<string | null>(null)
   const { playTimerEnd } = useSound()
 
   const hasActiveRoutine = activeRoutines.length > 0
-  const firstRoutine = activeRoutines[0]
-  const template = firstRoutine
-    ? routineTemplates.find(r => r.id === firstRoutine.templateId)
-    : null
+  const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
 
   const handleStartTimer = () => {
     const childIds = timerTarget === 'both'
@@ -74,6 +80,28 @@ export default function ParentPanel({
     setShowCustomLabel(true)
   }
 
+  const handleNewDay = () => {
+    if (window.confirm('Réinitialiser toutes les routines ? (Nouvelle journée)')) {
+      resetAllRoutines()
+    }
+  }
+
+  const handleRemoveReward = (childId: string, imageId: string) => {
+    if (window.confirm('Retirer cette image comme sanction ?')) {
+      removeReward(childId, imageId)
+    }
+  }
+
+  const sanctionChild = sanctionChildId ? children.find(c => c.id === sanctionChildId) : null
+  const sanctionImages = sanctionChildId
+    ? (() => {
+        const allImages = getRewardImagesForChild(sanctionChildId)
+        const child = children.find(c => c.id === sanctionChildId)
+        if (!child) return []
+        return allImages.filter(img => child.unlockedImages.includes(img.id))
+      })()
+    : []
+
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
       {/* Header */}
@@ -88,47 +116,69 @@ export default function ParentPanel({
         <div className="w-24" />
       </div>
 
-      {/* Routine en cours */}
+      {/* Routines en cours — grouped by template */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
-        <h2 className="text-lg font-semibold text-gray-500 mb-4">ROUTINE EN COURS</h2>
-        {hasActiveRoutine && template ? (
+        <h2 className="text-lg font-semibold text-gray-500 mb-4">ROUTINES EN COURS</h2>
+        {hasActiveRoutine ? (
           <>
-            <p className="text-xl font-bold text-gray-800 mb-4">
-              {template.icon} {template.name}
-            </p>
-            {children.map(child => {
-              const childRoutine = activeRoutines.find(ar => ar.childId === child.id)
-              if (!childRoutine) return null
-              const done = childRoutine.tasks.filter(t => t.done).length
-              const total = childRoutine.tasks.length
+            {activeTemplateIds.map(templateId => {
+              const template = routineTemplates.find(r => r.id === templateId)
+              if (!template) return null
+              const routinesForTemplate = activeRoutines.filter(ar => ar.templateId === templateId)
               return (
-                <div key={child.id} className="flex items-center gap-4 mb-3">
-                  <img src={child.photo} alt={child.name} className="w-10 h-10 rounded-full object-cover" />
-                  <span className="font-medium text-gray-700 w-28">{child.name}</span>
-                  <div className="flex-1">
-                    <ProgressBar done={done} total={total} color={child.color} />
+                <div key={templateId} className="mb-5 last:mb-0">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-lg font-bold text-gray-800">
+                      {template.icon} {template.name}
+                    </p>
+                    <button
+                      onClick={() => resetRoutine(templateId)}
+                      className="text-sm text-orange-500 font-medium px-3 py-1 rounded-lg bg-orange-50 active:scale-95 transition-transform"
+                    >
+                      Réinitialiser
+                    </button>
                   </div>
-                  <button
-                    onClick={() => resetChildRoutine(child.id)}
-                    className="text-sm text-orange-500 font-medium px-3 py-1 rounded-lg bg-orange-50 active:scale-95 transition-transform"
-                  >
-                    Réinitialiser
-                  </button>
+                  {children.map(child => {
+                    const childRoutine = routinesForTemplate.find(ar => ar.childId === child.id)
+                    if (!childRoutine) return null
+                    const done = childRoutine.tasks.filter(t => t.done).length
+                    const total = childRoutine.tasks.length
+                    return (
+                      <div key={child.id} className="flex items-center gap-4 mb-3">
+                        <img src={child.photo} alt={child.name} className="w-10 h-10 rounded-full object-cover" />
+                        <span className="font-medium text-gray-700 w-28">{child.name}</span>
+                        <div className="flex-1">
+                          <ProgressBar done={done} total={total} color={child.color} />
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             })}
             <div className="flex gap-3 mt-4">
               <button
-                onClick={() => setCurrentScreen('routine')}
+                onClick={() => {
+                  if (activeTemplateIds.length > 0) {
+                    setActiveViewTemplateId(activeTemplateIds[0])
+                  }
+                  setCurrentScreen('routine')
+                }}
                 className="flex-1 py-3 bg-blue-50 text-blue-500 rounded-xl font-medium active:scale-95 transition-transform"
               >
                 Voir la routine →
               </button>
               <button
+                onClick={handleNewDay}
+                className="flex-1 py-3 bg-amber-50 text-amber-600 rounded-xl font-medium active:scale-95 transition-transform"
+              >
+                Nouvelle journée
+              </button>
+              <button
                 onClick={stopRoutines}
                 className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-medium active:scale-95 transition-transform"
               >
-                Arrêter la routine
+                Arrêter tout
               </button>
             </div>
           </>
@@ -138,7 +188,7 @@ export default function ParentPanel({
       </div>
 
       {/* Minuteur */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
         <h2 className="text-lg font-semibold text-gray-500 mb-4">MINUTEUR</h2>
 
         {/* Active timers */}
@@ -273,6 +323,50 @@ export default function ParentPanel({
             ⏳ Lancer le minuteur
           </button>
         </div>
+      </div>
+
+      {/* Sanctions */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
+        <h2 className="text-lg font-semibold text-gray-500 mb-4">SANCTIONS</h2>
+        <p className="text-sm text-gray-400 mb-3">Retirer une image de la collection</p>
+
+        {/* Child selection */}
+        <div className="flex gap-3 mb-4">
+          {children.map(child => (
+            <button
+              key={child.id}
+              onClick={() => setSanctionChildId(child.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                sanctionChildId === child.id
+                  ? 'border-2 text-gray-700'
+                  : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
+              }`}
+              style={sanctionChildId === child.id ? { borderColor: child.color, backgroundColor: child.color + '20' } : {}}
+            >
+              <img src={child.photo} alt={child.name} className="w-8 h-8 rounded-full object-cover" />
+              {child.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Images grid */}
+        {sanctionChild && (
+          sanctionImages.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2">
+              {sanctionImages.map(img => (
+                <button
+                  key={img.id}
+                  onClick={() => handleRemoveReward(sanctionChildId!, img.id)}
+                  className="aspect-square rounded-lg overflow-hidden border-2 border-gray-100 hover:border-red-300 active:scale-95 transition-all"
+                >
+                  <img src={img.src} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">Aucune image à retirer</p>
+          )
+        )}
       </div>
     </div>
   )
