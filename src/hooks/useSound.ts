@@ -89,10 +89,30 @@ function taskSoundD(ctx: AudioContext, t: number) {
 
 const taskSoundVariants = [taskSoundA, taskSoundB, taskSoundC, taskSoundD]
 
+// Shared unlocked HTML5 Audio element — created once on first user gesture so iOS
+// allows subsequent programmatic playback of any Audio element in the same session.
+let html5AudioUnlocked = false
+
+export function unlockHtml5Audio(): void {
+  if (html5AudioUnlocked) return
+  html5AudioUnlocked = true
+  // iOS requires a silent play() call on an Audio element within a user gesture
+  // before any other Audio element can be played programmatically.
+  const silentAudio = new Audio()
+  // Minimal valid silent MP3 as a data-URI (0.1 s of silence, 8-bit, 8 kHz)
+  silentAudio.src =
+    'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjM2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU2LjQxAAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA//OEZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'
+  silentAudio.volume = 0
+  silentAudio.play().catch(() => {
+    // Ignore — just needed for iOS unlock side-effect
+  })
+}
+
 // Call once from App root to unlock AudioContext on first user gesture (mobile)
 export function initAudioOnGesture(): () => void {
   const handler = () => {
     getAudioContext()
+    unlockHtml5Audio()
     window.removeEventListener('touchstart', handler)
     window.removeEventListener('click', handler)
   }
