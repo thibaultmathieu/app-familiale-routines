@@ -15,7 +15,6 @@ interface ActiveRoutineScreenProps {
   activeTimers: ActiveTimer[]
   activeViewTemplateId: string | null
   setCurrentScreen: (screen: Screen) => void
-  setActiveViewTemplateId: (id: string | null) => void
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
   toggleTask: (routineId: string, taskId: string) => void
@@ -30,7 +29,6 @@ export default function ActiveRoutineScreen({
   activeTimers,
   activeViewTemplateId,
   setCurrentScreen,
-  setActiveViewTemplateId,
   setGalleryChildId,
   setGalleryReturnScreen,
   toggleTask,
@@ -162,30 +160,6 @@ export default function ActiveRoutineScreen({
           <div className="w-12" />
         </div>
       </div>
-
-      {/* Tabs for multiple active routines */}
-      {activeTemplateIds.length > 1 && (
-        <div className="flex gap-2 mb-3 overflow-x-auto">
-          {activeTemplateIds.map(tid => {
-            const t = routineTemplates.find(r => r.id === tid)
-            if (!t) return null
-            const isViewing = tid === viewTemplateId
-            return (
-              <button
-                key={tid}
-                onClick={() => setActiveViewTemplateId(tid)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  isViewing
-                    ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                    : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-                }`}
-              >
-                {t.icon} {t.name}
-              </button>
-            )
-          })}
-        </div>
-      )}
 
       {/* Split-screen : 2 colonnes */}
       <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">

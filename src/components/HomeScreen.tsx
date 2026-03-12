@@ -163,17 +163,21 @@ export default function HomeScreen({
         <div className="grid grid-cols-3 gap-4 w-full">
           {fixedRoutines.map(routine => {
             const isActive = activeTemplateIds.includes(routine.id)
+            const routinesForThis = activeRoutines.filter(ar => ar.templateId === routine.id)
+            const isCompleted = isActive && routinesForThis.every(ar => ar.completedAt != null)
             return (
               <button
                 key={routine.id}
                 onClick={() => handleLaunchFixed(routine.id)}
                 className={`bg-white rounded-2xl p-6 shadow-sm border-2 relative
                            active:scale-95 transition-transform flex flex-col items-center gap-3
-                           hover:border-gray-200 ${isActive ? 'border-green-300' : 'border-gray-100'}`}
+                           hover:border-gray-200 ${isCompleted ? 'border-amber-300' : isActive ? 'border-green-300' : 'border-gray-100'}`}
               >
                 {isActive && (
-                  <span className="absolute top-2 right-2 bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                    EN COURS
+                  <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full ${
+                    isCompleted ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'
+                  }`}>
+                    {isCompleted ? 'TERMINÉE' : 'EN COURS'}
                   </span>
                 )}
                 <span className="text-5xl">{routine.icon}</span>
@@ -271,16 +275,18 @@ export default function HomeScreen({
       {/* 4. Résumé routines en cours — grouped by templateId */}
       {activeTemplateIds.length > 0 && (
         <div className="mt-6 space-y-4 max-w-3xl mx-auto w-full">
-          <span className="text-sm font-bold text-green-600 uppercase tracking-wide">Routines en cours</span>
+          <span className="text-sm font-bold text-green-600 uppercase tracking-wide">Routines</span>
           {activeTemplateIds.map(templateId => {
             const routinesForTemplate = activeRoutines.filter(ar => ar.templateId === templateId)
             const template = routineTemplates.find(r => r.id === templateId)
             if (!template) return null
+            const allCompleted = routinesForTemplate.every(ar => ar.completedAt != null)
             return (
-              <div key={templateId} className="bg-white rounded-2xl p-5 shadow-sm border-2 border-green-100">
+              <div key={templateId} className={`bg-white rounded-2xl p-5 shadow-sm border-2 ${allCompleted ? 'border-amber-200' : 'border-green-100'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-base font-bold text-gray-800">
                     {template.icon} {template.name}
+                    {allCompleted && <span className="ml-2 text-sm text-amber-600">✓ Terminée</span>}
                   </span>
                   <button
                     onClick={() => {
