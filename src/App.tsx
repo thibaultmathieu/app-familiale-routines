@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useAppState } from './hooks/useAppState'
+import { initAudioOnGesture } from './hooks/useSound'
 import HomeScreen from './components/HomeScreen'
 import ActiveRoutineScreen from './components/ActiveRoutineScreen'
 import ParentPanel from './components/ParentPanel'
@@ -12,7 +13,7 @@ export default function App() {
 
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current)
-    if (currentScreen === 'routine' || currentScreen === 'gallery') {
+    if (currentScreen === 'gallery') {
       inactivityTimer.current = setTimeout(() => {
         setCurrentScreen('home')
       }, 2 * 60 * 1000)
@@ -30,6 +31,11 @@ export default function App() {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current)
     }
   }, [resetInactivityTimer])
+
+  // Initialize AudioContext on first user gesture (mobile requirement)
+  useEffect(() => {
+    return initAudioOnGesture()
+  }, [])
 
   return (
     <div className="h-full bg-warm-100 no-select">
