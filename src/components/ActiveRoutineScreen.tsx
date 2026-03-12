@@ -6,7 +6,6 @@ import CelebrationOverlay from './CelebrationOverlay'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
 import { useSound } from '../hooks/useSound'
-import { useMusic } from '../hooks/useMusic'
 
 interface ActiveRoutineScreenProps {
   children: Child[]
@@ -20,6 +19,7 @@ interface ActiveRoutineScreenProps {
   toggleTask: (routineId: string, taskId: string) => void
   unlockReward: (childId: string) => RewardImage | null
   cancelTimer: (timerId: string) => void
+  musicPlay: () => void
 }
 
 export default function ActiveRoutineScreen({
@@ -34,13 +34,12 @@ export default function ActiveRoutineScreen({
   toggleTask,
   unlockReward,
   cancelTimer,
+  musicPlay,
 }: ActiveRoutineScreenProps) {
   const [celebration, setCelebration] = useState<{ childName: string; reward: RewardImage | null } | null>(null)
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
   const [showEndOfDay, setShowEndOfDay] = useState(false)
   const { playTaskComplete, playRoutineComplete, playTimerEnd } = useSound()
-  const music = useMusic()
-  const { play: musicPlay } = music
   const musicTriggered = useRef(false)
 
   // Determine which template to view
@@ -145,17 +144,7 @@ export default function ActiveRoutineScreen({
         <h1 className="text-2xl font-bold text-gray-800">
           {template ? `${template.icon} ${template.name}` : 'Routine en cours'}
         </h1>
-        <div className="flex items-center gap-2">
-          {music.isPlaying && (
-            <button
-              onClick={music.stop}
-              className="text-sm text-gray-400 px-3 py-1 rounded-lg bg-gray-100 active:scale-95 transition-transform"
-            >
-              🔇 Stop musique
-            </button>
-          )}
-          <div className="w-12" />
-        </div>
+        <div className="w-12" />
       </div>
 
       {/* Split-screen : 2 colonnes */}

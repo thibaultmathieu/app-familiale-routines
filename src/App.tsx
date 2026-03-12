@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useAppState } from './hooks/useAppState'
+import { useMusic } from './hooks/useMusic'
 import { initAudioOnGesture } from './hooks/useSound'
 import HomeScreen from './components/HomeScreen'
 import ActiveRoutineScreen from './components/ActiveRoutineScreen'
@@ -8,6 +9,7 @@ import GalleryScreen from './components/GalleryScreen'
 
 export default function App() {
   const appState = useAppState()
+  const music = useMusic()
   const { currentScreen, setCurrentScreen } = appState
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -40,9 +42,19 @@ export default function App() {
   return (
     <div className="h-full bg-warm-100 no-select">
       {currentScreen === 'home' && <HomeScreen {...appState} />}
-      {currentScreen === 'routine' && <ActiveRoutineScreen {...appState} />}
+      {currentScreen === 'routine' && <ActiveRoutineScreen {...appState} musicPlay={music.play} />}
       {currentScreen === 'parent' && <ParentPanel {...appState} />}
       {currentScreen === 'gallery' && <GalleryScreen {...appState} />}
+
+      {/* Bouton global stop musique — visible sur toutes les pages */}
+      {music.isPlaying && (
+        <button
+          onClick={music.stop}
+          className="fixed bottom-4 left-4 z-50 px-4 py-2 rounded-full bg-gray-800 text-white text-sm font-medium shadow-lg active:scale-95 transition-transform"
+        >
+          🔇 Stop musique
+        </button>
+      )}
     </div>
   )
 }

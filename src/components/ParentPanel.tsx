@@ -11,13 +11,8 @@ interface ParentPanelProps {
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
   setCurrentScreen: (screen: Screen) => void
-  setActiveViewTemplateId: (id: string | null) => void
-  setGalleryChildId: (id: string | null) => void
-  setGalleryReturnScreen: (screen: Screen | null) => void
-  resetChildRoutine: (childId: string, templateId?: string) => void
   resetRoutine: (templateId: string) => void
   resetAllRoutines: () => void
-  stopRoutines: () => void
   removeReward: (childId: string, imageId: string) => void
   startTimer: (childIds: string[], durationSeconds: number, label?: string) => void
   cancelTimer: (timerId: string) => void
@@ -44,10 +39,8 @@ export default function ParentPanel({
   activeRoutines,
   activeTimers,
   setCurrentScreen,
-  setActiveViewTemplateId,
   resetRoutine,
   resetAllRoutines,
-  stopRoutines,
   removeReward,
   startTimer,
   cancelTimer,
@@ -156,29 +149,12 @@ export default function ParentPanel({
                 </div>
               )
             })}
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => {
-                  if (activeTemplateIds.length > 0) {
-                    setActiveViewTemplateId(activeTemplateIds[0])
-                  }
-                  setCurrentScreen('routine')
-                }}
-                className="flex-1 py-3 bg-blue-50 text-blue-500 rounded-xl font-medium active:scale-95 transition-transform"
-              >
-                Voir la routine →
-              </button>
+            <div className="mt-4">
               <button
                 onClick={handleNewDay}
-                className="flex-1 py-3 bg-amber-50 text-amber-600 rounded-xl font-medium active:scale-95 transition-transform"
+                className="w-full py-3 bg-amber-50 text-amber-600 rounded-xl font-medium active:scale-95 transition-transform"
               >
                 Nouvelle journée
-              </button>
-              <button
-                onClick={stopRoutines}
-                className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-medium active:scale-95 transition-transform"
-              >
-                Arrêter tout
               </button>
             </div>
           </>
