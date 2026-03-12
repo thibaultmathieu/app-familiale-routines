@@ -54,26 +54,7 @@ export default function ActiveRoutineScreen({
     ? routineTemplates.find(r => r.id === viewTemplateId)
     : null
 
-  // Check if both children completed evening routine → play music
-  useEffect(() => {
-    if (musicTriggered.current) return
-
-    const eveningRoutines = activeRoutines.filter(ar => ar.templateId === 'evening')
-    if (eveningRoutines.length === 0) return
-
-    const allCompleted = children.every(child => {
-      const routine = eveningRoutines.find(ar => ar.childId === child.id)
-      return routine?.completedAt != null
-    })
-
-    if (allCompleted && children.length >= 2) {
-      musicTriggered.current = true
-      musicPlay()
-      setShowEndOfDay(true)
-    }
-  }, [activeRoutines, children, musicPlay])
-
-  // Reset music trigger when no evening routines
+  // Reset music trigger when all evening routines are cleared
   useEffect(() => {
     const hasEvening = activeRoutines.some(ar => ar.templateId === 'evening')
     if (!hasEvening) {
@@ -89,17 +70,30 @@ export default function ActiveRoutineScreen({
 
     const remainingAfterToggle = routine.tasks.filter(t => !t.done && t.taskId !== taskId).length
     if (remainingAfterToggle === 0) {
-      // Routine complete
+      // This child's routine is now complete
       playRoutineComplete()
       const child = children.find(c => c.id === childId)
       if (child) {
         const reward = unlockReward(childId)
         setCelebration({ childName: child.name, reward })
       }
+
+      // If this was the evening routine, check if all other children already finished too
+      // Call musicPlay() directly here (within the user gesture) to satisfy mobile autoplay policy
+      if (routine.templateId === 'evening' && !musicTriggered.current) {
+        const otherEveningDone = activeRoutines
+          .filter(ar => ar.templateId === 'evening' && ar.childId !== childId)
+          .every(ar => ar.completedAt != null)
+        if (otherEveningDone) {
+          musicTriggered.current = true
+          musicPlay()
+          setShowEndOfDay(true)
+        }
+      }
     } else {
       playTaskComplete()
     }
-  }, [activeRoutines, children, toggleTask, unlockReward, playTaskComplete, playRoutineComplete])
+  }, [activeRoutines, children, toggleTask, unlockReward, playTaskComplete, playRoutineComplete, musicPlay])
 
   const openGallery = useCallback((childId: string) => {
     setGalleryChildId(childId)
