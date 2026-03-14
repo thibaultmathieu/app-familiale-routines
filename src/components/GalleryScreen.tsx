@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Child, Screen } from '../types'
 import { getRewardImagesForChild } from '../data/rewardImages'
 
@@ -20,6 +20,45 @@ export default function GalleryScreen({
   setGalleryReturnScreen,
 }: GalleryScreenProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [scale, setScale] = useState(1)
+  const initialDistance = useRef<number | null>(null)
+  const baseScale = useRef(1)
+
+  const openImage = useCallback((imageId: string) => {
+    setSelectedImage(imageId)
+    setScale(1)
+    baseScale.current = 1
+  }, [])
+
+  const closeImage = useCallback(() => {
+    setSelectedImage(null)
+    setScale(1)
+    baseScale.current = 1
+  }, [])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      initialDistance.current = Math.hypot(dx, dy)
+      baseScale.current = scale
+    }
+  }, [scale])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && initialDistance.current) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const distance = Math.hypot(dx, dy)
+      const newScale = Math.min(5, Math.max(1, baseScale.current * (distance / initialDistance.current)))
+      setScale(newScale)
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    initialDistance.current = null
+  }, [])
 
   const currentChild = children.find(c => c.id === galleryChildId) || children[0]
   const otherChild = children.find(c => c.id !== currentChild.id)
@@ -62,7 +101,7 @@ export default function GalleryScreen({
             return (
               <button
                 key={image.id}
-                onClick={unlocked ? () => setSelectedImage(image.id) : undefined}
+                onClick={unlocked ? () => openImage(image.id) : undefined}
                 className={`
                   aspect-square rounded-2xl flex items-center justify-center overflow-hidden
                   transition-all duration-200
@@ -95,20 +134,30 @@ export default function GalleryScreen({
         </span>
       </div>
 
-      {/* Image plein écran */}
+      {/* Image plein écran avec pinch-to-zoom */}
       {selectedImage && (() => {
         const image = childImages.find(r => r.id === selectedImage)
         if (!image) return null
         return (
           <div
-            className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-8"
-            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={closeImage}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             <div
-              className="bg-white rounded-3xl p-4 max-w-lg max-h-[80vh] flex items-center justify-center"
+              className="flex items-center justify-center overflow-hidden"
+              style={{ maxWidth: '95vw', maxHeight: '90vh' }}
               onClick={e => e.stopPropagation()}
             >
-              <img src={image.src} alt="" className="max-w-full max-h-[70vh] object-contain rounded-2xl" />
+              <img
+                src={image.src}
+                alt=""
+                className="max-w-full max-h-[90vh] object-contain rounded-2xl transition-transform duration-100"
+                style={{ transform: `scale(${scale})` }}
+                draggable={false}
+              />
             </div>
           </div>
         )
