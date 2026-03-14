@@ -68,7 +68,15 @@ export default function ActiveRoutineScreen({
   const handleToggle = useCallback((routineId: string, taskId: string, childId: string) => {
     toggleTask(routineId, taskId)
 
+    // Auto-cancel timers linked to this task
     const routine = activeRoutines.find(ar => ar.id === routineId)
+    const taskTemplate = routine ? routineTemplates.find(r => r.id === routine.templateId)?.tasks.find(t => t.id === taskId) : null
+    if (taskTemplate) {
+      const matchingTimers = (activeTimers ?? []).filter(
+        t => t.label === taskTemplate.label && t.childIds.includes(childId)
+      )
+      matchingTimers.forEach(t => cancelTimer(t.id))
+    }
     if (!routine) return
 
     const remainingAfterToggle = routine.tasks.filter(t => !t.done && t.taskId !== taskId).length
@@ -96,7 +104,7 @@ export default function ActiveRoutineScreen({
     } else {
       playTaskComplete()
     }
-  }, [activeRoutines, children, toggleTask, unlockReward, playTaskComplete, playRoutineComplete, musicPlay])
+  }, [activeRoutines, activeTimers, routineTemplates, children, toggleTask, unlockReward, cancelTimer, playTaskComplete, playRoutineComplete, musicPlay])
 
   const openGallery = useCallback((childId: string) => {
     setGalleryChildId(childId)

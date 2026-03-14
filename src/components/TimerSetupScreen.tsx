@@ -17,6 +17,7 @@ const MISSION_PRESETS = [
   'Ranger la chambre',
   'Finir les devoirs',
   'Se préparer',
+  'Se laver les dents',
 ]
 
 interface TimerSetupScreenProps {

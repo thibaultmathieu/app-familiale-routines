@@ -54,49 +54,46 @@ export default function TimerDisplay({ timer, color, size = 'small', onExpired }
   const ringColor = isExpired ? '#F59E0B' : color
   const ringOpacity = isExpired ? 1 : 0.4
 
-  // Vertical centering offset for text inside circle
-  const textOffset = Math.round(pixelSize * 0.675)
-
   return (
     <div className="flex flex-col items-center">
-      <svg width={pixelSize} height={pixelSize} className="transform -rotate-90">
-        <circle
-          cx={pixelSize / 2}
-          cy={pixelSize / 2}
-          r={radius}
-          fill="none"
-          stroke="#e5e7eb"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={pixelSize / 2}
-          cy={pixelSize / 2}
-          r={radius}
-          fill="none"
-          stroke={ringColor}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          opacity={ringOpacity}
-          className="transition-all duration-1000"
-        />
-      </svg>
-      <span
-        className={`${FONT_MAP[size]} font-medium relative z-10`}
-        style={{
-          color: isExpired ? '#F59E0B' : '#9CA3AF',
-          marginTop: `-${textOffset}px`,
-          marginBottom: `${textOffset - pixelSize / 3}px`,
-        }}
-      >
-        {isExpired ? '✓' : timeStr}
-      </span>
+      {/* Label above the ring for medium/large */}
       {size !== 'small' && timer.label && (
-        <p className={`text-center font-medium text-gray-600 mt-1 relative z-10 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
+        <p className={`text-center font-medium text-gray-600 mb-1 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
           {timer.label}
         </p>
       )}
+      {/* Ring + centered time text */}
+      <div className="relative" style={{ width: pixelSize, height: pixelSize }}>
+        <svg width={pixelSize} height={pixelSize} className="absolute inset-0 transform -rotate-90">
+          <circle
+            cx={pixelSize / 2}
+            cy={pixelSize / 2}
+            r={radius}
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth={strokeWidth}
+          />
+          <circle
+            cx={pixelSize / 2}
+            cy={pixelSize / 2}
+            r={radius}
+            fill="none"
+            stroke={ringColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            opacity={ringOpacity}
+            className="transition-all duration-1000"
+          />
+        </svg>
+        <span
+          className={`${FONT_MAP[size]} font-medium absolute inset-0 flex items-center justify-center`}
+          style={{ color: isExpired ? '#F59E0B' : '#9CA3AF' }}
+        >
+          {isExpired ? '✓' : timeStr}
+        </span>
+      </div>
     </div>
   )
 }
