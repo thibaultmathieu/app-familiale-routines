@@ -49,7 +49,7 @@ export interface ActiveTimer {
   label: string
 }
 
-export type Screen = 'home' | 'routine' | 'parent' | 'gallery'
+export type Screen = 'home' | 'routine' | 'parent' | 'gallery' | 'timer'
 
 export interface AppState {
   children: Child[]

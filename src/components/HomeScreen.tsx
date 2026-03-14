@@ -17,6 +17,8 @@ interface HomeScreenProps {
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
   setActiveViewTemplateId: (id: string | null) => void
+  setTimerReturnScreen: (screen: Screen | null) => void
+  setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
   cancelTimer: (timerId: string) => void
 }
 
@@ -44,6 +46,8 @@ export default function HomeScreen({
   setGalleryChildId,
   setGalleryReturnScreen,
   setActiveViewTemplateId,
+  setTimerReturnScreen,
+  setTimerPrefill,
   cancelTimer,
 }: HomeScreenProps) {
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -186,6 +190,20 @@ export default function HomeScreen({
             )
           })}
         </div>
+
+        {/* Bouton minuteur */}
+        <button
+          onClick={() => {
+            setTimerReturnScreen('home')
+            setTimerPrefill(null)
+            setCurrentScreen('timer')
+          }}
+          className="bg-amber-50 rounded-2xl px-8 py-4 shadow-sm border-2 border-amber-200
+                     active:scale-95 transition-transform text-amber-700 text-lg font-medium
+                     hover:border-amber-300 w-full max-w-md"
+        >
+          ⏳ Minuteur
+        </button>
 
         {/* Bouton routine personnalisée */}
         {!showCustomForm ? (

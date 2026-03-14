@@ -5,6 +5,7 @@ import ProgressBar from './ProgressBar'
 import CelebrationOverlay from './CelebrationOverlay'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
+import TaskTimerPopup from './TaskTimerPopup'
 import { useSound } from '../hooks/useSound'
 
 interface ActiveRoutineScreenProps {
@@ -18,6 +19,7 @@ interface ActiveRoutineScreenProps {
   setGalleryReturnScreen: (screen: Screen | null) => void
   toggleTask: (routineId: string, taskId: string) => void
   unlockReward: (childId: string) => RewardImage | null
+  startTimer: (childIds: string[], durationSeconds: number, label?: string) => void
   cancelTimer: (timerId: string) => void
   musicPlay: () => void
 }
@@ -33,11 +35,13 @@ export default function ActiveRoutineScreen({
   setGalleryReturnScreen,
   toggleTask,
   unlockReward,
+  startTimer,
   cancelTimer,
   musicPlay,
 }: ActiveRoutineScreenProps) {
   const [celebration, setCelebration] = useState<{ childName: string; reward: RewardImage | null } | null>(null)
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
+  const [taskTimerPopup, setTaskTimerPopup] = useState<{ label: string; childId: string } | null>(null)
   const [showEndOfDay, setShowEndOfDay] = useState(false)
   const { playTaskComplete, playRoutineComplete, playTimerEnd } = useSound()
   const musicTriggered = useRef(false)
@@ -230,6 +234,7 @@ export default function ActiveRoutineScreen({
                       done={task.done}
                       color={child.color}
                       onToggle={() => handleToggle(childRoutine.id, task.taskId, child.id)}
+                      onTimerPress={() => setTaskTimerPopup({ label: taskTemplate.label, childId: child.id })}
                     />
                   )
                 })}
@@ -280,6 +285,16 @@ export default function ActiveRoutineScreen({
           timer={expiredTimer}
           children={children}
           onDismiss={handleDismissExpired}
+        />
+      )}
+
+      {/* Task timer popup */}
+      {taskTimerPopup && (
+        <TaskTimerPopup
+          label={taskTimerPopup.label}
+          childId={taskTimerPopup.childId}
+          onStart={startTimer}
+          onClose={() => setTaskTimerPopup(null)}
         />
       )}
     </div>

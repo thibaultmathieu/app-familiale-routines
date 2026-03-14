@@ -4,12 +4,16 @@ interface TaskCardProps {
   done: boolean
   onToggle: () => void
   color: string
+  onTimerPress?: () => void
 }
 
-export default function TaskCard({ icon, label, done, onToggle, color }: TaskCardProps) {
+export default function TaskCard({ icon, label, done, onToggle, color, onTimerPress }: TaskCardProps) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={done ? undefined : onToggle}
+      onKeyDown={e => { if (!done && (e.key === 'Enter' || e.key === ' ')) onToggle() }}
       className={`
         w-full rounded-2xl p-4 flex items-center gap-4 transition-all duration-300
         ${done
@@ -18,12 +22,20 @@ export default function TaskCard({ icon, label, done, onToggle, color }: TaskCar
         }
         ${!done ? 'cursor-pointer' : 'cursor-default'}
       `}
-      disabled={done}
     >
       <span className="text-3xl flex-shrink-0">{icon}</span>
       <span className={`text-lg font-medium flex-1 text-left ${done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
         {label}
       </span>
+      {onTimerPress && !done && (
+        <button
+          onClick={e => { e.stopPropagation(); onTimerPress() }}
+          className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-lg flex-shrink-0 active:scale-90 transition-transform border-2 border-amber-200"
+          aria-label="Lancer un minuteur"
+        >
+          ⏳
+        </button>
+      )}
       <div
         className={`
           w-12 h-12 rounded-full border-3 flex items-center justify-center flex-shrink-0
@@ -41,6 +53,6 @@ export default function TaskCard({ icon, label, done, onToggle, color }: TaskCar
           </svg>
         )}
       </div>
-    </button>
+    </div>
   )
 }

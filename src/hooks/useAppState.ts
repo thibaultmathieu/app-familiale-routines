@@ -80,6 +80,8 @@ export function useAppState() {
   const [galleryChildId, setGalleryChildId] = useLocalStorage<string | null>('routines-gallery-child', null)
   const [galleryReturnScreen, setGalleryReturnScreen] = useLocalStorage<Screen | null>('routines-gallery-return', null)
   const [activeViewTemplateId, setActiveViewTemplateId] = useLocalStorage<string | null>('routines-active-view', null)
+  const [timerReturnScreen, setTimerReturnScreen] = useLocalStorage<Screen | null>('routines-timer-return', null)
+  const [timerPrefill, setTimerPrefill] = useLocalStorage<{ label?: string; childIds?: string[] } | null>('routines-timer-prefill', null)
 
   const launchRoutine = useCallback((templateId: string, childIds: string[]) => {
     setState(prev => {
@@ -281,10 +283,14 @@ export function useAppState() {
     galleryChildId,
     galleryReturnScreen,
     activeViewTemplateId,
+    timerReturnScreen,
+    timerPrefill,
     setCurrentScreen,
     setGalleryChildId,
     setGalleryReturnScreen,
     setActiveViewTemplateId,
+    setTimerReturnScreen,
+    setTimerPrefill,
     launchRoutine,
     toggleTask,
     resetChildRoutine,

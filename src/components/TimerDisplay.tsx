@@ -7,19 +7,19 @@ type TimerSize = 'small' | 'medium' | 'large'
 const SIZE_MAP: Record<TimerSize, number> = {
   small: 80,
   medium: 120,
-  large: 180,
+  large: 220,
 }
 
 const STROKE_MAP: Record<TimerSize, number> = {
   small: 6,
   medium: 8,
-  large: 10,
+  large: 12,
 }
 
 const FONT_MAP: Record<TimerSize, string> = {
   small: 'text-sm',
   medium: 'text-xl',
-  large: 'text-3xl',
+  large: 'text-4xl',
 }
 
 interface TimerDisplayProps {
@@ -83,7 +83,7 @@ export default function TimerDisplay({ timer, color, size = 'small', onExpired }
         />
       </svg>
       <span
-        className={`${FONT_MAP[size]} font-medium`}
+        className={`${FONT_MAP[size]} font-medium relative z-10`}
         style={{
           color: isExpired ? '#F59E0B' : '#9CA3AF',
           marginTop: `-${textOffset}px`,
@@ -93,7 +93,7 @@ export default function TimerDisplay({ timer, color, size = 'small', onExpired }
         {isExpired ? '✓' : timeStr}
       </span>
       {size !== 'small' && timer.label && (
-        <p className={`text-center font-medium text-gray-600 mt-1 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
+        <p className={`text-center font-medium text-gray-600 mt-1 relative z-10 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
           {timer.label}
         </p>
       )}

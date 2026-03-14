@@ -6,6 +6,7 @@ import HomeScreen from './components/HomeScreen'
 import ActiveRoutineScreen from './components/ActiveRoutineScreen'
 import ParentPanel from './components/ParentPanel'
 import GalleryScreen from './components/GalleryScreen'
+import TimerSetupScreen from './components/TimerSetupScreen'
 
 export default function App() {
   const appState = useAppState()
@@ -45,6 +46,7 @@ export default function App() {
       {currentScreen === 'routine' && <ActiveRoutineScreen {...appState} musicPlay={music.play} />}
       {currentScreen === 'parent' && <ParentPanel {...appState} />}
       {currentScreen === 'gallery' && <GalleryScreen {...appState} />}
+      {currentScreen === 'timer' && <TimerSetupScreen {...appState} />}
 
       {/* Bouton global stop musique — visible sur toutes les pages */}
       {music.isPlaying && (

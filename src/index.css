@@ -10,6 +10,10 @@ html, body, #root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Cacher la scrollbar pour le sélecteur de durée */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Empêcher la sélection de texte sur les éléments interactifs (enfants) */
 .no-select {
   -webkit-user-select: none;
