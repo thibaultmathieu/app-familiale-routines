@@ -234,6 +234,9 @@ export default function ActiveRoutineScreen({
                 {childRoutine.tasks.map(task => {
                   const taskTemplate = template?.tasks.find(t => t.id === task.taskId)
                   if (!taskTemplate) return null
+                  const hasActiveTimer = (activeTimers ?? []).some(
+                    t => t.label === taskTemplate.label && t.childIds.includes(child.id)
+                  )
                   return (
                     <TaskCard
                       key={task.taskId}
@@ -242,7 +245,7 @@ export default function ActiveRoutineScreen({
                       done={task.done}
                       color={child.color}
                       onToggle={() => handleToggle(childRoutine.id, task.taskId, child.id)}
-                      onTimerPress={() => setTaskTimerPopup({ label: taskTemplate.label, childId: child.id })}
+                      onTimerPress={hasActiveTimer ? undefined : () => setTaskTimerPopup({ label: taskTemplate.label, childId: child.id })}
                     />
                   )
                 })}
