@@ -397,17 +397,20 @@ export default function HomeScreen({
       <div className="h-16" />
 
       {/* Bouton ⚙️ — appui long */}
-      <button
-        onMouseDown={handleGearDown}
-        onMouseUp={handleGearUp}
-        onMouseLeave={handleGearUp}
-        onTouchStart={handleGearDown}
-        onTouchEnd={handleGearUp}
-        className="fixed bottom-4 right-4 w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl"
-        aria-label="Espace parent"
-      >
-        ⚙️
-      </button>
+      <div className="fixed bottom-4 right-4 flex flex-col items-center gap-1">
+        <span className="text-[10px] font-medium text-gray-300 uppercase tracking-wide">Parents</span>
+        <button
+          onMouseDown={handleGearDown}
+          onMouseUp={handleGearUp}
+          onMouseLeave={handleGearUp}
+          onTouchStart={handleGearDown}
+          onTouchEnd={handleGearUp}
+          className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl"
+          aria-label="Espace parent"
+        >
+          ⚙️
+        </button>
+      </div>
 
       {/* Timer expired overlay */}
       {expiredTimer && (
