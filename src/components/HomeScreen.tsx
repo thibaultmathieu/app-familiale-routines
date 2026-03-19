@@ -399,6 +399,7 @@ export default function HomeScreen({
       {/* Bouton ⚙️ — appui long */}
       <div className="fixed bottom-4 right-4 flex flex-col items-center gap-1">
         <span className="text-[10px] font-medium text-gray-300 uppercase tracking-wide">Parents</span>
+        <span className="text-[8px] text-gray-400/60 -mt-1">appui long</span>
         <button
           onMouseDown={handleGearDown}
           onMouseUp={handleGearUp}
