@@ -53,7 +53,7 @@ export default function HomeScreen({
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName] = useState('')
   const [customTasks, setCustomTasks] = useState<string[]>([''])
-  const [customTarget, setCustomTarget] = useState<'both' | 'evangelina' | 'noah'>('both')
+  const [customTargetIds, setCustomTargetIds] = useState<string[]>(() => children.map(c => c.id))
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
   const [showGearHint, setShowGearHint] = useState(() => {
     return !localStorage.getItem('gearHintSeen')
@@ -103,9 +103,7 @@ export default function HomeScreen({
       tasks: validTasks.map((t, i) => ({ id: `t-${Date.now()}-${i}`, label: t.trim(), icon: '📋' })),
     })
 
-    const childIds = customTarget === 'both'
-      ? children.map(c => c.id)
-      : [customTarget]
+    const childIds = customTargetIds.length > 0 ? customTargetIds : children.map(c => c.id)
 
     launchRoutine(templateId, childIds)
     setShowCustomForm(false)
@@ -292,20 +290,42 @@ export default function HomeScreen({
             </button>
 
             {/* Sélection de la cible */}
-            <div className="flex gap-2 mb-4">
-              {(['both', 'evangelina', 'noah'] as const).map(target => (
-                <button
-                  key={target}
-                  onClick={() => setCustomTarget(target)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    customTarget === target
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {target === 'both' ? 'Les deux' : target === 'evangelina' ? 'Evangéline' : 'Noah'}
-                </button>
-              ))}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <button
+                onClick={() => setCustomTargetIds(children.map(c => c.id))}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  customTargetIds.length === children.length
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                Tous
+              </button>
+              {children.map(child => {
+                const isSelected = customTargetIds.includes(child.id)
+                return (
+                  <button
+                    key={child.id}
+                    onClick={() => {
+                      if (isSelected) {
+                        const next = customTargetIds.filter(id => id !== child.id)
+                        setCustomTargetIds(next.length > 0 ? next : [child.id])
+                      } else {
+                        setCustomTargetIds([...customTargetIds, child.id])
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      isSelected && customTargetIds.length < children.length
+                        ? 'bg-blue-100 text-blue-700'
+                        : !isSelected
+                          ? 'bg-gray-100 text-gray-500'
+                          : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {child.name}
+                  </button>
+                )
+              })}
             </div>
 
             <div className="flex gap-3">

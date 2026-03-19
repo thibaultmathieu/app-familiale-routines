@@ -1,0 +1,234 @@
+import { useState, useRef } from 'react'
+import { Child, Screen } from '../types'
+
+const COLOR_PALETTE = [
+  '#A78BFA', '#60A5FA', '#F472B6', '#34D399',
+  '#FBBF24', '#FB923C', '#F87171', '#A3E635',
+]
+
+const DEFAULT_AVATARS = [
+  { label: 'Fille', src: '/profiles/default-girl.svg' },
+  { label: 'Garçon', src: '/profiles/default-boy.svg' },
+]
+
+interface ChildEditorScreenProps {
+  children: Child[]
+  setCurrentScreen: (screen: Screen) => void
+  updateChild: (id: string, updates: Partial<Pick<Child, 'name' | 'photo' | 'color'>>) => void
+  addChild: (child: Omit<Child, 'unlockedImages' | 'completedCycles'>) => void
+  removeChild: (id: string) => void
+}
+
+export default function ChildEditorScreen({
+  children,
+  setCurrentScreen,
+  updateChild,
+  addChild,
+  removeChild,
+}: ChildEditorScreenProps) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editColor, setEditColor] = useState('')
+  const [editPhoto, setEditPhoto] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const startEditing = (child: Child) => {
+    setEditingId(child.id)
+    setEditName(child.name)
+    setEditColor(child.color)
+    setEditPhoto(child.photo)
+  }
+
+  const saveEditing = () => {
+    if (!editingId || !editName.trim()) return
+    updateChild(editingId, {
+      name: editName.trim(),
+      color: editColor,
+      photo: editPhoto,
+    })
+    setEditingId(null)
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+  }
+
+  const handleAddChild = () => {
+    const id = `child-${Date.now()}`
+    addChild({
+      id,
+      name: `Enfant ${children.length + 1}`,
+      photo: '/profiles/default-girl.svg',
+      color: COLOR_PALETTE[children.length % COLOR_PALETTE.length],
+    })
+  }
+
+  const handleRemoveChild = (id: string) => {
+    const child = children.find(c => c.id === id)
+    if (!child) return
+    if (window.confirm(`Supprimer ${child.name} ? Ses routines en cours seront aussi supprimées.`)) {
+      removeChild(id)
+      if (editingId === id) setEditingId(null)
+    }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setEditPhoto(reader.result)
+      }
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  return (
+    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <button
+          onClick={() => setCurrentScreen('parent')}
+          className="text-gray-400 text-lg font-medium px-4 py-2"
+        >
+          ← Retour
+        </button>
+        <h1 className="text-2xl font-bold text-gray-800">Gérer les enfants</h1>
+        <div className="w-24" />
+      </div>
+
+      {/* Children list */}
+      <div className="space-y-4">
+        {children.map(child => (
+          <div key={child.id} className="bg-white rounded-2xl p-5 shadow-sm border-2 border-gray-100">
+            {editingId === child.id ? (
+              /* Edit mode */
+              <div className="space-y-4">
+                {/* Name */}
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Nom de l'enfant"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-blue-300"
+                  autoFocus
+                />
+
+                {/* Photo */}
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Photo</p>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={editPhoto}
+                      alt="Preview"
+                      className="w-16 h-16 rounded-full object-cover border-3"
+                      style={{ borderColor: editColor }}
+                    />
+                    {DEFAULT_AVATARS.map(avatar => (
+                      <button
+                        key={avatar.src}
+                        onClick={() => setEditPhoto(avatar.src)}
+                        className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${
+                          editPhoto === avatar.src ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'
+                        }`}
+                      >
+                        <img src={avatar.src} alt={avatar.label} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-lg hover:border-gray-400"
+                    >
+                      📷
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                </div>
+
+                {/* Color */}
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Couleur</p>
+                  <div className="flex gap-2">
+                    {COLOR_PALETTE.map(color => (
+                      <button
+                        key={color}
+                        onClick={() => setEditColor(color)}
+                        className={`w-10 h-10 rounded-full transition-all ${
+                          editColor === color ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={saveEditing}
+                    className="flex-1 py-3 bg-green-400 text-white rounded-xl font-medium active:scale-95 transition-transform"
+                  >
+                    Enregistrer
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-6 py-3 bg-gray-100 text-gray-500 rounded-xl font-medium"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* View mode */
+              <div className="flex items-center gap-4">
+                <img
+                  src={child.photo}
+                  alt={child.name}
+                  className="w-14 h-14 rounded-full object-cover border-3"
+                  style={{ borderColor: child.color }}
+                />
+                <div className="flex-1">
+                  <p className="text-lg font-bold text-gray-800">{child.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: child.color }} />
+                    <span className="text-sm text-gray-400">{child.color}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => startEditing(child)}
+                  className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+                >
+                  Modifier
+                </button>
+                {children.length > 1 && (
+                  <button
+                    onClick={() => handleRemoveChild(child.id)}
+                    className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-sm font-medium active:scale-95 transition-transform"
+                  >
+                    Supprimer
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add child button */}
+      <button
+        onClick={handleAddChild}
+        className="mt-6 w-full py-4 bg-white rounded-2xl border-2 border-dashed border-gray-300 text-gray-500 text-lg font-medium active:scale-95 transition-transform hover:border-gray-400"
+      >
+        + Ajouter un enfant
+      </button>
+    </div>
+  )
+}

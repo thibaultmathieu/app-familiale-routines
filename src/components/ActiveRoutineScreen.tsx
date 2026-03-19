@@ -159,9 +159,9 @@ export default function ActiveRoutineScreen({
         <div className="w-12" />
       </div>
 
-      {/* Split-screen : 2 colonnes */}
-      <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
-        {children.map(child => {
+      {/* Split-screen : N colonnes */}
+      <div className={`flex-1 grid gap-6 overflow-hidden`} style={{ gridTemplateColumns: `repeat(${children.length}, 1fr)` }}>
+        {children.map((child, index) => {
           const childRoutine = viewRoutines.find(ar => ar.childId === child.id)
           if (!childRoutine) return (
             <div key={child.id} className="flex items-center justify-center text-gray-300">
@@ -180,7 +180,7 @@ export default function ActiveRoutineScreen({
             <div
               key={child.id}
               className={`flex flex-col rounded-2xl p-4 ${
-                child.id === 'evangelina' ? 'border-r border-gray-200' : ''
+                index < children.length - 1 ? 'border-r border-gray-200' : ''
               }`}
             >
               {/* Profil enfant + progression */}

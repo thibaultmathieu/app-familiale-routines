@@ -9,6 +9,7 @@ import GalleryScreen from './components/GalleryScreen'
 import TimerSetupScreen from './components/TimerSetupScreen'
 import RoutineListScreen from './components/RoutineListScreen'
 import RoutineEditorScreen from './components/RoutineEditorScreen'
+import ChildEditorScreen from './components/ChildEditorScreen'
 
 export default function App() {
   const appState = useAppState()
@@ -51,6 +52,7 @@ export default function App() {
       {currentScreen === 'timer' && <TimerSetupScreen {...appState} />}
       {currentScreen === 'routine-list' && <RoutineListScreen {...appState} />}
       {currentScreen === 'routine-editor' && <RoutineEditorScreen {...appState} />}
+      {currentScreen === 'child-editor' && <ChildEditorScreen {...appState} />}
 
       {/* Bouton global stop musique — visible sur toutes les pages */}
       {music.isPlaying && (

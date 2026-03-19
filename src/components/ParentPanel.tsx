@@ -134,6 +134,17 @@ export default function ParentPanel({
         </button>
       </div>
 
+      {/* Gérer les enfants */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
+        <h2 className="text-lg font-semibold text-gray-500 mb-4">GÉRER LES ENFANTS</h2>
+        <button
+          onClick={() => setCurrentScreen('child-editor')}
+          className="w-full py-3 bg-purple-50 text-purple-600 rounded-xl font-medium active:scale-95 transition-transform"
+        >
+          👶 Gérer les enfants
+        </button>
+      </div>
+
       {/* Minuteur */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
         <h2 className="text-lg font-semibold text-gray-500 mb-4">MINUTEUR</h2>

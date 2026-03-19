@@ -13,7 +13,7 @@ interface PersistedState {
   schemaVersion?: number
 }
 
-const CURRENT_SCHEMA_VERSION = 3
+const CURRENT_SCHEMA_VERSION = 4
 
 const initialState: PersistedState = {
   children: defaultChildren,
@@ -66,6 +66,11 @@ function migrateState(state: PersistedState): PersistedState {
       }
       return rest
     })
+  }
+
+  // V3→V4: just bump the version — existing users keep their children as-is
+  if (version < 4) {
+    needsMigration = true
   }
 
   if (needsMigration) {
@@ -303,6 +308,29 @@ export function useAppState() {
     }))
   }, [setState])
 
+  // Child CRUD
+  const updateChild = useCallback((id: string, updates: Partial<Pick<Child, 'name' | 'photo' | 'color'>>) => {
+    setState(prev => ({
+      ...prev,
+      children: prev.children.map(c => c.id === id ? { ...c, ...updates } : c),
+    }))
+  }, [setState])
+
+  const addChild = useCallback((child: Omit<Child, 'unlockedImages' | 'completedCycles'>) => {
+    setState(prev => ({
+      ...prev,
+      children: [...prev.children, { ...child, unlockedImages: [], completedCycles: 0 }],
+    }))
+  }, [setState])
+
+  const removeChild = useCallback((id: string) => {
+    setState(prev => ({
+      ...prev,
+      children: prev.children.filter(c => c.id !== id),
+      activeRoutines: prev.activeRoutines.filter(ar => ar.childId !== id),
+    }))
+  }, [setState])
+
   const childrenWithPhotos = useMemo(
     () => state.children.map(c => ({ ...c, photo: assetUrl(c.photo) })),
     [state.children]
@@ -339,5 +367,8 @@ export function useAppState() {
     reorderTask,
     startTimer,
     cancelTimer,
+    updateChild,
+    addChild,
+    removeChild,
   }
 }

@@ -33,24 +33,24 @@ export const defaultRoutines: RoutineTemplate[] = [
     tasks: [
       { id: 'e1', label: 'je débarrasse la table', icon: '🍽️' },
       { id: 'e2', label: 'je me lave les dents', icon: '🪥' },
-      { id: 'e3', label: 'j\'ai bien fait pipi 3 fois aujourd\'hui', icon: '🚽', childIds: ['evangelina'] },
+      { id: 'e3', label: 'j\'ai bien fait pipi 3 fois aujourd\'hui', icon: '🚽' },
     ],
   },
 ]
 
 export const defaultChildren: Child[] = [
   {
-    id: 'evangelina',
-    name: 'Evangéline',
-    photo: '/profiles/evangelina.jpeg',
+    id: 'child-1',
+    name: 'Enfant 1',
+    photo: '/profiles/default-girl.svg',
     color: '#A78BFA',
     unlockedImages: [],
     completedCycles: 0,
   },
   {
-    id: 'noah',
-    name: 'Noah',
-    photo: '/profiles/noah.jpeg',
+    id: 'child-2',
+    name: 'Enfant 2',
+    photo: '/profiles/default-boy.svg',
     color: '#60A5FA',
     unlockedImages: [],
     completedCycles: 0,
