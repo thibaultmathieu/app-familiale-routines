@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { Child, Screen } from '../types'
 import { getRewardImagesForChild } from '../data/rewardImages'
 
@@ -21,71 +21,13 @@ export default function GalleryScreen({
 }: GalleryScreenProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  // Pinch-to-zoom + pan state
-  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 })
-  const pinchRef = useRef<{ initialDistance: number; initialScale: number } | null>(null)
-  const panRef = useRef<{ lastX: number; lastY: number } | null>(null)
-
   const openImage = useCallback((imageId: string) => {
     setSelectedImage(imageId)
-    setTransform({ scale: 1, x: 0, y: 0 })
   }, [])
 
   const closeImage = useCallback(() => {
     setSelectedImage(null)
-    setTransform({ scale: 1, x: 0, y: 0 })
   }, [])
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      // Start pinch
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      pinchRef.current = {
-        initialDistance: Math.hypot(dx, dy),
-        initialScale: transform.scale,
-      }
-      panRef.current = null
-    } else if (e.touches.length === 1 && transform.scale > 1) {
-      // Start pan (only when zoomed)
-      panRef.current = { lastX: e.touches[0].clientX, lastY: e.touches[0].clientY }
-      pinchRef.current = null
-    }
-  }, [transform.scale])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2 && pinchRef.current) {
-      e.preventDefault()
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      const distance = Math.hypot(dx, dy)
-      const newScale = Math.min(5, Math.max(1, pinchRef.current.initialScale * (distance / pinchRef.current.initialDistance)))
-      setTransform(prev => {
-        // If zooming back to 1, reset position
-        if (newScale <= 1) return { scale: 1, x: 0, y: 0 }
-        return { ...prev, scale: newScale }
-      })
-    } else if (e.touches.length === 1 && panRef.current && transform.scale > 1) {
-      e.preventDefault()
-      const deltaX = e.touches[0].clientX - panRef.current.lastX
-      const deltaY = e.touches[0].clientY - panRef.current.lastY
-      panRef.current = { lastX: e.touches[0].clientX, lastY: e.touches[0].clientY }
-      setTransform(prev => ({ ...prev, x: prev.x + deltaX, y: prev.y + deltaY }))
-    }
-  }, [transform.scale])
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 0) {
-      pinchRef.current = null
-      panRef.current = null
-    } else if (e.touches.length === 1) {
-      // Switched from pinch to single finger — start pan
-      pinchRef.current = null
-      if (transform.scale > 1) {
-        panRef.current = { lastX: e.touches[0].clientX, lastY: e.touches[0].clientY }
-      }
-    }
-  }, [transform.scale])
 
   const currentChild = children.find(c => c.id === galleryChildId) || children[0]
   const otherChild = children.find(c => c.id !== currentChild.id)
@@ -169,26 +111,16 @@ export default function GalleryScreen({
         return (
           <div
             className="fixed inset-0 z-50 bg-black/80 overflow-hidden"
-            onClick={transform.scale <= 1 ? closeImage : undefined}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onClick={closeImage}
           >
-            {/* Close button — always visible */}
+            {/* Close button */}
             <button
               onClick={closeImage}
               className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 text-white text-xl flex items-center justify-center"
             >
               ✕
             </button>
-            {/* Image container — scales and translates as a whole */}
-            <div
-              className="w-full h-full flex items-center justify-center"
-              style={{
-                transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
-                transformOrigin: 'center center',
-              }}
-            >
+            <div className="w-full h-full flex items-center justify-center">
               <img
                 src={image.src}
                 alt=""
