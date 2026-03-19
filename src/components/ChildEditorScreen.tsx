@@ -178,7 +178,6 @@ export default function ChildEditorScreen({
                   <p className="text-lg font-bold text-gray-800">{child.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-4 h-4 rounded-full" style={{ backgroundColor: child.color }} />
-                    <span className="text-sm text-gray-400">{child.color}</span>
                   </div>
                 </div>
                 <button
