@@ -1,14 +1,10 @@
 import { useState, useRef } from 'react'
 import { Child, Screen } from '../types'
+import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
 
 const COLOR_PALETTE = [
   '#A78BFA', '#60A5FA', '#F472B6', '#34D399',
   '#FBBF24', '#FB923C', '#F87171', '#A3E635',
-]
-
-const DEFAULT_AVATARS = [
-  { label: 'Fille', src: '/profiles/default-girl.svg' },
-  { label: 'Garçon', src: '/profiles/default-boy.svg' },
 ]
 
 interface ChildEditorScreenProps {
@@ -58,7 +54,7 @@ export default function ChildEditorScreen({
     addChild({
       id,
       name: `Enfant ${children.length + 1}`,
-      photo: '/profiles/default-girl.svg',
+      photo: DEFAULT_AVATAR_PATH,
       color: COLOR_PALETTE[children.length % COLOR_PALETTE.length],
     })
   }
@@ -120,28 +116,14 @@ export default function ChildEditorScreen({
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-2">Photo</p>
                   <div className="flex items-center gap-3">
-                    <img
-                      src={editPhoto}
-                      alt="Preview"
-                      className="w-16 h-16 rounded-full object-cover border-3"
-                      style={{ borderColor: editColor }}
-                    />
-                    {DEFAULT_AVATARS.map(avatar => (
-                      <button
-                        key={avatar.src}
-                        onClick={() => setEditPhoto(avatar.src)}
-                        className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${
-                          editPhoto === avatar.src ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'
-                        }`}
-                      >
-                        <img src={avatar.src} alt={avatar.label} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
+                    <div className="border-3 rounded-full" style={{ borderColor: editColor }}>
+                      <ChildAvatar photo={editPhoto} color={editColor} size={64} />
+                    </div>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-lg hover:border-gray-400"
+                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:scale-95 transition-transform hover:bg-gray-200"
                     >
-                      📷
+                      📷 Changer la photo
                     </button>
                     <input
                       ref={fileInputRef}
@@ -189,12 +171,9 @@ export default function ChildEditorScreen({
             ) : (
               /* View mode */
               <div className="flex items-center gap-4">
-                <img
-                  src={child.photo}
-                  alt={child.name}
-                  className="w-14 h-14 rounded-full object-cover border-3"
-                  style={{ borderColor: child.color }}
-                />
+                <div className="border-3 rounded-full" style={{ borderColor: child.color }}>
+                  <ChildAvatar photo={child.photo} color={child.color} size={56} />
+                </div>
                 <div className="flex-1">
                   <p className="text-lg font-bold text-gray-800">{child.name}</p>
                   <div className="flex items-center gap-2 mt-1">

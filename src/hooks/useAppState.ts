@@ -200,10 +200,11 @@ export function useAppState() {
   const unlockReward = useCallback((childId: string): RewardImage | null => {
     let unlockedImage: RewardImage | null = null
     setState(prev => {
-      const child = prev.children.find(c => c.id === childId)
+      const childIndex = prev.children.findIndex(c => c.id === childId)
+      const child = childIndex >= 0 ? prev.children[childIndex] : undefined
       if (!child) return prev
 
-      const childImages = getRewardImagesForChild(childId)
+      const childImages = getRewardImagesForChild(childIndex)
       if (childImages.length === 0) return prev
 
       let currentUnlocked = [...child.unlockedImages]
@@ -332,7 +333,10 @@ export function useAppState() {
   }, [setState])
 
   const childrenWithPhotos = useMemo(
-    () => state.children.map(c => ({ ...c, photo: assetUrl(c.photo) })),
+    () => state.children.map(c => ({
+      ...c,
+      photo: c.photo.startsWith('data:') ? c.photo : assetUrl(c.photo),
+    })),
     [state.children]
   )
 

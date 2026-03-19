@@ -42,7 +42,7 @@ export const defaultChildren: Child[] = [
   {
     id: 'child-1',
     name: 'Enfant 1',
-    photo: '/profiles/default-girl.svg',
+    photo: '/profiles/default-avatar.svg',
     color: '#A78BFA',
     unlockedImages: [],
     completedCycles: 0,
@@ -50,7 +50,7 @@ export const defaultChildren: Child[] = [
   {
     id: 'child-2',
     name: 'Enfant 2',
-    photo: '/profiles/default-boy.svg',
+    photo: '/profiles/default-avatar.svg',
     color: '#60A5FA',
     unlockedImages: [],
     completedCycles: 0,

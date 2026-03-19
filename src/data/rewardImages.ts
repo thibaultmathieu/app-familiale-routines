@@ -6,9 +6,13 @@ function withBase(images: RewardImage[]): RewardImage[] {
   return images.map(img => ({ ...img, src: assetUrl(img.src) }))
 }
 
-// Per-child reward images — used by unlockReward and GalleryScreen
-export function getRewardImagesForChild(childId: string): RewardImage[] {
-  return withBase(rewardImagesByChild[childId] ?? [])
+const poolKeys = Object.keys(rewardImagesByChild)
+
+// Per-child reward images — uses child index (0-based) to pick pool via round-robin
+export function getRewardImagesForChild(childIndex: number): RewardImage[] {
+  if (poolKeys.length === 0) return []
+  const key = poolKeys[childIndex % poolKeys.length]
+  return withBase(rewardImagesByChild[key] ?? [])
 }
 
 // Find a single reward image by id across all children

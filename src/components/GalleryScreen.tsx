@@ -89,7 +89,8 @@ export default function GalleryScreen({
 
   const currentChild = children.find(c => c.id === galleryChildId) || children[0]
   const otherChild = children.find(c => c.id !== currentChild.id)
-  const childImages = getRewardImagesForChild(currentChild.id)
+  const currentChildIndex = children.findIndex(c => c.id === currentChild.id)
+  const childImages = getRewardImagesForChild(currentChildIndex >= 0 ? currentChildIndex : 0)
 
   const handleBack = () => {
     const returnTo = galleryReturnScreen || 'parent'

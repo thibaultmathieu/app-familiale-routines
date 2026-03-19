@@ -48,7 +48,8 @@ export default function ParentPanel({
   const sanctionChild = sanctionChildId ? children.find(c => c.id === sanctionChildId) : null
   const sanctionImages = sanctionChildId
     ? (() => {
-        const allImages = getRewardImagesForChild(sanctionChildId)
+        const childIndex = children.findIndex(c => c.id === sanctionChildId)
+        const allImages = getRewardImagesForChild(childIndex >= 0 ? childIndex : 0)
         const child = children.find(c => c.id === sanctionChildId)
         if (!child) return []
         return allImages.filter(img => child.unlockedImages.includes(img.id))
