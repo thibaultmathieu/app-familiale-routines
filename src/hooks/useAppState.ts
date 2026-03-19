@@ -10,68 +10,79 @@ interface PersistedState {
   routineTemplates: RoutineTemplate[]
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
+  schemaVersion?: number
 }
+
+const CURRENT_SCHEMA_VERSION = 3
 
 const initialState: PersistedState = {
   children: defaultChildren,
   routineTemplates: defaultRoutines,
   activeRoutines: [],
   activeTimers: [],
+  schemaVersion: CURRENT_SCHEMA_VERSION,
 }
 
-// Migration V1→V2: detect old emoji-based reward IDs and reset them
 function migrateState(state: PersistedState): PersistedState {
   let needsMigration = false
+  let { children, activeTimers, routineTemplates } = state
+  const version = state.schemaVersion ?? 1
 
-  const children = state.children.map(child => {
-    // Add completedCycles if missing
+  // V1→V2: detect old emoji-based reward IDs and reset them
+  children = children.map(child => {
     const completedCycles = child.completedCycles ?? 0
-
-    // Detect V1 emoji IDs (r01, r02, etc.)
     const hasOldIds = child.unlockedImages.some(id => /^r\d{2}$/.test(id))
     if (hasOldIds) {
       needsMigration = true
       return { ...child, unlockedImages: [], completedCycles: 0 }
     }
-
     if (child.completedCycles === undefined) {
       needsMigration = true
       return { ...child, completedCycles }
     }
-
     return child
   })
 
   // Add activeTimers if missing + migrate timers without label
-  let activeTimers = state.activeTimers ?? []
-  if (!state.activeTimers) needsMigration = true
-  const migratedTimers = activeTimers.map(t => {
+  if (!state.activeTimers) {
+    activeTimers = []
+    needsMigration = true
+  }
+  activeTimers = activeTimers.map(t => {
     if (!t.label) {
       needsMigration = true
       return { ...t, label: 'Minuteur' }
     }
     return t
   })
-  if (needsMigration) activeTimers = migratedTimers
 
-  // Always sync fixed routine templates from defaults (so new tasks are picked up)
-  const customRoutines = state.routineTemplates.filter(r => r.type === 'custom')
-  const freshFixed = defaultRoutines.filter(r => r.type === 'fixed')
-  const mergedTemplates = [...freshFixed, ...customRoutines]
-  if (JSON.stringify(mergedTemplates) !== JSON.stringify(state.routineTemplates)) {
+  // V2→V3: remove type field, add scheduledDays
+  if (version < 3) {
     needsMigration = true
+    routineTemplates = routineTemplates.map(r => {
+      const { type, ...rest } = r as RoutineTemplate & { type?: string }
+      if (!rest.scheduledDays && ['morning', 'afterschool', 'evening'].includes(rest.id)) {
+        return { ...rest, scheduledDays: [1, 2, 3, 4, 5] }
+      }
+      return rest
+    })
   }
 
   if (needsMigration) {
-    return { ...state, children, activeTimers, routineTemplates: mergedTemplates }
+    return { ...state, children, activeTimers, routineTemplates, schemaVersion: CURRENT_SCHEMA_VERSION }
   }
+
+  // Ensure schemaVersion is set even without migration
+  if (state.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    return { ...state, schemaVersion: CURRENT_SCHEMA_VERSION }
+  }
+
   return state
 }
 
 export function useAppState() {
   const [rawState, setState] = useLocalStorage<PersistedState>('routines-familiales', initialState)
   const state = migrateState(rawState)
-  // Persist migration if it changed something
   if (state !== rawState) {
     setState(state)
   }
@@ -82,13 +93,13 @@ export function useAppState() {
   const [activeViewTemplateId, setActiveViewTemplateId] = useLocalStorage<string | null>('routines-active-view', null)
   const [timerReturnScreen, setTimerReturnScreen] = useLocalStorage<Screen | null>('routines-timer-return', null)
   const [timerPrefill, setTimerPrefill] = useLocalStorage<{ label?: string; childIds?: string[] } | null>('routines-timer-prefill', null)
+  const [editorRoutineId, setEditorRoutineId] = useLocalStorage<string | null>('routines-editor-id', null)
 
   const launchRoutine = useCallback((templateId: string, childIds: string[]) => {
     setState(prev => {
       const template = prev.routineTemplates.find(r => r.id === templateId)
       if (!template) return prev
 
-      // Only create routines for children who don't already have this templateId active
       const existingChildIds = prev.activeRoutines
         .filter(ar => ar.templateId === templateId)
         .map(ar => ar.childId)
@@ -193,13 +204,11 @@ export function useAppState() {
       let currentUnlocked = [...child.unlockedImages]
       let currentCycles = child.completedCycles
 
-      // If all images unlocked, reset for new cycle
       if (currentUnlocked.length >= childImages.length) {
         currentUnlocked = []
         currentCycles += 1
       }
 
-      // Pick random from available
       const available = childImages.filter(img => !currentUnlocked.includes(img.id))
       if (available.length === 0) return prev
       const picked = available[Math.floor(Math.random() * available.length)]
@@ -232,20 +241,44 @@ export function useAppState() {
     }))
   }, [setState])
 
-  const addCustomRoutine = useCallback((name: string, tasks: { label: string; icon: string }[]) => {
-    const id = `custom-${Date.now()}`
-    const template: RoutineTemplate = {
-      id,
-      name,
-      icon: '📋',
-      type: 'custom',
-      tasks: tasks.map((t, i) => ({ id: `${id}-t${i}`, label: t.label, icon: t.icon })),
-    }
+  const addRoutine = useCallback((template: Omit<RoutineTemplate, 'id'>): string => {
+    const id = `routine-${Date.now()}`
     setState(prev => ({
       ...prev,
-      routineTemplates: [...prev.routineTemplates, template],
+      routineTemplates: [...prev.routineTemplates, { ...template, id }],
     }))
     return id
+  }, [setState])
+
+  const updateRoutine = useCallback((id: string, updates: Partial<RoutineTemplate>) => {
+    setState(prev => ({
+      ...prev,
+      routineTemplates: prev.routineTemplates.map(r =>
+        r.id === id ? { ...r, ...updates } : r
+      ),
+    }))
+  }, [setState])
+
+  const deleteRoutine = useCallback((id: string) => {
+    setState(prev => ({
+      ...prev,
+      routineTemplates: prev.routineTemplates.filter(r => r.id !== id),
+      activeRoutines: prev.activeRoutines.filter(ar => ar.templateId !== id),
+    }))
+  }, [setState])
+
+  const reorderTask = useCallback((routineId: string, taskIndex: number, direction: 'up' | 'down') => {
+    setState(prev => ({
+      ...prev,
+      routineTemplates: prev.routineTemplates.map(r => {
+        if (r.id !== routineId) return r
+        const tasks = [...r.tasks]
+        const swapIndex = direction === 'up' ? taskIndex - 1 : taskIndex + 1
+        if (swapIndex < 0 || swapIndex >= tasks.length) return r
+        ;[tasks[taskIndex], tasks[swapIndex]] = [tasks[swapIndex], tasks[taskIndex]]
+        return { ...r, tasks }
+      }),
+    }))
   }, [setState])
 
   // Timer methods
@@ -270,7 +303,6 @@ export function useAppState() {
     }))
   }, [setState])
 
-  // Resolve photo URLs with base path for GitHub Pages compatibility
   const childrenWithPhotos = useMemo(
     () => state.children.map(c => ({ ...c, photo: assetUrl(c.photo) })),
     [state.children]
@@ -285,12 +317,14 @@ export function useAppState() {
     activeViewTemplateId,
     timerReturnScreen,
     timerPrefill,
+    editorRoutineId,
     setCurrentScreen,
     setGalleryChildId,
     setGalleryReturnScreen,
     setActiveViewTemplateId,
     setTimerReturnScreen,
     setTimerPrefill,
+    setEditorRoutineId,
     launchRoutine,
     toggleTask,
     resetChildRoutine,
@@ -299,7 +333,10 @@ export function useAppState() {
     stopRoutines,
     unlockReward,
     removeReward,
-    addCustomRoutine,
+    addRoutine,
+    updateRoutine,
+    deleteRoutine,
+    reorderTask,
     startTimer,
     cancelTimer,
   }
