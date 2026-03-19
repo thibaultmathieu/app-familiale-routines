@@ -5,7 +5,7 @@ export const defaultRoutines: RoutineTemplate[] = [
     id: 'morning',
     name: 'Routine du matin',
     icon: '🌅',
-    type: 'fixed',
+    scheduledDays: [1, 2, 3, 4, 5],
     tasks: [
       { id: 'm1', label: 'je fais mon lit', icon: '🛏️' },
       { id: 'm2', label: 'je m\'habille', icon: '👕' },
@@ -16,7 +16,7 @@ export const defaultRoutines: RoutineTemplate[] = [
     id: 'afterschool',
     name: 'Retour de l\'école',
     icon: '🏫',
-    type: 'fixed',
+    scheduledDays: [1, 2, 3, 4, 5],
     tasks: [
       { id: 'a1', label: 'j\'ai bien bu toute ma gourde aujourd\'hui', icon: '💧' },
       { id: 'a2', label: 'je me lave les mains', icon: '🧼' },
@@ -29,7 +29,7 @@ export const defaultRoutines: RoutineTemplate[] = [
     id: 'evening',
     name: 'Routine du soir',
     icon: '🌙',
-    type: 'fixed',
+    scheduledDays: [1, 2, 3, 4, 5],
     tasks: [
       { id: 'e1', label: 'je débarrasse la table', icon: '🍽️' },
       { id: 'e2', label: 'je me lave les dents', icon: '🪥' },

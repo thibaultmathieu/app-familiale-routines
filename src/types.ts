@@ -9,7 +9,7 @@ export interface RoutineTemplate {
   id: string
   name: string
   icon: string
-  type: 'fixed' | 'custom'
+  scheduledDays?: number[]
   tasks: TaskTemplate[]
 }
 
@@ -49,7 +49,7 @@ export interface ActiveTimer {
   label: string
 }
 
-export type Screen = 'home' | 'routine' | 'parent' | 'gallery' | 'timer'
+export type Screen = 'home' | 'routine' | 'parent' | 'gallery' | 'timer' | 'routine-list' | 'routine-editor'
 
 export interface AppState {
   children: Child[]
@@ -59,4 +59,5 @@ export interface AppState {
   galleryChildId: string | null
   galleryReturnScreen: Screen | null
   activeTimers: ActiveTimer[]
+  editorRoutineId: string | null
 }
