@@ -123,6 +123,17 @@ export default function ParentPanel({
         )}
       </div>
 
+      {/* Gérer les routines */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
+        <h2 className="text-lg font-semibold text-gray-500 mb-4">GÉRER LES ROUTINES</h2>
+        <button
+          onClick={() => setCurrentScreen('routine-list')}
+          className="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-medium active:scale-95 transition-transform"
+        >
+          📋 Modifier les routines
+        </button>
+      </div>
+
       {/* Minuteur */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
         <h2 className="text-lg font-semibold text-gray-500 mb-4">MINUTEUR</h2>

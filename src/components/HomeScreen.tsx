@@ -13,7 +13,7 @@ interface HomeScreenProps {
   activeTimers: ActiveTimer[]
   setCurrentScreen: (screen: Screen) => void
   launchRoutine: (templateId: string, childIds: string[]) => void
-  addCustomRoutine: (name: string, tasks: { label: string; icon: string }[]) => string
+  addRoutine: (template: Omit<import('../types').RoutineTemplate, 'id'>) => string
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
   setActiveViewTemplateId: (id: string | null) => void
@@ -42,7 +42,7 @@ export default function HomeScreen({
   activeTimers,
   setCurrentScreen,
   launchRoutine,
-  addCustomRoutine,
+  addRoutine,
   setGalleryChildId,
   setGalleryReturnScreen,
   setActiveViewTemplateId,
@@ -68,7 +68,13 @@ export default function HomeScreen({
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }, [])
 
-  const fixedRoutines = routineTemplates.filter(r => r.type === 'fixed')
+  const today = new Date().getDay()
+  const todayRoutines = routineTemplates.filter(r =>
+    r.scheduledDays && r.scheduledDays.length > 0 && r.scheduledDays.includes(today)
+  )
+  const onDemandRoutines = routineTemplates.filter(r =>
+    !r.scheduledDays || r.scheduledDays.length === 0
+  )
 
   // Group active routines by templateId
   const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
@@ -88,10 +94,11 @@ export default function HomeScreen({
     const validTasks = customTasks.filter(t => t.trim())
     if (!customName.trim() || validTasks.length === 0) return
 
-    const templateId = addCustomRoutine(
-      customName.trim(),
-      validTasks.map(t => ({ label: t.trim(), icon: '📋' }))
-    )
+    const templateId = addRoutine({
+      name: customName.trim(),
+      icon: '📋',
+      tasks: validTasks.map((t, i) => ({ id: `t-${Date.now()}-${i}`, label: t.trim(), icon: '📋' })),
+    })
 
     const childIds = customTarget === 'both'
       ? children.map(c => c.id)
@@ -164,32 +171,58 @@ export default function HomeScreen({
 
       {/* 3. Boutons routines */}
       <div className="flex flex-col items-center gap-4 max-w-3xl mx-auto w-full">
-        <div className="grid grid-cols-3 gap-4 w-full">
-          {fixedRoutines.map(routine => {
-            const isActive = activeTemplateIds.includes(routine.id)
-            const routinesForThis = activeRoutines.filter(ar => ar.templateId === routine.id)
-            const isCompleted = isActive && routinesForThis.every(ar => ar.completedAt != null)
-            return (
-              <button
-                key={routine.id}
-                onClick={() => handleLaunchFixed(routine.id)}
-                className={`bg-white rounded-2xl p-6 shadow-sm border-2 relative
-                           active:scale-95 transition-transform flex flex-col items-center gap-3
-                           hover:border-gray-200 ${isCompleted ? 'border-amber-300' : isActive ? 'border-green-300' : 'border-gray-100'}`}
-              >
-                {isActive && (
-                  <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full ${
-                    isCompleted ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'
-                  }`}>
-                    {isCompleted ? 'TERMINÉE' : 'EN COURS'}
-                  </span>
-                )}
-                <span className="text-5xl">{routine.icon}</span>
-                <span className="text-xl font-semibold text-gray-700">{routine.name}</span>
-              </button>
-            )
-          })}
-        </div>
+        {todayRoutines.length > 0 && (
+          <div className={`grid ${todayRoutines.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-4 w-full`}>
+            {todayRoutines.map(routine => {
+              const isActive = activeTemplateIds.includes(routine.id)
+              const routinesForThis = activeRoutines.filter(ar => ar.templateId === routine.id)
+              const isCompleted = isActive && routinesForThis.every(ar => ar.completedAt != null)
+              return (
+                <button
+                  key={routine.id}
+                  onClick={() => handleLaunchFixed(routine.id)}
+                  className={`bg-white rounded-2xl p-6 shadow-sm border-2 relative
+                             active:scale-95 transition-transform flex flex-col items-center gap-3
+                             hover:border-gray-200 ${isCompleted ? 'border-amber-300' : isActive ? 'border-green-300' : 'border-gray-100'}`}
+                >
+                  {isActive && (
+                    <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full ${
+                      isCompleted ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'
+                    }`}>
+                      {isCompleted ? 'TERMINÉE' : 'EN COURS'}
+                    </span>
+                  )}
+                  <span className="text-5xl">{routine.icon}</span>
+                  <span className="text-xl font-semibold text-gray-700">{routine.name}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* On-demand routines */}
+        {onDemandRoutines.length > 0 && (
+          <div className="w-full">
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Autres routines</p>
+            <div className="grid grid-cols-2 gap-3">
+              {onDemandRoutines.map(routine => {
+                const isActive = activeTemplateIds.includes(routine.id)
+                return (
+                  <button
+                    key={routine.id}
+                    onClick={() => handleLaunchFixed(routine.id)}
+                    className={`bg-white rounded-xl p-4 shadow-sm border-2 flex items-center gap-3
+                               active:scale-95 transition-transform text-left
+                               ${isActive ? 'border-green-300' : 'border-gray-100'}`}
+                  >
+                    <span className="text-2xl">{routine.icon}</span>
+                    <span className="text-base font-medium text-gray-700">{routine.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Bouton minuteur */}
         <button

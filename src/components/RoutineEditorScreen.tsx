@@ -12,7 +12,6 @@ interface RoutineEditorScreenProps {
   setEditorRoutineId: (id: string | null) => void
   updateRoutine: (id: string, updates: Partial<RoutineTemplate>) => void
   deleteRoutine: (id: string) => void
-  reorderTask: (routineId: string, taskIndex: number, direction: 'up' | 'down') => void
 }
 
 export default function RoutineEditorScreen({
@@ -24,7 +23,6 @@ export default function RoutineEditorScreen({
   setEditorRoutineId,
   updateRoutine,
   deleteRoutine,
-  reorderTask,
 }: RoutineEditorScreenProps) {
   const routine = routineTemplates.find(r => r.id === editorRoutineId)
 
@@ -97,11 +95,6 @@ export default function RoutineEditorScreen({
     ;[updated[index], updated[swapIndex]] = [updated[swapIndex], updated[index]]
     setTasks(updated)
   }
-
-  const childFilterOptions = [
-    { value: undefined, label: 'Tous' },
-    ...children.map(c => ({ value: [c.id], label: c.name })),
-  ]
 
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
