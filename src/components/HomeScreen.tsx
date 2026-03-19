@@ -55,6 +55,9 @@ export default function HomeScreen({
   const [customTasks, setCustomTasks] = useState<string[]>([''])
   const [customTarget, setCustomTarget] = useState<'both' | 'evangelina' | 'noah'>('both')
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
+  const [showGearHint, setShowGearHint] = useState(() => {
+    return !localStorage.getItem('gearHintSeen')
+  })
   const { playTimerEnd } = useSound()
 
   // Appui long pour accéder à l'espace parent
@@ -412,6 +415,38 @@ export default function HomeScreen({
           ⚙️
         </button>
       </div>
+
+      {/* First-time gear button hint overlay */}
+      {showGearHint && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-end"
+          onClick={() => {
+            localStorage.setItem('gearHintSeen', '1')
+            setShowGearHint(false)
+          }}
+        >
+          {/* Dark backdrop with a cutout around the gear button */}
+          <div className="absolute inset-0 bg-black/60" />
+
+          {/* Tooltip bubble pointing to gear button */}
+          <div className="absolute bottom-24 right-2 bg-white rounded-2xl px-5 py-4 shadow-xl max-w-[240px] z-10 animate-bounce">
+            <p className="text-sm font-semibold text-gray-800 mb-1">Espace Parents</p>
+            <p className="text-xs text-gray-500">
+              Maintenez appuyé 2 secondes sur le bouton ⚙️ pour accéder aux réglages.
+            </p>
+            <div className="absolute -bottom-2 right-8 w-4 h-4 bg-white rotate-45" />
+          </div>
+
+          {/* Highlight ring around gear button area */}
+          <div className="relative z-10 mb-4 mr-4 flex flex-col items-center gap-1">
+            <span className="text-[10px] font-medium text-gray-300 uppercase tracking-wide">Parents</span>
+            <span className="text-[8px] text-gray-400/60 -mt-1">appui long</span>
+            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl ring-4 ring-white/80 shadow-lg shadow-white/50">
+              ⚙️
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Timer expired overlay */}
       {expiredTimer && (
