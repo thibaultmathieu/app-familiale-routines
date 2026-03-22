@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Child, Screen } from '../types'
 import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
 
@@ -26,7 +26,6 @@ export default function ChildEditorScreen({
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
   const [editPhoto, setEditPhoto] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const startEditing = (child: Child) => {
     setEditingId(child.id)
@@ -72,10 +71,25 @@ export default function ChildEditorScreen({
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
+    reader.onerror = () => console.error('FileReader error:', reader.error)
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setEditPhoto(reader.result)
+      if (typeof reader.result !== 'string') return
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 200
+        let w = img.width
+        let h = img.height
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX }
+        else { w = Math.round(w * MAX / h); h = MAX }
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+        ctx.drawImage(img, 0, 0, w, h)
+        setEditPhoto(canvas.toDataURL('image/jpeg', 0.8))
       }
+      img.src = reader.result
     }
     reader.readAsDataURL(file)
     e.target.value = ''
@@ -119,19 +133,15 @@ export default function ChildEditorScreen({
                     <div className="border-3 rounded-full" style={{ borderColor: editColor }}>
                       <ChildAvatar photo={editPhoto} color={editColor} size={64} />
                     </div>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:scale-95 transition-transform hover:bg-gray-200"
-                    >
+                    <label className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:scale-95 transition-transform hover:bg-gray-200 cursor-pointer">
                       📷 Changer la photo
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
+                      <input
+                        type="file"
+                        accept="image/*,.heic,.heif"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
                   </div>
                 </div>
 

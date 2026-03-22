@@ -6,6 +6,7 @@ import CelebrationOverlay from './CelebrationOverlay'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
 import TaskTimerPopup from './TaskTimerPopup'
+import ChildAvatar from './ChildAvatar'
 import { useSound } from '../hooks/useSound'
 
 interface ActiveRoutineScreenProps {
@@ -185,12 +186,9 @@ export default function ActiveRoutineScreen({
             >
               {/* Profil enfant + progression */}
               <div className="flex items-center gap-3 mb-3">
-                <img
-                  src={child.photo}
-                  alt={child.name}
-                  className="w-14 h-14 rounded-full object-cover border-3"
-                  style={{ borderColor: child.color }}
-                />
+                <div className="border-3 rounded-full" style={{ borderColor: child.color }}>
+                  <ChildAvatar photo={child.photo} color={child.color} size={56} />
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h2

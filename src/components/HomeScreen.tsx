@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { ActiveRoutine, ActiveTimer, RoutineTemplate, Screen, Child } from '../types'
+import ChildAvatar from './ChildAvatar'
 import ProgressBar from './ProgressBar'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
@@ -380,7 +381,7 @@ export default function HomeScreen({
                     const total = childRoutine.tasks.length
                     return (
                       <div key={child.id} className="flex items-center gap-3">
-                        <img src={child.photo} alt={child.name} className="w-8 h-8 rounded-full object-cover" />
+                        <ChildAvatar photo={child.photo} color={child.color} size={32} />
                         <span className="text-sm font-medium text-gray-700">{child.name}</span>
                         <div className="flex-1">
                           <ProgressBar done={done} total={total} color={child.color} />
@@ -406,7 +407,9 @@ export default function HomeScreen({
               className="flex-1 flex items-center gap-3 p-4 rounded-2xl active:scale-95 transition-transform"
               style={{ backgroundColor: child.color + '15' }}
             >
-              <img src={child.photo} alt={child.name} className="w-12 h-12 rounded-full object-cover border-2" style={{ borderColor: child.color }} />
+              <div className="border-2 rounded-full" style={{ borderColor: child.color }}>
+                <ChildAvatar photo={child.photo} color={child.color} size={48} />
+              </div>
               <div className="text-left">
                 <p className="font-medium text-gray-700">{child.name}</p>
                 <p className="text-sm text-gray-400">{child.unlockedImages.length} images</p>

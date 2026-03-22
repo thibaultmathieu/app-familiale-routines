@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ActiveTimer, Child, Screen } from '../types'
+import ChildAvatar from './ChildAvatar'
 import TimerDisplay from './TimerDisplay'
 import DurationPicker from './DurationPicker'
 import { useSound } from '../hooks/useSound'
@@ -234,7 +235,7 @@ export default function TimerSetupScreen({
                 }`}
                 style={timerTarget === child.id ? { borderColor: child.color, backgroundColor: child.color + '20' } : {}}
               >
-                <img src={child.photo} alt={child.name} className="w-6 h-6 rounded-full object-cover" />
+                <ChildAvatar photo={child.photo} color={child.color} size={24} />
                 {child.name}
               </button>
             ))}

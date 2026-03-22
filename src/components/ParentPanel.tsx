@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../types'
 import ProgressBar from './ProgressBar'
+import ChildAvatar from './ChildAvatar'
 import { getRewardImagesForChild } from '../data/rewardImages'
 
 interface ParentPanelProps {
@@ -99,7 +100,7 @@ export default function ParentPanel({
                     const total = childRoutine.tasks.length
                     return (
                       <div key={child.id} className="flex items-center gap-4 mb-3">
-                        <img src={child.photo} alt={child.name} className="w-10 h-10 rounded-full object-cover" />
+                        <ChildAvatar photo={child.photo} color={child.color} size={40} />
                         <span className="font-medium text-gray-700 w-28">{child.name}</span>
                         <div className="flex-1">
                           <ProgressBar done={done} total={total} color={child.color} />
@@ -184,7 +185,7 @@ export default function ParentPanel({
               }`}
               style={sanctionChildId === child.id ? { borderColor: child.color, backgroundColor: child.color + '20' } : {}}
             >
-              <img src={child.photo} alt={child.name} className="w-8 h-8 rounded-full object-cover" />
+              <ChildAvatar photo={child.photo} color={child.color} size={32} />
               {child.name}
             </button>
           ))}
