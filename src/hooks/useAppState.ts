@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
-import { defaultRoutines, defaultChildren } from '../data/defaultRoutines'
+import { defaultRoutines } from '../data/defaultRoutines'
 import { getRewardImagesForChild } from '../data/rewardImages'
 import { assetUrl } from '../utils/assetUrl'
 
@@ -11,16 +11,18 @@ interface PersistedState {
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
   schemaVersion?: number
+  onboardingCompleted?: boolean
 }
 
-const CURRENT_SCHEMA_VERSION = 4
+const CURRENT_SCHEMA_VERSION = 5
 
 const initialState: PersistedState = {
-  children: defaultChildren,
+  children: [],
   routineTemplates: defaultRoutines,
   activeRoutines: [],
   activeTimers: [],
   schemaVersion: CURRENT_SCHEMA_VERSION,
+  onboardingCompleted: false,
 }
 
 function migrateState(state: PersistedState): PersistedState {
@@ -73,8 +75,20 @@ function migrateState(state: PersistedState): PersistedState {
     needsMigration = true
   }
 
+  // V4→V5: add onboardingCompleted — existing users skip onboarding
+  if (version < 5) {
+    needsMigration = true
+  }
+
   if (needsMigration) {
-    return { ...state, children, activeTimers, routineTemplates, schemaVersion: CURRENT_SCHEMA_VERSION }
+    return {
+      ...state,
+      children,
+      activeTimers,
+      routineTemplates,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      onboardingCompleted: state.onboardingCompleted ?? true,
+    }
   }
 
   // Ensure schemaVersion is set even without migration
@@ -372,6 +386,10 @@ export function useAppState() {
     }))
   }, [setState])
 
+  const completeOnboarding = useCallback(() => {
+    setState(prev => ({ ...prev, onboardingCompleted: true }))
+  }, [setState])
+
   const childrenWithPhotos = useMemo(
     () => state.children.map(c => ({
       ...c,
@@ -414,5 +432,6 @@ export function useAppState() {
     updateChild,
     addChild,
     removeChild,
+    completeOnboarding,
   }
 }

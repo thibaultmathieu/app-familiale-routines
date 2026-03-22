@@ -10,6 +10,7 @@ import TimerSetupScreen from './components/TimerSetupScreen'
 import RoutineListScreen from './components/RoutineListScreen'
 import RoutineEditorScreen from './components/RoutineEditorScreen'
 import ChildEditorScreen from './components/ChildEditorScreen'
+import OnboardingScreen from './components/OnboardingScreen'
 
 export default function App() {
   const appState = useAppState()
@@ -42,6 +43,14 @@ export default function App() {
   useEffect(() => {
     return initAudioOnGesture()
   }, [])
+
+  if (!appState.onboardingCompleted) {
+    return (
+      <div className="h-full bg-warm-100 no-select">
+        <OnboardingScreen {...appState} />
+      </div>
+    )
+  }
 
   return (
     <div className="h-full bg-warm-100 no-select">
