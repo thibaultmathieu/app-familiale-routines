@@ -48,7 +48,9 @@ export default function RoutineListScreen({
 
       <div className="space-y-3 mb-6">
         {routineTemplates.map(routine => {
-          const isActive = activeRoutines.some(ar => ar.templateId === routine.id)
+          const hasProgress = activeRoutines
+            .filter(ar => ar.templateId === routine.id)
+            .some(ar => ar.tasks.some(t => t.done))
           const days = routine.scheduledDays ?? []
           return (
             <button
@@ -60,7 +62,7 @@ export default function RoutineListScreen({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-800 truncate">{routine.name}</span>
-                  {isActive && (
+                  {hasProgress && (
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600 shrink-0">
                       EN COURS
                     </span>

@@ -257,12 +257,52 @@ export function useAppState() {
   }, [setState])
 
   const updateRoutine = useCallback((id: string, updates: Partial<RoutineTemplate>) => {
-    setState(prev => ({
-      ...prev,
-      routineTemplates: prev.routineTemplates.map(r =>
+    setState(prev => {
+      const updatedTemplates = prev.routineTemplates.map(r =>
         r.id === id ? { ...r, ...updates } : r
-      ),
-    }))
+      )
+
+      // If tasks changed, sync active routine instances
+      if (!updates.tasks) {
+        return { ...prev, routineTemplates: updatedTemplates }
+      }
+
+      const updatedTemplate = updatedTemplates.find(r => r.id === id)
+      if (!updatedTemplate) {
+        return { ...prev, routineTemplates: updatedTemplates }
+      }
+
+      const updatedActiveRoutines = prev.activeRoutines.map(ar => {
+        if (ar.templateId !== id) return ar
+
+        const applicableTasks = updatedTemplate.tasks.filter(
+          t => !t.childIds || t.childIds.includes(ar.childId)
+        )
+
+        const existingDoneMap = new Map(
+          ar.tasks.map(t => [t.taskId, t.done])
+        )
+
+        const newTasks = applicableTasks.map(t => ({
+          taskId: t.id,
+          done: existingDoneMap.get(t.id) ?? false,
+        }))
+
+        const allDone = newTasks.length > 0 && newTasks.every(t => t.done)
+
+        return {
+          ...ar,
+          tasks: newTasks,
+          completedAt: allDone ? (ar.completedAt ?? new Date().toISOString()) : null,
+        }
+      })
+
+      return {
+        ...prev,
+        routineTemplates: updatedTemplates,
+        activeRoutines: updatedActiveRoutines,
+      }
+    })
   }, [setState])
 
   const deleteRoutine = useCallback((id: string) => {

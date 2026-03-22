@@ -50,7 +50,9 @@ export default function RoutineEditorScreen({
     )
   }
 
-  const isActive = activeRoutines.some(ar => ar.templateId === editorRoutineId)
+  const hasActiveProgress = activeRoutines
+    .filter(ar => ar.templateId === editorRoutineId)
+    .some(ar => ar.tasks.some(t => t.done))
 
   const goBack = () => {
     setEditorRoutineId(null)
@@ -68,7 +70,10 @@ export default function RoutineEditorScreen({
   }
 
   const handleDelete = () => {
-    if (window.confirm('Supprimer cette routine ? Cette action est irréversible.')) {
+    const msg = hasActiveProgress
+      ? 'Cette routine est en cours avec des tâches accomplies. Supprimer ? La progression sera perdue.'
+      : 'Supprimer cette routine ? Cette action est irréversible.'
+    if (window.confirm(msg)) {
       deleteRoutine(editorRoutineId)
       setEditorRoutineId(null)
       setCurrentScreen('routine-list')
@@ -111,14 +116,7 @@ export default function RoutineEditorScreen({
         </button>
       </div>
 
-      {isActive && (
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 text-center">
-          <p className="text-amber-700 font-medium">Cette routine est en cours.</p>
-          <p className="text-amber-600 text-sm">Arrêtez-la avant de la modifier.</p>
-        </div>
-      )}
-
-      <div className={isActive ? 'opacity-50 pointer-events-none' : ''}>
+      <div>
         {/* Name */}
         <label className="block text-sm font-semibold text-gray-500 mb-2">Nom</label>
         <input
@@ -246,8 +244,7 @@ export default function RoutineEditorScreen({
       {/* Save button */}
       <button
         onClick={handleSave}
-        disabled={isActive}
-        className="w-full py-4 bg-green-500 text-white rounded-xl text-lg font-semibold active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
+        className="w-full py-4 bg-green-500 text-white rounded-xl text-lg font-semibold active:scale-95 transition-transform mt-auto"
       >
         Enregistrer
       </button>

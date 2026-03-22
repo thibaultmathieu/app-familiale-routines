@@ -176,18 +176,18 @@ export default function HomeScreen({
         {todayRoutines.length > 0 && (
           <div className={`grid ${todayRoutines.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-4 w-full`}>
             {todayRoutines.map(routine => {
-              const isActive = activeTemplateIds.includes(routine.id)
               const routinesForThis = activeRoutines.filter(ar => ar.templateId === routine.id)
-              const isCompleted = isActive && routinesForThis.every(ar => ar.completedAt != null)
+              const hasProgress = routinesForThis.some(ar => ar.tasks.some(t => t.done))
+              const isCompleted = routinesForThis.length > 0 && routinesForThis.every(ar => ar.completedAt != null)
               return (
                 <button
                   key={routine.id}
                   onClick={() => handleLaunchFixed(routine.id)}
                   className={`bg-white rounded-2xl p-6 shadow-sm border-2 relative
                              active:scale-95 transition-transform flex flex-col items-center gap-3
-                             hover:border-gray-200 ${isCompleted ? 'border-amber-300' : isActive ? 'border-green-300' : 'border-gray-100'}`}
+                             hover:border-gray-200 ${isCompleted ? 'border-amber-300' : hasProgress ? 'border-green-300' : 'border-gray-100'}`}
                 >
-                  {isActive && (
+                  {(hasProgress || isCompleted) && (
                     <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full ${
                       isCompleted ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'
                     }`}>
@@ -208,14 +208,16 @@ export default function HomeScreen({
             <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Autres routines</p>
             <div className="grid grid-cols-2 gap-3">
               {onDemandRoutines.map(routine => {
-                const isActive = activeTemplateIds.includes(routine.id)
+                const hasProgress = activeRoutines
+                  .filter(ar => ar.templateId === routine.id)
+                  .some(ar => ar.tasks.some(t => t.done))
                 return (
                   <button
                     key={routine.id}
                     onClick={() => handleLaunchFixed(routine.id)}
                     className={`bg-white rounded-xl p-4 shadow-sm border-2 flex items-center gap-3
                                active:scale-95 transition-transform text-left
-                               ${isActive ? 'border-green-300' : 'border-gray-100'}`}
+                               ${hasProgress ? 'border-green-300' : 'border-gray-100'}`}
                   >
                     <span className="text-2xl">{routine.icon}</span>
                     <span className="text-base font-medium text-gray-700">{routine.name}</span>
