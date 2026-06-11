@@ -33,7 +33,7 @@ export default function CelebrationOverlay({ childName, reward, onClose }: Celeb
           <div className="mb-4 flex justify-center">
             <img
               src={reward.src}
-              alt=""
+              alt="Nouvelle image débloquée"
               className="w-48 h-48 object-contain rounded-2xl animate-bounce"
             />
           </div>

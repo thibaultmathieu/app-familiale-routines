@@ -66,7 +66,7 @@ export default function GalleryScreen({
       {/* Grille d'images */}
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-5 gap-4 max-w-3xl mx-auto">
-          {childImages.map(image => {
+          {childImages.map((image, index) => {
             const unlocked = currentChild.unlockedImages.includes(image.id)
             return (
               <button
@@ -82,9 +82,9 @@ export default function GalleryScreen({
                 `}
               >
                 {unlocked ? (
-                  <img src={image.src} alt="" className="w-full h-full object-cover rounded-xl" />
+                  <img src={image.src} alt={`Image ${index + 1} de la collection de ${currentChild.name}`} className="w-full h-full object-cover rounded-xl" />
                 ) : (
-                  <span className="text-4xl opacity-30">🔒</span>
+                  <span className="text-4xl opacity-30" role="img" aria-label="Image encore verrouillée">🔒</span>
                 )}
               </button>
             )
@@ -123,7 +123,7 @@ export default function GalleryScreen({
             <div className="w-full h-full flex items-center justify-center">
               <img
                 src={image.src}
-                alt=""
+                alt={`Image de la collection de ${currentChild.name} en plein écran`}
                 className="max-w-[95vw] max-h-[90vh] object-contain"
                 draggable={false}
                 onClick={e => e.stopPropagation()}

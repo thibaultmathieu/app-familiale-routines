@@ -305,7 +305,7 @@ function ChildCard({
         value={child.name}
         onChange={e => onUpdate(child.id, { name: e.target.value })}
         placeholder="Prénom de l'enfant"
-        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-blue-300"
+        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:border-blue-300"
       />
 
       {/* Color picker */}
@@ -404,7 +404,7 @@ function RoutineDetailStep({
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-5 focus:outline-none focus:border-blue-300"
+          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-5 focus:border-blue-300"
           placeholder="Nom de la routine"
         />
 
@@ -449,7 +449,7 @@ function RoutineDetailStep({
                 value={task.label}
                 onChange={e => updateTask(i, { label: e.target.value })}
                 placeholder="Nom de la tâche"
-                className="flex-1 min-w-0 border-0 text-base focus:outline-none bg-transparent"
+                className="flex-1 min-w-0 border-0 text-base bg-transparent"
               />
               <button
                 type="button"

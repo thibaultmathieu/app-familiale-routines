@@ -123,7 +123,7 @@ export default function RoutineEditorScreen({
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-5 focus:outline-none focus:border-blue-300"
+          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-5 focus:border-blue-300"
           placeholder="Nom de la routine"
         />
 
@@ -171,7 +171,7 @@ export default function RoutineEditorScreen({
                 value={task.label}
                 onChange={e => updateTask(i, { label: e.target.value })}
                 placeholder="Nom de la tâche"
-                className="flex-1 min-w-0 border-0 text-base focus:outline-none bg-transparent"
+                className="flex-1 min-w-0 border-0 text-base bg-transparent"
               />
 
               {/* Child filter */}
@@ -181,7 +181,7 @@ export default function RoutineEditorScreen({
                   const val = e.target.value
                   updateTask(i, { childIds: val ? JSON.parse(val) : undefined })
                 }}
-                className="text-xs bg-gray-50 rounded-lg px-2 py-1 border border-gray-200 focus:outline-none"
+                className="text-xs bg-gray-50 rounded-lg px-2 py-1 border border-gray-200"
               >
                 <option value="">Tous</option>
                 {children.map(c => (

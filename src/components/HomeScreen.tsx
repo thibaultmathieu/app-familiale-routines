@@ -260,7 +260,7 @@ export default function HomeScreen({
               placeholder="Nom de la routine"
               value={customName}
               onChange={e => setCustomName(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-3 focus:outline-none focus:border-blue-300"
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-3 focus:border-blue-300"
             />
             {customTasks.map((task, i) => (
               <div key={i} className="flex gap-2 mb-2">
@@ -273,7 +273,7 @@ export default function HomeScreen({
                     updated[i] = e.target.value
                     setCustomTasks(updated)
                   }}
-                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-lg focus:outline-none focus:border-blue-300"
+                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-lg focus:border-blue-300"
                 />
                 {customTasks.length > 1 && (
                   <button

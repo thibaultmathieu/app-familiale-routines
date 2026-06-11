@@ -180,7 +180,7 @@ export default function TimerSetupScreen({
               placeholder="Mission personnalisée"
               value={customLabelText}
               onChange={e => setCustomLabelText(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-sm mt-2 focus:outline-none focus:border-amber-300"
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-sm mt-2 focus:border-amber-300"
             />
           )}
         </div>

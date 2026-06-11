@@ -122,7 +122,7 @@ export default function ChildEditorScreen({
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
                   placeholder="Nom de l'enfant"
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-blue-300"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:border-blue-300"
                   autoFocus
                 />
 

@@ -201,7 +201,7 @@ export default function ParentPanel({
                   onClick={() => handleRemoveReward(sanctionChildId!, img.id)}
                   className="aspect-square rounded-lg overflow-hidden border-2 border-gray-100 hover:border-red-300 active:scale-95 transition-all"
                 >
-                  <img src={img.src} alt="" className="w-full h-full object-cover" />
+                  <img src={img.src} alt={`Image de la collection de ${sanctionChild.name}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
