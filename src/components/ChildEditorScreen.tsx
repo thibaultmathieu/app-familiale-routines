@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { Child, Screen } from '../types'
 import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
-
-const COLOR_PALETTE = [
-  '#A78BFA', '#60A5FA', '#F472B6', '#34D399',
-  '#FBBF24', '#FB923C', '#F87171', '#A3E635',
-]
+import { COLOR_PALETTE } from '../theme'
+import { Button, Card, ScreenHeader, TextInput } from './ui'
 
 interface ChildEditorScreenProps {
   children: Child[]
@@ -97,43 +94,26 @@ export default function ChildEditorScreen({
 
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <button
-          onClick={() => setCurrentScreen('parent')}
-          className="text-gray-400 text-lg font-medium px-4 py-2"
-        >
-          ← Retour
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">Gérer les enfants</h1>
-        <div className="w-24" />
-      </div>
+      <ScreenHeader className="mb-8" onBack={() => setCurrentScreen('parent')} title="Gérer les enfants" />
 
       {/* Children list */}
       <div className="space-y-4">
         {children.map(child => (
-          <div key={child.id} className="bg-white rounded-2xl p-5 shadow-sm border-2 border-gray-100">
+          <Card key={child.id} className="p-5">
             {editingId === child.id ? (
               /* Edit mode */
               <div className="space-y-4">
                 {/* Name */}
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  placeholder="Nom de l'enfant"
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:border-blue-300"
-                  autoFocus
-                />
+                <TextInput value={editName} onChange={setEditName} placeholder="Nom de l'enfant" autoFocus />
 
                 {/* Photo */}
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Photo</p>
+                  <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-2">Photo</p>
                   <div className="flex items-center gap-3">
-                    <div className="border-3 rounded-full" style={{ borderColor: editColor }}>
+                    <div className="border-[3px] rounded-full" style={{ borderColor: editColor }}>
                       <ChildAvatar photo={editPhoto} color={editColor} size={64} />
                     </div>
-                    <label className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:scale-95 transition-transform hover:bg-gray-200 cursor-pointer">
+                    <label className="min-h-12 px-4 py-2 bg-warm-100 text-ink-soft rounded-xl text-sm font-semibold inline-flex items-center active:scale-95 transition-transform hover:bg-warm-200 cursor-pointer">
                       📷 Changer la photo
                       <input
                         type="file"
@@ -147,14 +127,16 @@ export default function ChildEditorScreen({
 
                 {/* Color */}
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Couleur</p>
-                  <div className="flex gap-2">
+                  <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-2">Couleur</p>
+                  <div className="flex gap-2 flex-wrap">
                     {COLOR_PALETTE.map(color => (
                       <button
                         key={color}
                         onClick={() => setEditColor(color)}
-                        className={`w-10 h-10 rounded-full transition-all ${
-                          editColor === color ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
+                        aria-label={`Couleur ${color}`}
+                        aria-pressed={editColor === color}
+                        className={`w-12 h-12 rounded-full transition-all active:scale-90 ${
+                          editColor === color ? 'ring-[3px] ring-offset-2 ring-ink-faint scale-110' : ''
                         }`}
                         style={{ backgroundColor: color }}
                       />
@@ -164,59 +146,45 @@ export default function ChildEditorScreen({
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={saveEditing}
-                    className="flex-1 py-3 bg-green-400 text-white rounded-xl font-medium active:scale-95 transition-transform"
-                  >
+                  <Button variant="primary" size="lg" className="flex-1" onClick={saveEditing}>
                     Enregistrer
-                  </button>
-                  <button
-                    onClick={cancelEditing}
-                    className="px-6 py-3 bg-gray-100 text-gray-500 rounded-xl font-medium"
-                  >
+                  </Button>
+                  <Button variant="soft" size="lg" onClick={cancelEditing}>
                     Annuler
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
               /* View mode */
               <div className="flex items-center gap-4">
-                <div className="border-3 rounded-full" style={{ borderColor: child.color }}>
-                  <ChildAvatar photo={child.photo} color={child.color} size={56} />
+                <div className="border-[3px] rounded-full" style={{ borderColor: child.color }}>
+                  <ChildAvatar photo={child.photo} color={child.color} size={56} alt={`Photo de ${child.name}`} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-lg font-bold text-gray-800">{child.name}</p>
+                  <p className="text-lg font-display font-semibold text-ink">{child.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-4 h-4 rounded-full" style={{ backgroundColor: child.color }} />
                   </div>
                 </div>
-                <button
-                  onClick={() => startEditing(child)}
-                  className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium active:scale-95 transition-transform"
-                >
+                <Button variant="success-soft" size="md" onClick={() => startEditing(child)}>
                   Modifier
-                </button>
+                </Button>
                 {children.length > 1 && (
-                  <button
-                    onClick={() => handleRemoveChild(child.id)}
-                    className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-sm font-medium active:scale-95 transition-transform"
-                  >
+                  <Button variant="danger-soft" size="md" onClick={() => handleRemoveChild(child.id)}>
                     Supprimer
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Add child button */}
-      <button
-        onClick={handleAddChild}
-        className="mt-6 w-full py-4 bg-white rounded-2xl border-2 border-dashed border-gray-300 text-gray-500 text-lg font-medium active:scale-95 transition-transform hover:border-gray-400"
-      >
+      <Button variant="outline" size="xl" className="mt-6" onClick={handleAddChild}>
         + Ajouter un enfant
-      </button>
+      </Button>
+      <div className="h-6 shrink-0" />
     </div>
   )
 }

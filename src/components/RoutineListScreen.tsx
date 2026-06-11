@@ -1,4 +1,5 @@
 import { ActiveRoutine, RoutineTemplate, Screen } from '../types'
+import { Badge, Button, Card, ScreenHeader } from './ui'
 
 const DAY_LABELS = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
 
@@ -35,16 +36,7 @@ export default function RoutineListScreen({
 
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
-      <div className="flex items-center justify-between mb-8">
-        <button
-          onClick={() => setCurrentScreen('parent')}
-          className="text-gray-400 text-lg font-medium px-4 py-2"
-        >
-          ← Retour
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">Gérer les routines</h1>
-        <div className="w-24" />
-      </div>
+      <ScreenHeader className="mb-8" onBack={() => setCurrentScreen('parent')} title="Gérer les routines" />
 
       <div className="space-y-3 mb-6">
         {routineTemplates.map(routine => {
@@ -53,51 +45,45 @@ export default function RoutineListScreen({
             .some(ar => ar.tasks.some(t => t.done))
           const days = routine.scheduledDays ?? []
           return (
-            <button
+            <Card
               key={routine.id}
               onClick={() => handleEdit(routine.id)}
-              className="w-full bg-white rounded-2xl p-5 shadow-sm border-2 border-gray-100 flex items-center gap-4 text-left active:scale-[0.98] transition-transform"
+              className="w-full p-5 flex items-center gap-4"
             >
-              <span className="text-3xl">{routine.icon}</span>
+              <span className="text-3xl" aria-hidden="true">{routine.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-800 truncate">{routine.name}</span>
-                  {hasProgress && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600 shrink-0">
-                      EN COURS
-                    </span>
-                  )}
+                  <span className="font-display font-semibold text-ink truncate">{routine.name}</span>
+                  {hasProgress && <Badge tone="success" className="shrink-0">En cours</Badge>}
                 </div>
-                <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-3 mt-1.5">
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5, 6, 0].map(d => (
                       <span
                         key={d}
-                        className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                        className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${
                           days.includes(d)
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-300'
+                            ? 'bg-ink text-warm-50'
+                            : 'bg-warm-100 text-ink-faint/60'
                         }`}
                       >
                         {DAY_LABELS[d]}
                       </span>
                     ))}
                   </div>
-                  <span className="text-xs text-gray-400">{routine.tasks.length} tâche{routine.tasks.length !== 1 ? 's' : ''}</span>
+                  <span className="text-xs text-ink-faint">{routine.tasks.length} tâche{routine.tasks.length !== 1 ? 's' : ''}</span>
                 </div>
               </div>
-              <span className="text-gray-300 text-xl">›</span>
-            </button>
+              <span className="text-ink-faint/60 text-xl" aria-hidden="true">›</span>
+            </Card>
           )
         })}
       </div>
 
-      <button
-        onClick={handleAdd}
-        className="w-full bg-white rounded-2xl px-6 py-4 shadow-sm border-2 border-dashed border-gray-300 text-gray-500 text-lg font-medium active:scale-95 transition-transform"
-      >
+      <Button variant="outline" size="xl" onClick={handleAdd}>
         + Ajouter une routine
-      </button>
+      </Button>
+      <div className="h-6 shrink-0" />
     </div>
   )
 }

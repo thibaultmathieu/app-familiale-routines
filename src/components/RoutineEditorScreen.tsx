@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ActiveRoutine, Child, RoutineTemplate, Screen, TaskTemplate } from '../types'
 import DayOfWeekPicker from './DayOfWeekPicker'
 import EmojiPicker from './EmojiPicker'
+import { Button, FieldLabel, IconButton, TextInput } from './ui'
 
 interface RoutineEditorScreenProps {
   routineTemplates: RoutineTemplate[]
@@ -45,7 +46,7 @@ export default function RoutineEditorScreen({
   if (!routine || !editorRoutineId) {
     return (
       <div className="h-full flex items-center justify-center">
-        <p className="text-gray-400">Routine introuvable</p>
+        <p className="text-ink-faint">Routine introuvable</p>
       </div>
     )
   }
@@ -105,12 +106,15 @@ export default function RoutineEditorScreen({
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <button onClick={goBack} className="text-gray-400 text-lg font-medium px-4 py-2">
+        <button
+          onClick={goBack}
+          className="min-h-12 px-4 py-2 -ml-4 rounded-2xl text-ink-faint text-lg font-display font-medium active:scale-95 transition-transform"
+        >
           ← Retour
         </button>
         <button
           onClick={handleDelete}
-          className="text-red-400 text-sm font-medium px-4 py-2"
+          className="min-h-12 px-4 py-2 rounded-2xl text-danger-400 text-sm font-semibold active:scale-95 transition-transform"
         >
           Supprimer
         </button>
@@ -118,60 +122,52 @@ export default function RoutineEditorScreen({
 
       <div>
         {/* Name */}
-        <label className="block text-sm font-semibold text-gray-500 mb-2">Nom</label>
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-5 focus:border-blue-300"
-          placeholder="Nom de la routine"
-        />
+        <FieldLabel>Nom</FieldLabel>
+        <TextInput value={name} onChange={setName} placeholder="Nom de la routine" className="mb-5" />
 
         {/* Icon */}
-        <label className="block text-sm font-semibold text-gray-500 mb-2">Icône</label>
+        <FieldLabel>Icône</FieldLabel>
         <button
           type="button"
           onClick={() => setShowIconPicker(!showIconPicker)}
-          className="text-4xl mb-2 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+          aria-label="Changer l'icône de la routine"
+          className="text-4xl mb-2 w-14 h-14 flex items-center justify-center rounded-xl bg-warm-50 border-2 border-line hover:bg-warm-100 transition-colors active:scale-95"
         >
           {icon}
         </button>
         {showIconPicker && (
-          <div className="mb-5 p-3 bg-gray-50 rounded-xl">
+          <div className="mb-5 p-3 bg-warm-50 border border-line rounded-2xl">
             <EmojiPicker value={icon} onChange={e => { setIcon(e); setShowIconPicker(false) }} />
           </div>
         )}
 
         {/* Days */}
-        <label className="block text-sm font-semibold text-gray-500 mb-2 mt-3">
-          Jours planifiés
-          <span className="font-normal text-gray-400 ml-2">(aucun = à la demande)</span>
-        </label>
+        <FieldLabel className="mt-3" hint="(aucun = à la demande)">Jours planifiés</FieldLabel>
         <div className="mb-5">
           <DayOfWeekPicker value={days} onChange={setDays} />
         </div>
 
         {/* Tasks */}
-        <label className="block text-sm font-semibold text-gray-500 mb-3">Tâches</label>
+        <FieldLabel className="mb-3">Tâches</FieldLabel>
         <div className="space-y-2 mb-4">
           {tasks.map((task, i) => (
-            <div key={task.id} className="flex items-center gap-2 bg-white rounded-xl p-3 border-2 border-gray-100">
+            <div key={task.id} className="flex items-center gap-1.5 bg-white rounded-xl p-2.5 border-2 border-line">
               {/* Task emoji */}
               <button
                 type="button"
                 onClick={() => setTaskEmojiIndex(taskEmojiIndex === i ? null : i)}
-                className="text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100"
+                aria-label="Changer l'icône de la tâche"
+                className="text-xl w-11 h-11 flex items-center justify-center rounded-lg hover:bg-warm-100 active:scale-90 transition-transform shrink-0"
               >
                 {task.icon}
               </button>
 
               {/* Label */}
-              <input
-                type="text"
+              <TextInput
+                variant="bare"
                 value={task.label}
-                onChange={e => updateTask(i, { label: e.target.value })}
+                onChange={v => updateTask(i, { label: v })}
                 placeholder="Nom de la tâche"
-                className="flex-1 min-w-0 border-0 text-base bg-transparent"
               />
 
               {/* Child filter */}
@@ -181,7 +177,8 @@ export default function RoutineEditorScreen({
                   const val = e.target.value
                   updateTask(i, { childIds: val ? JSON.parse(val) : undefined })
                 }}
-                className="text-xs bg-gray-50 rounded-lg px-2 py-1 border border-gray-200"
+                aria-label="Pour quel enfant ?"
+                className="text-sm min-h-11 bg-warm-50 rounded-lg px-2 border border-line text-ink-soft shrink-0"
               >
                 <option value="">Tous</option>
                 {children.map(c => (
@@ -190,37 +187,23 @@ export default function RoutineEditorScreen({
               </select>
 
               {/* Up/Down */}
-              <button
-                type="button"
-                onClick={() => moveTask(i, 'up')}
-                disabled={i === 0}
-                className="text-gray-400 disabled:opacity-20 px-1"
-              >
+              <IconButton size={44} ariaLabel="Monter la tâche" disabled={i === 0} onClick={() => moveTask(i, 'up')} className="text-ink-faint hover:bg-warm-100">
                 ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => moveTask(i, 'down')}
-                disabled={i === tasks.length - 1}
-                className="text-gray-400 disabled:opacity-20 px-1"
-              >
+              </IconButton>
+              <IconButton size={44} ariaLabel="Descendre la tâche" disabled={i === tasks.length - 1} onClick={() => moveTask(i, 'down')} className="text-ink-faint hover:bg-warm-100">
                 ↓
-              </button>
+              </IconButton>
 
               {/* Delete */}
-              <button
-                type="button"
-                onClick={() => removeTask(i)}
-                className="text-gray-400 hover:text-red-400 px-1"
-              >
+              <IconButton size={44} ariaLabel="Supprimer la tâche" onClick={() => removeTask(i)} className="text-ink-faint hover:text-danger-400 hover:bg-danger-50">
                 ✕
-              </button>
+              </IconButton>
             </div>
           ))}
 
           {/* Task emoji picker (shown below the task row) */}
           {taskEmojiIndex !== null && (
-            <div className="p-3 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-warm-50 border border-line rounded-2xl">
               <EmojiPicker
                 value={tasks[taskEmojiIndex]?.icon ?? '📋'}
                 onChange={e => {
@@ -232,24 +215,19 @@ export default function RoutineEditorScreen({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={addTask}
-          className="text-blue-500 text-sm font-medium mb-6"
-        >
+        <Button variant="soft" size="md" onClick={addTask} className="mb-6">
           + Ajouter une tâche
-        </button>
+        </Button>
       </div>
 
       {/* Save button */}
-      <button
-        onClick={handleSave}
-        className="w-full py-4 bg-green-500 text-white rounded-xl text-lg font-semibold active:scale-95 transition-transform mt-auto"
-      >
-        Enregistrer
-      </button>
+      <div className="mt-auto">
+        <Button variant="primary" size="xl" onClick={handleSave}>
+          Enregistrer
+        </Button>
+      </div>
 
-      <div className="h-6" />
+      <div className="h-6 shrink-0" />
     </div>
   )
 }
