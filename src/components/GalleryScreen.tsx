@@ -30,14 +30,28 @@ export default function GalleryScreen({
   }, [])
 
   const currentChild = children.find(c => c.id === galleryChildId) || children[0]
-  const otherChild = children.find(c => c.id !== currentChild.id)
-  const currentChildIndex = children.findIndex(c => c.id === currentChild.id)
+  const otherChild = currentChild ? children.find(c => c.id !== currentChild.id) : undefined
+  const currentChildIndex = currentChild ? children.findIndex(c => c.id === currentChild.id) : -1
   const childImages = getRewardImagesForChild(currentChildIndex >= 0 ? currentChildIndex : 0)
 
   const handleBack = () => {
     const returnTo = galleryReturnScreen || 'parent'
     setGalleryReturnScreen(null)
     setCurrentScreen(returnTo)
+  }
+
+  if (!currentChild) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6">
+        <p className="text-xl text-gray-400 mb-4">Aucun enfant configuré</p>
+        <button
+          onClick={handleBack}
+          className="px-6 py-3 bg-blue-100 text-blue-600 rounded-full text-lg font-medium"
+        >
+          ← Retour
+        </button>
+      </div>
+    )
   }
 
   return (
