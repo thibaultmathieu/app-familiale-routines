@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../types'
 import ProgressBar from './ProgressBar'
 import ChildAvatar from './ChildAvatar'
-import { getRewardImagesForChild } from '../data/rewardImages'
+import { getRewardImagesForChildEntry } from '../data/rewardImages'
 import { childTextColor, tint } from '../theme'
 import { Badge, Button, Card, ScreenHeader } from './ui'
 
@@ -53,13 +53,11 @@ export default function ParentPanel({
   }
 
   const sanctionChild = sanctionChildId ? children.find(c => c.id === sanctionChildId) : null
-  const sanctionImages = sanctionChildId
+  const sanctionImages = sanctionChild
     ? (() => {
-        const childIndex = children.findIndex(c => c.id === sanctionChildId)
-        const allImages = getRewardImagesForChild(childIndex >= 0 ? childIndex : 0)
-        const child = children.find(c => c.id === sanctionChildId)
-        if (!child) return []
-        return allImages.filter(img => child.unlockedImages.includes(img.id))
+        const childIndex = children.findIndex(c => c.id === sanctionChild.id)
+        const allImages = getRewardImagesForChildEntry(sanctionChild, childIndex)
+        return allImages.filter(img => sanctionChild.unlockedImages.includes(img.id))
       })()
     : []
 
@@ -117,15 +115,18 @@ export default function ParentPanel({
         )}
       </Card>
 
-      {/* Gérer les routines + enfants */}
+      {/* Gérer les routines + enfants + univers */}
       <Card className="p-6 mb-6">
         <SectionTitle>Gérer</SectionTitle>
         <div className="flex flex-col gap-3">
           <Button variant="success-soft" size="lg" className="w-full" onClick={() => setCurrentScreen('routine-list')}>
             📋 Modifier les routines
           </Button>
-          <Button variant="night-soft" size="lg" className="w-full" onClick={() => setCurrentScreen('child-editor')}>
+          <Button variant="soft" size="lg" className="w-full" onClick={() => setCurrentScreen('child-editor')}>
             👧 Gérer les enfants
+          </Button>
+          <Button variant="night-soft" size="lg" className="w-full" onClick={() => setCurrentScreen('universe-select')}>
+            🌌 Univers des récompenses
           </Button>
         </div>
       </Card>

@@ -10,23 +10,33 @@ import {
 } from './useAppState'
 import { RoutineTemplate } from '../types'
 
-// Petits pools contrôlés pour tester le cycle de récompenses (3 images par pool)
+// Petits pools contrôlés pour tester le cycle de récompenses (3 images par pool).
+// Reproduit le contrat de src/data/rewardImages.ts avec deux univers 'a' et 'b'.
 vi.mock('../data/rewardImages', () => {
-  const pools = [
-    [
+  const pools: Record<string, { id: string; src: string }[]> = {
+    a: [
       { id: 'a-001', src: '/rewards/a/a-001.png' },
       { id: 'a-002', src: '/rewards/a/a-002.png' },
       { id: 'a-003', src: '/rewards/a/a-003.png' },
     ],
-    [
+    b: [
       { id: 'b-001', src: '/rewards/b/b-001.png' },
       { id: 'b-002', src: '/rewards/b/b-002.png' },
       { id: 'b-003', src: '/rewards/b/b-003.png' },
     ],
-  ]
+  }
+  const poolKeys = Object.keys(pools)
+  const legacyUniverseIdForIndex = (i: number) => poolKeys[i % poolKeys.length]
+  const resolveUniverseId = (child: { universeId?: string }, i: number) =>
+    child.universeId && pools[child.universeId] ? child.universeId : legacyUniverseIdForIndex(i)
   return {
-    getRewardImagesForChild: (childIndex: number) => pools[childIndex % pools.length],
-    findRewardImage: (id: string) => pools.flat().find(img => img.id === id),
+    getRewardImagesForUniverse: (id: string) => pools[id] ?? [],
+    resolveUniverseId,
+    getRewardImagesForChildEntry: (child: { universeId?: string }, i: number) =>
+      pools[resolveUniverseId(child, i)] ?? [],
+    getRewardImagesForChild: (i: number) => pools[legacyUniverseIdForIndex(i)],
+    legacyUniverseIdForIndex,
+    findRewardImage: (id: string) => Object.values(pools).flat().find(img => img.id === id),
   }
 })
 
@@ -138,6 +148,21 @@ describe('migrateState', () => {
 
     const out = migrateState(legacy)
     expect(out.onboardingCompleted).toBe(true)
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
+  })
+
+  it('V5→V6 : fige l’univers de chaque enfant selon son index (round-robin legacy)', () => {
+    const state = {
+      children: [makeChild('c1'), makeChild('c2'), makeChild('c3')],
+      routineTemplates: [],
+      activeRoutines: [],
+      activeTimers: [],
+      schemaVersion: 5,
+      onboardingCompleted: true,
+    } as unknown as PersistedState
+
+    const out = migrateState(state)
+    expect(out.children.map(c => c.universeId)).toEqual(['a', 'b', 'a'])
     expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 
@@ -386,6 +411,42 @@ describe('useAppState — récompenses', () => {
     const child = result.current.children.find(c => c.id === 'c1')!
     expect(returned).not.toBeNull()
     expect(child.unlockedImages).toEqual([returned!.id])
+  })
+
+  it('setChildUniverse change le pool de tirage sans perdre les images des autres univers', () => {
+    const { result } = setupHook({})
+    act(() => { result.current.unlockReward('c1') })
+    const fromA = result.current.children.find(c => c.id === 'c1')!.unlockedImages[0]
+    expect(fromA.startsWith('a-')).toBe(true)
+
+    act(() => result.current.setChildUniverse('c1', 'b'))
+    act(() => { result.current.unlockReward('c1') })
+
+    const child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.universeId).toBe('b')
+    expect(child.unlockedImages).toContain(fromA)
+    expect(child.unlockedImages.some(id => id.startsWith('b-'))).toBe(true)
+  })
+
+  it('le reset de cycle ne touche que les images de l’univers courant', () => {
+    const { result } = setupHook({
+      children: [
+        makeChild('c1', { name: 'Éva', universeId: 'a', unlockedImages: ['b-001', 'b-002'] }),
+        makeChild('c2', { name: 'Noé', universeId: 'b' }),
+      ],
+    })
+    // Épuise le pool 'a' (3 images) puis déclenche le reset de cycle
+    for (let i = 0; i < 3; i++) {
+      act(() => { result.current.unlockReward('c1') })
+    }
+    act(() => { result.current.unlockReward('c1') })
+
+    const child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.completedCycles).toBe(1)
+    // Les images de l'univers 'b' restent acquises, le pool 'a' est reparti à 1
+    expect(child.unlockedImages).toContain('b-001')
+    expect(child.unlockedImages).toContain('b-002')
+    expect(child.unlockedImages.filter(id => id.startsWith('a-'))).toHaveLength(1)
   })
 
   it('removeReward retire une image (sanction)', () => {

@@ -11,6 +11,7 @@ import RoutineListScreen from './components/RoutineListScreen'
 import RoutineEditorScreen from './components/RoutineEditorScreen'
 import ChildEditorScreen from './components/ChildEditorScreen'
 import OnboardingScreen from './components/OnboardingScreen'
+import UniverseSelectScreen from './components/UniverseSelectScreen'
 
 export default function App() {
   const appState = useAppState()
@@ -62,6 +63,7 @@ export default function App() {
       {currentScreen === 'routine-list' && <RoutineListScreen {...appState} />}
       {currentScreen === 'routine-editor' && <RoutineEditorScreen {...appState} />}
       {currentScreen === 'child-editor' && <ChildEditorScreen {...appState} />}
+      {currentScreen === 'universe-select' && <UniverseSelectScreen {...appState} />}
 
       {/* Bouton global stop musique — visible sur toutes les pages */}
       {music.isPlaying && (

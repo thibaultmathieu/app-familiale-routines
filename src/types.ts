@@ -36,11 +36,23 @@ export interface Child {
   color: string
   unlockedImages: string[]
   completedCycles: number
+  /** Univers de récompenses dont l'enfant tire ses images (V6). Absent = pool par index (legacy). */
+  universeId?: string
 }
 
 export interface RewardImage {
   id: string
   src: string
+}
+
+/** Univers thématique de récompenses (Jalon 2). Un univers = un pool d'images. */
+export interface Universe {
+  id: string
+  name: string
+  emoji: string
+  description?: string
+  /** Univers annoncé mais sans images — visible verrouillé, non sélectionnable. */
+  comingSoon?: boolean
 }
 
 export interface ActiveTimer {
@@ -51,7 +63,7 @@ export interface ActiveTimer {
   label: string
 }
 
-export type Screen = 'home' | 'routine' | 'parent' | 'gallery' | 'timer' | 'routine-list' | 'routine-editor' | 'child-editor'
+export type Screen = 'home' | 'routine' | 'parent' | 'gallery' | 'timer' | 'routine-list' | 'routine-editor' | 'child-editor' | 'universe-select'
 
 export interface AppState {
   children: Child[]

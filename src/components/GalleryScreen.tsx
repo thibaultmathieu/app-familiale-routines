@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Child, Screen } from '../types'
-import { getRewardImagesForChild } from '../data/rewardImages'
+import { getRewardImagesForChildEntry, resolveUniverseId } from '../data/rewardImages'
+import { getUniverse } from '../data/universes'
 import { childTextColor, tint } from '../theme'
 import { ScreenHeader } from './ui'
 
@@ -34,7 +35,9 @@ export default function GalleryScreen({
   const currentChild = children.find(c => c.id === galleryChildId) || children[0]
   const otherChild = currentChild ? children.find(c => c.id !== currentChild.id) : undefined
   const currentChildIndex = currentChild ? children.findIndex(c => c.id === currentChild.id) : -1
-  const childImages = getRewardImagesForChild(currentChildIndex >= 0 ? currentChildIndex : 0)
+  const childImages = currentChild ? getRewardImagesForChildEntry(currentChild, currentChildIndex) : []
+  const universeId = currentChild ? resolveUniverseId(currentChild, currentChildIndex) : null
+  const universe = universeId ? getUniverse(universeId) : undefined
 
   const handleBack = () => {
     const returnTo = galleryReturnScreen || 'parent'
@@ -61,7 +64,7 @@ export default function GalleryScreen({
   return (
     <div className="h-full flex flex-col p-6">
       <ScreenHeader
-        className="mb-6"
+        className="mb-4"
         onBack={handleBack}
         title={
           <>
@@ -84,6 +87,13 @@ export default function GalleryScreen({
           ) : undefined
         }
       />
+
+      {/* Univers courant */}
+      {universe && (
+        <p className="text-center text-sm font-display font-medium text-ink-faint mb-4 -mt-2">
+          {universe.emoji} {universe.name}
+        </p>
+      )}
 
       {/* Grille d'images */}
       <div className="flex-1 overflow-y-auto">

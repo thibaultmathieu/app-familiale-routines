@@ -5,11 +5,32 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 
-// Config
-const childrenDirs = [
-  { name: 'evangelina', sourceDir: 'images_rewards/Evangeline' },
-  { name: 'noah', sourceDir: 'images_rewards/Noah' },
-]
+// Config — chaque sous-dossier de images_rewards/ devient un pool d'univers.
+// Les alias préservent les clés historiques du manifeste (IDs d'images déjà
+// débloquées en localStorage) ; tout nouveau dossier est slugifié automatiquement.
+const POOL_KEY_ALIASES = {
+  Evangeline: 'evangelina',
+  Noah: 'noah',
+}
+
+function slugifyPoolKey(folderName) {
+  return folderName
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // retire les accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+const imagesRoot = path.join(ROOT, 'images_rewards')
+const childrenDirs = fs.readdirSync(imagesRoot, { withFileTypes: true })
+  .filter(entry => entry.isDirectory())
+  .map(entry => ({
+    name: POOL_KEY_ALIASES[entry.name] ?? slugifyPoolKey(entry.name),
+    sourceDir: `images_rewards/${entry.name}`,
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name))
+
 const musicSourceDir = 'music'
 
 const musicTitles = {

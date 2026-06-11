@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines } from '../data/defaultRoutines'
-import { getRewardImagesForChild } from '../data/rewardImages'
+import { getRewardImagesForChildEntry, legacyUniverseIdForIndex } from '../data/rewardImages'
 import { assetUrl } from '../utils/assetUrl'
 
 export interface PersistedState {
@@ -14,7 +14,7 @@ export interface PersistedState {
   onboardingCompleted?: boolean
 }
 
-export const CURRENT_SCHEMA_VERSION = 5
+export const CURRENT_SCHEMA_VERSION = 6
 
 // Plafonds anti-accumulation (enfants qui spamment, routines à la volée jamais nettoyées)
 export const MAX_ROUTINE_TEMPLATES = 30
@@ -82,6 +82,15 @@ export function migrateState(state: PersistedState): PersistedState {
   // V4→V5: add onboardingCompleted — existing users skip onboarding
   if (version < 5) {
     needsMigration = true
+  }
+
+  // V5→V6: fige l'univers de chaque enfant sur son attribution legacy par index
+  // (round-robin) — comportement de tirage strictement identique.
+  if (version < 6) {
+    needsMigration = true
+    children = children.map((child, index) =>
+      child.universeId ? child : { ...child, universeId: legacyUniverseIdForIndex(index) }
+    )
   }
 
   if (needsMigration) {
@@ -220,23 +229,29 @@ export function useAppState() {
 
   // Le tirage est calculé AVANT setState (état du rendu courant) : la valeur de retour
   // est fiable, là où un calcul dans l'updater dépendait de l'évaluation eager de React.
+  // Le pool est celui de l'univers de l'enfant ; la progression d'un univers est
+  // l'intersection unlockedImages ∩ pool, ce qui rend le changement d'univers sans perte.
   const unlockReward = useCallback((childId: string): RewardImage | null => {
     const childIndex = state.children.findIndex(c => c.id === childId)
     const child = childIndex >= 0 ? state.children[childIndex] : undefined
     if (!child) return null
 
-    const childImages = getRewardImagesForChild(childIndex)
+    const childImages = getRewardImagesForChildEntry(child, childIndex)
     if (childImages.length === 0) return null
 
+    const poolIds = new Set(childImages.map(img => img.id))
     let currentUnlocked = [...child.unlockedImages]
     let currentCycles = child.completedCycles
 
-    if (currentUnlocked.length >= childImages.length) {
-      currentUnlocked = []
+    const unlockedInPool = currentUnlocked.filter(id => poolIds.has(id))
+    if (unlockedInPool.length >= childImages.length) {
+      // Cycle complet dans CET univers : on ne réinitialise que ses images
+      currentUnlocked = currentUnlocked.filter(id => !poolIds.has(id))
       currentCycles += 1
     }
 
-    const available = childImages.filter(img => !currentUnlocked.includes(img.id))
+    const unlockedSet = new Set(currentUnlocked)
+    const available = childImages.filter(img => !unlockedSet.has(img.id))
     if (available.length === 0) return null
     const picked = available[Math.floor(Math.random() * available.length)]
 
@@ -376,6 +391,15 @@ export function useAppState() {
     }))
   }, [setState])
 
+  // Univers : changer le pool de récompenses d'un enfant (sans perte — la
+  // progression de chaque univers vit dans unlockedImages, par intersection)
+  const setChildUniverse = useCallback((childId: string, universeId: string) => {
+    setState(prev => ({
+      ...prev,
+      children: prev.children.map(c => c.id === childId ? { ...c, universeId } : c),
+    }))
+  }, [setState])
+
   // Child CRUD
   const updateChild = useCallback((id: string, updates: Partial<Pick<Child, 'name' | 'photo' | 'color'>>) => {
     setState(prev => ({
@@ -442,6 +466,7 @@ export function useAppState() {
     reorderTask,
     startTimer,
     cancelTimer,
+    setChildUniverse,
     updateChild,
     addChild,
     removeChild,
