@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ActiveTimer, Child } from '../types'
+import { Button, Overlay } from './ui'
 
 interface TimerExpiredOverlayProps {
   timer: ActiveTimer
@@ -30,32 +31,20 @@ export default function TimerExpiredOverlay({ timer, children, onDismiss }: Time
   }
 
   return (
-    <div
-      className={`fixed inset-0 z-40 flex items-center justify-center transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
-      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-      onClick={handleDismiss}
-    >
-      <div
-        className="bg-white rounded-3xl p-8 text-center shadow-xl max-w-md mx-4"
-        onClick={e => e.stopPropagation()}
-      >
-        <p className="text-5xl mb-4">⏰</p>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          {timer.label}
-        </h2>
-        <p className="text-lg text-gray-500 mb-1">
-          {targetNames}
-        </p>
-        <p className="text-xl font-semibold text-amber-600 mb-6">
-          On termine maintenant !
-        </p>
-        <button
-          onClick={handleDismiss}
-          className="px-8 py-3 bg-amber-400 text-white rounded-full text-lg font-medium active:scale-95 transition-transform"
-        >
-          C'est fait !
-        </button>
-      </div>
-    </div>
+    <Overlay visible={visible} dim="light" onBackdropClick={handleDismiss} cardClassName="p-8 max-w-md w-full">
+      <p className="text-5xl mb-4" role="img" aria-label="Réveil">⏰</p>
+      <h2 className="text-2xl font-display font-semibold text-ink mb-2">
+        {timer.label}
+      </h2>
+      <p className="text-lg text-ink-soft mb-1">
+        {targetNames}
+      </p>
+      <p className="text-xl font-display font-semibold text-honey-600 mb-6">
+        On termine maintenant !
+      </p>
+      <Button variant="honey" size="lg" className="px-8 rounded-full" onClick={handleDismiss}>
+        C'est fait !
+      </Button>
+    </Overlay>
   )
 }

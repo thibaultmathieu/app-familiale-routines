@@ -4,6 +4,8 @@ import ChildAvatar from './ChildAvatar'
 import TimerDisplay from './TimerDisplay'
 import DurationPicker from './DurationPicker'
 import { useSound } from '../hooks/useSound'
+import { childTextColor, tint } from '../theme'
+import { Button, Card, Pill, ScreenHeader } from './ui'
 
 const TIMER_DURATIONS = [
   { label: '2 min', seconds: 2 * 60 },
@@ -98,22 +100,12 @@ export default function TimerSetupScreen({
 
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={handleBack}
-          className="text-gray-400 text-lg font-medium px-4 py-2"
-        >
-          ← Retour
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">⏳ Minuteur</h1>
-        <div className="w-24" />
-      </div>
+      <ScreenHeader className="mb-6" onBack={handleBack} title="⏳ Minuteur" />
 
       {/* Active timers */}
       {safeTimers.length > 0 && (
         <div className="mb-6 space-y-3">
-          <h2 className="text-sm font-bold text-amber-600 uppercase tracking-wide">Minuteurs actifs</h2>
+          <h2 className="text-sm font-bold text-honey-600 uppercase tracking-wide">Minuteurs actifs</h2>
           {safeTimers.map(timer => {
             const targetNames = timer.childIds
               .map(id => children.find(c => c.id === id)?.name)
@@ -121,23 +113,20 @@ export default function TimerSetupScreen({
               .join(' & ')
             const targetChild = children.find(c => timer.childIds.includes(c.id))
             return (
-              <div key={timer.id} className="flex items-center gap-4 p-3 bg-amber-50 rounded-xl">
+              <div key={timer.id} className="flex items-center gap-4 p-3 bg-honey-50 border border-honey-100 rounded-2xl">
                 <TimerDisplay
                   timer={timer}
-                  color={targetChild?.color ?? '#F59E0B'}
+                  color={targetChild?.color ?? '#D98E20'}
                   size="small"
                   onExpired={playTimerEnd}
                 />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-700">{timer.label}</p>
-                  <p className="text-sm text-gray-400">{targetNames} — {timer.durationSeconds / 60} min</p>
+                  <p className="font-display font-semibold text-ink">{timer.label}</p>
+                  <p className="text-sm text-ink-faint">{targetNames} — {Math.round(timer.durationSeconds / 60)} min</p>
                 </div>
-                <button
-                  onClick={() => cancelTimer(timer.id)}
-                  className="text-sm text-red-400 font-medium px-3 py-1 rounded-lg bg-red-50 active:scale-95 transition-transform"
-                >
+                <Button variant="danger-soft" size="md" onClick={() => cancelTimer(timer.id)}>
                   Annuler
-                </button>
+                </Button>
               </div>
             )
           })}
@@ -145,34 +134,23 @@ export default function TimerSetupScreen({
       )}
 
       {/* New timer form */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 space-y-5">
+      <Card className="p-6 space-y-6">
         {/* Mission */}
         <div>
-          <p className="text-sm font-semibold text-gray-400 mb-2">Mission</p>
+          <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Mission</p>
           <div className="flex flex-wrap gap-2">
             {MISSION_PRESETS.map(preset => (
-              <button
+              <Pill
                 key={preset}
+                selected={!showCustomLabel && timerLabel === preset}
                 onClick={() => handleSelectPreset(preset)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  !showCustomLabel && timerLabel === preset
-                    ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                    : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-                }`}
               >
                 {preset}
-              </button>
+              </Pill>
             ))}
-            <button
-              onClick={() => setShowCustomLabel(true)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                showCustomLabel
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-              }`}
-            >
+            <Pill selected={showCustomLabel} onClick={() => setShowCustomLabel(true)}>
               Autre…
-            </button>
+            </Pill>
           </div>
           {showCustomLabel && (
             <input
@@ -180,38 +158,27 @@ export default function TimerSetupScreen({
               placeholder="Mission personnalisée"
               value={customLabelText}
               onChange={e => setCustomLabelText(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-sm mt-2 focus:border-amber-300"
+              className="w-full border-2 border-line rounded-xl px-4 py-3 text-base mt-3 bg-white text-ink placeholder:text-ink-faint/70 focus:border-honey-300 transition-colors"
             />
           )}
         </div>
 
         {/* Duration */}
         <div>
-          <p className="text-sm font-semibold text-gray-400 mb-2">Durée</p>
+          <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Durée</p>
           <div className="flex flex-wrap gap-2">
             {TIMER_DURATIONS.map(d => (
-              <button
+              <Pill
                 key={d.seconds}
+                selected={!showCustomDuration && timerDuration === d.seconds}
                 onClick={() => handleSelectDurationPreset(d.seconds)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  !showCustomDuration && timerDuration === d.seconds
-                    ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                    : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-                }`}
               >
                 {d.label}
-              </button>
+              </Pill>
             ))}
-            <button
-              onClick={() => setShowCustomDuration(true)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                showCustomDuration
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-              }`}
-            >
+            <Pill selected={showCustomDuration} onClick={() => setShowCustomDuration(true)}>
               Personnalisé
-            </button>
+            </Pill>
           </div>
           {showCustomDuration && (
             <div className="mt-3">
@@ -222,44 +189,39 @@ export default function TimerSetupScreen({
 
         {/* Target */}
         <div>
-          <p className="text-sm font-semibold text-gray-400 mb-2">Pour</p>
-          <div className="flex gap-2">
-            {children.map(child => (
-              <button
-                key={child.id}
-                onClick={() => setTimerTarget(child.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  timerTarget === child.id
-                    ? 'border-2 text-gray-700'
-                    : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-                }`}
-                style={timerTarget === child.id ? { borderColor: child.color, backgroundColor: child.color + '20' } : {}}
-              >
-                <ChildAvatar photo={child.photo} color={child.color} size={24} />
-                {child.name}
-              </button>
-            ))}
-            <button
-              onClick={() => setTimerTarget('both')}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                timerTarget === 'both'
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-              }`}
-            >
+          <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Pour</p>
+          <div className="flex gap-2 flex-wrap">
+            {children.map(child => {
+              const selected = timerTarget === child.id
+              return (
+                <Pill
+                  key={child.id}
+                  selected={selected}
+                  onClick={() => setTimerTarget(child.id)}
+                  selectedClassName=""
+                  style={selected ? {
+                    borderColor: child.color,
+                    backgroundColor: tint(child.color, 0.12),
+                    color: childTextColor(child.color),
+                  } : undefined}
+                >
+                  <ChildAvatar photo={child.photo} color={child.color} size={28} />
+                  {child.name}
+                </Pill>
+              )
+            })}
+            <Pill selected={timerTarget === 'both'} onClick={() => setTimerTarget('both')}>
               Les deux
-            </button>
+            </Pill>
           </div>
         </div>
 
         {/* Launch button */}
-        <button
-          onClick={handleStartTimer}
-          className="w-full py-3 bg-amber-400 text-white rounded-xl font-semibold text-lg active:scale-95 transition-transform"
-        >
+        <Button variant="honey" size="xl" onClick={handleStartTimer}>
           ⏳ Lancer le minuteur
-        </button>
-      </div>
+        </Button>
+      </Card>
+      <div className="h-6 shrink-0" />
     </div>
   )
 }

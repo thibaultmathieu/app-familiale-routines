@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import DurationPicker from './DurationPicker'
+import { Button, Overlay, Pill } from './ui'
 
 const TIMER_DURATIONS = [
   { label: '2 min', seconds: 2 * 60 },
@@ -30,59 +31,37 @@ export default function TaskTimerPopup({ label, childId, onStart, onClose }: Tas
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl p-6 shadow-xl max-w-sm mx-4 w-full"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-lg font-bold text-gray-800 mb-1">⏳ Minuteur</h3>
-        <p className="text-sm text-gray-500 mb-4">{label}</p>
+    <Overlay onBackdropClick={onClose} cardClassName="p-6 max-w-sm w-full text-left">
+      <h3 className="text-lg font-display font-semibold text-ink mb-1">⏳ Minuteur</h3>
+      <p className="text-sm text-ink-faint mb-4">{label}</p>
 
-        <div className="flex flex-wrap gap-2 mb-3">
-          {TIMER_DURATIONS.map(d => (
-            <button
-              key={d.seconds}
-              onClick={() => handlePreset(d.seconds)}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-amber-50 text-amber-700 border-2 border-amber-200 active:scale-95 transition-transform"
-            >
-              {d.label}
-            </button>
-          ))}
-          <button
-            onClick={() => setShowCustom(!showCustom)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              showCustom
-                ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-            }`}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {TIMER_DURATIONS.map(d => (
+          <Pill
+            key={d.seconds}
+            selected
+            onClick={() => handlePreset(d.seconds)}
           >
-            Personnalisé
-          </button>
-        </div>
-
-        {showCustom && (
-          <div className="mb-3">
-            <DurationPicker value={customMinutes} onChange={setCustomMinutes} />
-            <button
-              onClick={handleCustomStart}
-              className="w-full mt-2 py-2 bg-amber-400 text-white rounded-xl font-semibold active:scale-95 transition-transform"
-            >
-              Lancer ({customMinutes} min)
-            </button>
-          </div>
-        )}
-
-        <button
-          onClick={onClose}
-          className="w-full py-2 text-gray-400 font-medium"
-        >
-          Annuler
-        </button>
+            {d.label}
+          </Pill>
+        ))}
+        <Pill selected={showCustom} onClick={() => setShowCustom(!showCustom)}>
+          Personnalisé
+        </Pill>
       </div>
-    </div>
+
+      {showCustom && (
+        <div className="mb-3">
+          <DurationPicker value={customMinutes} onChange={setCustomMinutes} />
+          <Button variant="honey" size="lg" className="w-full mt-2" onClick={handleCustomStart}>
+            Lancer ({customMinutes} min)
+          </Button>
+        </div>
+      )}
+
+      <Button variant="ghost" size="md" className="w-full" onClick={onClose}>
+        Annuler
+      </Button>
+    </Overlay>
   )
 }
