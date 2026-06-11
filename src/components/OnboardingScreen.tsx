@@ -3,6 +3,10 @@ import { RoutineTemplate, TaskTemplate } from '../types'
 import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
 import DayOfWeekPicker from './DayOfWeekPicker'
 import EmojiPicker from './EmojiPicker'
+import { useLocalStorage } from '../hooks/useLocalStorage'
+
+const DRAFT_CHILDREN_KEY = 'routines-onboarding-draft'
+const DRAFT_STEP_KEY = 'routines-onboarding-step'
 
 const COLOR_PALETTE = [
   '#A78BFA', '#60A5FA', '#F472B6', '#34D399',
@@ -35,13 +39,19 @@ export default function OnboardingScreen({
   addRoutine,
   completeOnboarding,
 }: OnboardingScreenProps) {
-  const [step, setStep] = useState<Step>('children')
+  // Brouillon persisté : un reload en plein onboarding ne perd ni les enfants saisis ni l'étape
+  const [step, setStep] = useLocalStorage<Step>(DRAFT_STEP_KEY, 'children')
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null)
-  const [localChildren, setLocalChildren] = useState<LocalChild[]>([
+  const [localChildren, setLocalChildren] = useLocalStorage<LocalChild[]>(DRAFT_CHILDREN_KEY, [
     { id: `child-${Date.now()}`, name: '', color: COLOR_PALETTE[0], photo: DEFAULT_AVATAR_PATH },
   ])
 
   const canProceed = localChildren.some(c => c.name.trim().length > 0)
+
+  // Un reload pendant l'édition d'une routine (id non persisté) retombe sur la liste
+  useEffect(() => {
+    if (step === 'routine-detail' && !editingRoutineId) setStep('routines')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Children step handlers ---
 
@@ -99,6 +109,8 @@ export default function OnboardingScreen({
     localChildren
       .filter(c => c.name.trim())
       .forEach(c => addChild({ id: c.id, name: c.name.trim(), photo: c.photo, color: c.color }))
+    localStorage.removeItem(DRAFT_CHILDREN_KEY)
+    localStorage.removeItem(DRAFT_STEP_KEY)
     completeOnboarding()
   }
 
