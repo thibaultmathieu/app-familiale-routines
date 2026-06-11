@@ -7,6 +7,8 @@ import TimerExpiredOverlay from './TimerExpiredOverlay'
 import ParentGate from './ParentGate'
 import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
+import { tint } from '../theme'
+import { Badge, Button, Card, Pill, TextInput } from './ui'
 
 interface HomeScreenProps {
   children: Child[]
@@ -147,7 +149,7 @@ export default function HomeScreen({
       ))}
 
       {/* 1. Titre */}
-      <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+      <h1 className="text-3xl font-display font-semibold text-ink text-center mb-6">
         Routines Familiales
       </h1>
 
@@ -161,14 +163,14 @@ export default function HomeScreen({
               .join(' & ')
             const targetChild = children.find(c => timer.childIds.includes(c.id))
             return (
-              <div key={timer.id} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-amber-100 flex flex-col items-center mb-3">
-                <p className="text-sm font-medium text-amber-600 mb-1">Mission {targetNames}</p>
+              <Card key={timer.id} className="p-6 !border-2 !border-honey-200 flex flex-col items-center mb-3">
+                <p className="text-sm font-display font-semibold text-honey-600 mb-1">Mission {targetNames}</p>
                 <TimerDisplay
                   timer={timer}
-                  color={targetChild?.color ?? '#F59E0B'}
+                  color={targetChild?.color ?? '#D98E20'}
                   size="large"
                 />
-              </div>
+              </Card>
             )
           })}
         </div>
@@ -186,19 +188,17 @@ export default function HomeScreen({
                 <button
                   key={routine.id}
                   onClick={() => handleLaunchFixed(routine.id)}
-                  className={`bg-white rounded-2xl p-6 shadow-sm border-2 relative
+                  className={`bg-white rounded-3xl p-6 shadow-card border-2 relative
                              active:scale-95 transition-transform flex flex-col items-center gap-3
-                             hover:border-gray-200 ${isCompleted ? 'border-amber-300' : hasProgress ? 'border-green-300' : 'border-gray-100'}`}
+                             ${isCompleted ? 'border-honey-300' : hasProgress ? 'border-success-300' : 'border-line hover:border-line-strong'}`}
                 >
                   {(hasProgress || isCompleted) && (
-                    <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full ${
-                      isCompleted ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'
-                    }`}>
-                      {isCompleted ? 'TERMINÉE' : 'EN COURS'}
-                    </span>
+                    <Badge tone={isCompleted ? 'honey' : 'success'} className="absolute top-3 right-3">
+                      {isCompleted ? 'Terminée' : 'En cours'}
+                    </Badge>
                   )}
-                  <span className="text-5xl">{routine.icon}</span>
-                  <span className="text-xl font-semibold text-gray-700">{routine.name}</span>
+                  <span className="text-5xl" aria-hidden="true">{routine.icon}</span>
+                  <span className="text-xl font-display font-semibold text-ink">{routine.name}</span>
                 </button>
               )
             })}
@@ -208,7 +208,7 @@ export default function HomeScreen({
         {/* On-demand routines */}
         {onDemandRoutines.length > 0 && (
           <div className="w-full">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Autres routines</p>
+            <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-2">Autres routines</p>
             <div className="grid grid-cols-2 gap-3">
               {onDemandRoutines.map(routine => {
                 const hasProgress = activeRoutines
@@ -218,12 +218,12 @@ export default function HomeScreen({
                   <button
                     key={routine.id}
                     onClick={() => handleLaunchFixed(routine.id)}
-                    className={`bg-white rounded-xl p-4 shadow-sm border-2 flex items-center gap-3
+                    className={`bg-white rounded-2xl p-4 shadow-card border-2 flex items-center gap-3
                                active:scale-95 transition-transform text-left
-                               ${hasProgress ? 'border-green-300' : 'border-gray-100'}`}
+                               ${hasProgress ? 'border-success-300' : 'border-line'}`}
                   >
-                    <span className="text-2xl">{routine.icon}</span>
-                    <span className="text-base font-medium text-gray-700">{routine.name}</span>
+                    <span className="text-2xl" aria-hidden="true">{routine.icon}</span>
+                    <span className="text-base font-semibold text-ink">{routine.name}</span>
                   </button>
                 )
               })}
@@ -232,39 +232,28 @@ export default function HomeScreen({
         )}
 
         {/* Bouton minuteur */}
-        <button
+        <Button
+          variant="honey-soft"
+          size="lg"
+          className="w-full max-w-md border-2 border-honey-200"
           onClick={() => {
             setTimerReturnScreen('home')
             setTimerPrefill(null)
             setCurrentScreen('timer')
           }}
-          className="bg-amber-50 rounded-2xl px-8 py-4 shadow-sm border-2 border-amber-200
-                     active:scale-95 transition-transform text-amber-700 text-lg font-medium
-                     hover:border-amber-300 w-full max-w-md"
         >
           ⏳ Minuteur
-        </button>
+        </Button>
 
         {/* Bouton routine personnalisée */}
         {!showCustomForm ? (
-          <button
-            onClick={() => setShowCustomForm(true)}
-            className="bg-white rounded-2xl px-8 py-4 shadow-sm border-2 border-dashed border-gray-300
-                       active:scale-95 transition-transform text-gray-500 text-lg font-medium
-                       hover:border-gray-400 w-full max-w-md"
-          >
+          <Button variant="outline" size="lg" className="w-full max-w-md" onClick={() => setShowCustomForm(true)}>
             ➕ Routine personnalisée
-          </button>
+          </Button>
         ) : (
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 w-full">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Nouvelle routine</h3>
-            <input
-              type="text"
-              placeholder="Nom de la routine"
-              value={customName}
-              onChange={e => setCustomName(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-3 focus:border-blue-300"
-            />
+          <Card className="p-6 w-full">
+            <h3 className="text-lg font-display font-semibold text-ink mb-4">Nouvelle routine</h3>
+            <TextInput value={customName} onChange={setCustomName} placeholder="Nom de la routine" className="mb-3" />
             {customTasks.map((task, i) => (
               <div key={i} className="flex gap-2 mb-2">
                 <input
@@ -276,42 +265,39 @@ export default function HomeScreen({
                     updated[i] = e.target.value
                     setCustomTasks(updated)
                   }}
-                  className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 text-lg focus:border-blue-300"
+                  className="flex-1 border-2 border-line rounded-xl px-4 py-2 text-lg bg-white text-ink placeholder:text-ink-faint/70 focus:border-honey-300 transition-colors"
                 />
                 {customTasks.length > 1 && (
                   <button
                     onClick={() => setCustomTasks(customTasks.filter((_, j) => j !== i))}
-                    className="text-gray-400 px-2 text-xl"
+                    className="w-11 text-ink-faint hover:text-danger-400 text-xl active:scale-90 transition-transform"
+                    aria-label={`Supprimer la tâche ${i + 1}`}
                   >
                     ✕
                   </button>
                 )}
               </div>
             ))}
-            <button
-              onClick={() => setCustomTasks([...customTasks, ''])}
-              className="text-blue-500 text-sm font-medium mb-4"
-            >
+            <Button variant="soft" size="md" className="mb-4" onClick={() => setCustomTasks([...customTasks, ''])}>
               + Ajouter une tâche
-            </button>
+            </Button>
 
             {/* Sélection de la cible */}
             <div className="flex gap-2 mb-4 flex-wrap">
-              <button
+              <Pill
+                selected={customTargetIds.length === children.length}
+                selectedClassName="bg-ink text-warm-50 border-ink"
                 onClick={() => setCustomTargetIds(children.map(c => c.id))}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  customTargetIds.length === children.length
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-500'
-                }`}
               >
                 Tous
-              </button>
+              </Pill>
               {children.map(child => {
                 const isSelected = customTargetIds.includes(child.id)
                 return (
-                  <button
+                  <Pill
                     key={child.id}
+                    selected={isSelected && customTargetIds.length < children.length}
+                    selectedClassName="bg-ink text-warm-50 border-ink"
                     onClick={() => {
                       if (isSelected) {
                         const next = customTargetIds.filter(id => id !== child.id)
@@ -320,60 +306,51 @@ export default function HomeScreen({
                         setCustomTargetIds([...customTargetIds, child.id])
                       }
                     }}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      isSelected && customTargetIds.length < children.length
-                        ? 'bg-blue-100 text-blue-700'
-                        : !isSelected
-                          ? 'bg-gray-100 text-gray-500'
-                          : 'bg-gray-100 text-gray-500'
-                    }`}
                   >
                     {child.name}
-                  </button>
+                  </Pill>
                 )
               })}
             </div>
 
             <div className="flex gap-3">
-              <button
-                onClick={handleLaunchCustom}
-                className="flex-1 bg-green-400 text-white rounded-xl py-3 text-lg font-medium active:scale-95 transition-transform"
-              >
+              <Button variant="primary" size="lg" className="flex-1" onClick={handleLaunchCustom}>
                 Lancer
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="soft"
+                size="lg"
                 onClick={() => { setShowCustomForm(false); setCustomName(''); setCustomTasks(['']) }}
-                className="px-6 bg-gray-100 text-gray-500 rounded-xl py-3 text-lg font-medium"
               >
                 Annuler
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
       </div>
 
       {/* 4. Résumé routines en cours — grouped by templateId */}
       {activeTemplateIds.length > 0 && (
         <div className="mt-6 space-y-4 max-w-3xl mx-auto w-full">
-          <span className="text-sm font-bold text-green-600 uppercase tracking-wide">Routines</span>
+          <span className="text-sm font-bold text-success-600 uppercase tracking-wide">Routines</span>
           {activeTemplateIds.map(templateId => {
             const routinesForTemplate = activeRoutines.filter(ar => ar.templateId === templateId)
             const template = routineTemplates.find(r => r.id === templateId)
             if (!template) return null
             const allCompleted = routinesForTemplate.every(ar => ar.completedAt != null)
             return (
-              <div key={templateId} className={`bg-white rounded-2xl p-5 shadow-sm border-2 ${allCompleted ? 'border-amber-200' : 'border-green-100'}`}>
+              <div key={templateId} className={`bg-white rounded-3xl p-5 shadow-card border-2 ${allCompleted ? 'border-honey-200' : 'border-success-200'}`}>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-base font-bold text-gray-800">
+                  <span className="text-base font-display font-semibold text-ink">
                     {template.icon} {template.name}
-                    {allCompleted && <span className="ml-2 text-sm text-amber-600">✓ Terminée</span>}
+                    {allCompleted && <span className="ml-2 text-sm text-honey-600">✓ Terminée</span>}
                   </span>
                   <button
                     onClick={() => {
                       setActiveViewTemplateId(templateId)
                       setCurrentScreen('routine')
                     }}
-                    className="text-blue-500 text-sm font-medium"
+                    className="min-h-11 px-3 text-success-600 text-sm font-semibold active:scale-95 transition-transform"
                   >
                     Voir la routine →
                   </button>
@@ -387,7 +364,7 @@ export default function HomeScreen({
                     return (
                       <div key={child.id} className="flex items-center gap-3">
                         <ChildAvatar photo={child.photo} color={child.color} size={32} />
-                        <span className="text-sm font-medium text-gray-700">{child.name}</span>
+                        <span className="text-sm font-semibold text-ink">{child.name}</span>
                         <div className="flex-1">
                           <ProgressBar done={done} total={total} color={child.color} />
                         </div>
@@ -403,21 +380,21 @@ export default function HomeScreen({
 
       {/* 5. Collections */}
       <div className="mt-6 max-w-3xl mx-auto w-full">
-        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wide mb-3">Collections</h2>
+        <h2 className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Collections</h2>
         <div className="flex gap-4">
           {children.map(child => (
             <button
               key={child.id}
               onClick={() => openGallery(child.id)}
-              className="flex-1 flex items-center gap-3 p-4 rounded-2xl active:scale-95 transition-transform"
-              style={{ backgroundColor: child.color + '15' }}
+              className="flex-1 flex items-center gap-3 p-4 rounded-3xl active:scale-95 transition-transform"
+              style={{ backgroundColor: tint(child.color, 0.10) }}
             >
               <div className="border-2 rounded-full" style={{ borderColor: child.color }}>
                 <ChildAvatar photo={child.photo} color={child.color} size={48} />
               </div>
               <div className="text-left">
-                <p className="font-medium text-gray-700">{child.name}</p>
-                <p className="text-sm text-gray-400">{child.unlockedImages.length} images</p>
+                <p className="font-display font-semibold text-ink">{child.name}</p>
+                <p className="text-sm text-ink-faint">{child.unlockedImages.length} images</p>
               </div>
             </button>
           ))}
@@ -425,20 +402,20 @@ export default function HomeScreen({
       </div>
 
       {/* Spacer to make room for gear button */}
-      <div className="h-16" />
+      <div className="h-16 shrink-0" />
 
       {/* Bouton ⚙️ — appui long */}
       <div className="fixed bottom-4 right-4 flex flex-col items-center gap-1">
-        <span className="text-[10px] font-medium text-gray-300 uppercase tracking-wide">Parents</span>
-        <span className="text-[8px] text-gray-400/60 -mt-1">appui long</span>
+        <span className="text-[10px] font-bold text-ink-faint/60 uppercase tracking-wide">Parents</span>
+        <span className="text-[8px] text-ink-faint/50 -mt-1">appui long</span>
         <button
           onMouseDown={handleGearDown}
           onMouseUp={handleGearUp}
           onMouseLeave={handleGearUp}
           onTouchStart={handleGearDown}
           onTouchEnd={handleGearUp}
-          className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl"
-          aria-label="Espace parent"
+          className="w-12 h-12 rounded-full bg-warm-200 flex items-center justify-center text-ink-faint text-xl"
+          aria-label="Espace parents (appui long)"
         >
           ⚙️
         </button>
@@ -447,7 +424,7 @@ export default function HomeScreen({
       {/* First-time gear button hint overlay */}
       {showGearHint && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-end"
+          className="fixed inset-0 z-modal flex items-end justify-end"
           onClick={() => {
             localStorage.setItem('gearHintSeen', '1')
             setShowGearHint(false)
@@ -457,9 +434,9 @@ export default function HomeScreen({
           <div className="absolute inset-0 bg-black/60" />
 
           {/* Tooltip bubble pointing to gear button */}
-          <div className="absolute bottom-24 right-2 bg-white rounded-2xl px-5 py-4 shadow-xl max-w-[240px] z-10 animate-bounce">
-            <p className="text-sm font-semibold text-gray-800 mb-1">Espace Parents</p>
-            <p className="text-xs text-gray-500">
+          <div className="absolute bottom-24 right-2 bg-white rounded-2xl px-5 py-4 shadow-overlay max-w-[240px] z-10 animate-bounce">
+            <p className="text-sm font-display font-semibold text-ink mb-1">Espace parents</p>
+            <p className="text-xs text-ink-soft">
               Maintenez appuyé 2 secondes sur le bouton ⚙️ pour accéder aux réglages.
             </p>
             <div className="absolute -bottom-2 right-8 w-4 h-4 bg-white rotate-45" />
@@ -467,9 +444,9 @@ export default function HomeScreen({
 
           {/* Highlight ring around gear button area */}
           <div className="relative z-10 mb-4 mr-4 flex flex-col items-center gap-1">
-            <span className="text-[10px] font-medium text-gray-300 uppercase tracking-wide">Parents</span>
-            <span className="text-[8px] text-gray-400/60 -mt-1">appui long</span>
-            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl ring-4 ring-white/80 shadow-lg shadow-white/50">
+            <span className="text-[10px] font-bold text-warm-200 uppercase tracking-wide">Parents</span>
+            <span className="text-[8px] text-warm-200/80 -mt-1">appui long</span>
+            <div className="w-12 h-12 rounded-full bg-warm-200 flex items-center justify-center text-ink-faint text-xl ring-4 ring-white/80 shadow-lg shadow-white/50">
               ⚙️
             </div>
           </div>
