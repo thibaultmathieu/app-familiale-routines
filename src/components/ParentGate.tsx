@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Overlay } from './ui'
 
 interface ParentGateProps {
   onSuccess: () => void
@@ -40,75 +41,66 @@ export default function ParentGate({ onSuccess, onCancel }: ParentGateProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-      onClick={onCancel}
-    >
+    <Overlay onBackdropClick={onCancel} cardClassName="p-8 max-w-sm w-full">
+      <h2 className="text-xl font-display font-semibold text-ink mb-1">Espace parents</h2>
+      <p className="text-sm text-ink-faint mb-4">
+        {error ? 'Mauvaise réponse, nouvelle question :' : 'Réponds pour entrer :'}
+      </p>
+
+      <p className="text-3xl font-display font-bold text-ink mb-3" aria-live="polite">
+        {challenge.a} × {challenge.b} = ?
+      </p>
+
       <div
-        className="bg-white rounded-3xl p-8 text-center shadow-xl w-full max-w-sm mx-4"
-        onClick={e => e.stopPropagation()}
+        className={`h-14 mb-4 rounded-xl border-2 flex items-center justify-center text-2xl font-bold tracking-widest tabular-nums ${
+          error ? 'border-danger-300 bg-danger-50 text-danger-500' : 'border-line bg-warm-50 text-ink'
+        }`}
+        aria-label="Réponse saisie"
       >
-        <h2 className="text-xl font-bold text-gray-800 mb-1">Espace parents</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          {error ? 'Mauvaise réponse, nouvelle question :' : 'Réponds pour entrer :'}
-        </p>
+        {input || '···'}
+      </div>
 
-        <p className="text-3xl font-bold text-gray-800 mb-3" aria-live="polite">
-          {challenge.a} × {challenge.b} = ?
-        </p>
-
-        <div
-          className={`h-14 mb-4 rounded-xl border-2 flex items-center justify-center text-2xl font-bold tracking-widest ${
-            error ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200 bg-gray-50 text-gray-800'
-          }`}
-          aria-label="Réponse saisie"
-        >
-          {input || '···'}
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {KEYS.map(key => {
-            if (key === 'erase') {
-              return (
-                <button
-                  key={key}
-                  onClick={erase}
-                  className="h-14 rounded-xl bg-gray-100 text-gray-500 text-xl font-bold active:scale-95 transition-transform"
-                  aria-label="Effacer"
-                >
-                  ⌫
-                </button>
-              )
-            }
-            if (key === 'ok') {
-              return (
-                <button
-                  key={key}
-                  onClick={validate}
-                  className="h-14 rounded-xl bg-green-500 text-white text-xl font-bold active:scale-95 transition-transform"
-                  aria-label="Valider"
-                >
-                  OK
-                </button>
-              )
-            }
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {KEYS.map(key => {
+          if (key === 'erase') {
             return (
               <button
                 key={key}
-                onClick={() => pressDigit(key)}
-                className="h-14 rounded-xl bg-gray-100 text-gray-800 text-xl font-bold active:scale-95 transition-transform"
+                onClick={erase}
+                className="h-14 rounded-xl bg-warm-100 text-ink-soft text-xl font-bold active:scale-95 transition-transform"
+                aria-label="Effacer"
               >
-                {key}
+                ⌫
               </button>
             )
-          })}
-        </div>
-
-        <button onClick={onCancel} className="w-full py-3 text-gray-400 font-medium">
-          Annuler
-        </button>
+          }
+          if (key === 'ok') {
+            return (
+              <button
+                key={key}
+                onClick={validate}
+                className="h-14 rounded-xl bg-success-500 text-white text-xl font-display font-bold active:scale-95 transition-transform"
+                aria-label="Valider"
+              >
+                OK
+              </button>
+            )
+          }
+          return (
+            <button
+              key={key}
+              onClick={() => pressDigit(key)}
+              className="h-14 rounded-xl bg-warm-100 text-ink text-xl font-bold tabular-nums active:scale-95 transition-transform"
+            >
+              {key}
+            </button>
+          )
+        })}
       </div>
-    </div>
+
+      <button onClick={onCancel} className="w-full min-h-12 py-3 text-ink-faint font-semibold active:scale-95 transition-transform">
+        Annuler
+      </button>
+    </Overlay>
   )
 }

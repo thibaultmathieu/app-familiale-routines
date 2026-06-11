@@ -4,14 +4,11 @@ import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
 import DayOfWeekPicker from './DayOfWeekPicker'
 import EmojiPicker from './EmojiPicker'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { COLOR_PALETTE } from '../theme'
+import { Button, Card, FieldLabel, IconButton, TextInput } from './ui'
 
 const DRAFT_CHILDREN_KEY = 'routines-onboarding-draft'
 const DRAFT_STEP_KEY = 'routines-onboarding-step'
-
-const COLOR_PALETTE = [
-  '#A78BFA', '#60A5FA', '#F472B6', '#34D399',
-  '#FBBF24', '#FB923C', '#F87171', '#A3E635',
-]
 
 const DAY_LABELS = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
 
@@ -118,8 +115,8 @@ export default function OnboardingScreen({
 
   const StepDots = () => (
     <div className="flex justify-center gap-2 mb-6">
-      <div className={`w-3 h-3 rounded-full transition-colors ${step === 'children' ? 'bg-blue-500' : 'bg-gray-200'}`} />
-      <div className={`w-3 h-3 rounded-full transition-colors ${step !== 'children' ? 'bg-blue-500' : 'bg-gray-200'}`} />
+      <div className={`w-3 h-3 rounded-full transition-colors ${step === 'children' ? 'bg-honey-400' : 'bg-warm-200'}`} />
+      <div className={`w-3 h-3 rounded-full transition-colors ${step !== 'children' ? 'bg-honey-400' : 'bg-warm-200'}`} />
     </div>
   )
 
@@ -145,13 +142,13 @@ export default function OnboardingScreen({
 
         <button
           onClick={() => setStep('children')}
-          className="text-gray-400 text-sm font-medium mb-4 self-start"
+          className="min-h-12 px-4 py-2 -ml-4 rounded-2xl text-ink-faint text-base font-display font-medium self-start mb-2 active:scale-95 transition-transform"
         >
           ← Retour
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Vos routines</h1>
-        <p className="text-gray-400 text-sm mb-6">
+        <h1 className="text-2xl font-display font-semibold text-ink mb-2">Vos routines</h1>
+        <p className="text-ink-faint text-sm mb-6">
           Nous avons préparé 3 routines. Modifiez-les ou ajoutez les vôtres.
         </p>
 
@@ -159,56 +156,54 @@ export default function OnboardingScreen({
           {routineTemplates.map(routine => {
             const days = routine.scheduledDays ?? []
             return (
-              <button
+              <Card
                 key={routine.id}
                 onClick={() => { setEditingRoutineId(routine.id); setStep('routine-detail') }}
-                className="w-full bg-white rounded-2xl p-5 shadow-sm border-2 border-gray-100 flex items-center gap-4 text-left active:scale-[0.98] transition-transform"
+                className="w-full p-5 flex items-center gap-4"
               >
-                <span className="text-3xl">{routine.icon}</span>
+                <span className="text-3xl" aria-hidden="true">{routine.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <span className="font-semibold text-gray-800 truncate block">{routine.name}</span>
-                  <div className="flex items-center gap-3 mt-1">
+                  <span className="font-display font-semibold text-ink truncate block">{routine.name}</span>
+                  <div className="flex items-center gap-3 mt-1.5">
                     <div className="flex gap-1">
                       {[1, 2, 3, 4, 5, 6, 0].map(d => (
                         <span
                           key={d}
-                          className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
-                            days.includes(d) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-300'
+                          className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                            days.includes(d) ? 'bg-ink text-warm-50' : 'bg-warm-100 text-ink-faint/60'
                           }`}
                         >
                           {DAY_LABELS[d]}
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-ink-faint">
                       {routine.tasks.length} tâche{routine.tasks.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
-                <span className="text-gray-300 text-xl">›</span>
-              </button>
+                <span className="text-ink-faint/60 text-xl" aria-hidden="true">›</span>
+              </Card>
             )
           })}
 
-          <button
+          <Button
+            variant="outline"
+            size="xl"
             onClick={() => {
               const id = addRoutine({ name: 'Nouvelle routine', icon: '📋', scheduledDays: [], tasks: [] })
               setEditingRoutineId(id)
               setStep('routine-detail')
             }}
-            className="w-full bg-white rounded-2xl px-6 py-4 shadow-sm border-2 border-dashed border-gray-300 text-gray-500 text-lg font-medium active:scale-95 transition-transform"
           >
             + Ajouter une routine
-          </button>
+          </Button>
         </div>
 
-        <button
-          onClick={handleComplete}
-          className="w-full py-4 bg-green-500 text-white rounded-xl text-lg font-semibold active:scale-95 transition-transform"
-        >
+        <Button variant="primary" size="xl" onClick={handleComplete}>
           C'est parti !
-        </button>
-        <div className="h-6" />
+        </Button>
+        <div className="h-6 shrink-0" />
       </div>
     )
   }
@@ -219,8 +214,8 @@ export default function OnboardingScreen({
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
       <StepDots />
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">Qui sont vos enfants ?</h1>
-      <p className="text-gray-400 text-sm mb-6">Ajoutez au moins un enfant pour commencer</p>
+      <h1 className="text-2xl font-display font-semibold text-ink mb-2">Qui sont vos enfants ?</h1>
+      <p className="text-ink-faint text-sm mb-6">Ajoutez au moins un enfant pour commencer</p>
 
       <div className="space-y-4 flex-1">
         {localChildren.map((child, index) => (
@@ -235,22 +230,15 @@ export default function OnboardingScreen({
           />
         ))}
 
-        <button
-          onClick={addLocalChild}
-          className="w-full py-4 bg-white rounded-2xl border-2 border-dashed border-gray-300 text-gray-500 text-lg font-medium active:scale-95 transition-transform hover:border-gray-400"
-        >
+        <Button variant="outline" size="xl" onClick={addLocalChild}>
           + Ajouter un enfant
-        </button>
+        </Button>
       </div>
 
-      <button
-        onClick={() => setStep('routines')}
-        disabled={!canProceed}
-        className="w-full py-4 bg-green-500 text-white rounded-xl text-lg font-semibold active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed mt-6"
-      >
+      <Button variant="primary" size="xl" className="mt-6" disabled={!canProceed} onClick={() => setStep('routines')}>
         Suivant
-      </button>
-      <div className="h-6" />
+      </Button>
+      <div className="h-6 shrink-0" />
     </div>
   )
 }
@@ -278,28 +266,25 @@ function ChildCard({
     if (index === 0 && !child.name) {
       nameRef.current?.focus()
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border-2 border-gray-100 space-y-4">
+    <Card className="p-5 space-y-4">
       {/* Remove button */}
       {totalChildren > 1 && (
         <div className="flex justify-end -mt-2 -mr-2">
-          <button
-            onClick={() => onRemove(child.id)}
-            className="text-gray-300 hover:text-red-400 text-lg px-2"
-          >
+          <IconButton size={44} ariaLabel="Retirer cet enfant" onClick={() => onRemove(child.id)} className="text-ink-faint hover:text-danger-400 hover:bg-danger-50 text-lg">
             ✕
-          </button>
+          </IconButton>
         </div>
       )}
 
       {/* Avatar + Photo */}
       <div className="flex items-center gap-4">
-        <div className="border-3 rounded-full" style={{ borderColor: child.color }}>
+        <div className="border-[3px] rounded-full" style={{ borderColor: child.color }}>
           <ChildAvatar photo={child.photo} color={child.color} size={64} />
         </div>
-        <label className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium active:scale-95 transition-transform hover:bg-gray-200 cursor-pointer">
+        <label className="min-h-12 px-4 py-2 bg-warm-100 text-ink-soft rounded-xl text-sm font-semibold inline-flex items-center active:scale-95 transition-transform hover:bg-warm-200 cursor-pointer">
           📷 Photo
           <input
             type="file"
@@ -311,29 +296,29 @@ function ChildCard({
       </div>
 
       {/* Name */}
-      <input
-        ref={nameRef}
-        type="text"
+      <TextInput
+        inputRef={nameRef}
         value={child.name}
-        onChange={e => onUpdate(child.id, { name: e.target.value })}
+        onChange={v => onUpdate(child.id, { name: v })}
         placeholder="Prénom de l'enfant"
-        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:border-blue-300"
       />
 
       {/* Color picker */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {COLOR_PALETTE.map(color => (
           <button
             key={color}
             onClick={() => onUpdate(child.id, { color })}
-            className={`w-10 h-10 rounded-full transition-all ${
-              child.color === color ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''
+            aria-label={`Couleur ${color}`}
+            aria-pressed={child.color === color}
+            className={`w-12 h-12 rounded-full transition-all active:scale-90 ${
+              child.color === color ? 'ring-[3px] ring-offset-2 ring-ink-faint scale-110' : ''
             }`}
             style={{ backgroundColor: color }}
           />
         ))}
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -403,7 +388,10 @@ function RoutineDetailStep({
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
-        <button onClick={onBack} className="text-gray-400 text-lg font-medium px-4 py-2">
+        <button
+          onClick={onBack}
+          className="min-h-12 px-4 py-2 -ml-4 rounded-2xl text-ink-faint text-lg font-display font-medium active:scale-95 transition-transform"
+        >
           ← Retour
         </button>
         <div className="w-24" />
@@ -411,86 +399,64 @@ function RoutineDetailStep({
 
       <div>
         {/* Name */}
-        <label className="block text-sm font-semibold text-gray-500 mb-2">Nom</label>
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg mb-5 focus:border-blue-300"
-          placeholder="Nom de la routine"
-        />
+        <FieldLabel>Nom</FieldLabel>
+        <TextInput value={name} onChange={setName} placeholder="Nom de la routine" className="mb-5" />
 
         {/* Icon */}
-        <label className="block text-sm font-semibold text-gray-500 mb-2">Icône</label>
+        <FieldLabel>Icône</FieldLabel>
         <button
           type="button"
           onClick={() => setShowIconPicker(!showIconPicker)}
-          className="text-4xl mb-2 p-2 rounded-xl hover:bg-gray-100 transition-colors"
+          aria-label="Changer l'icône de la routine"
+          className="text-4xl mb-2 w-14 h-14 flex items-center justify-center rounded-xl bg-warm-50 border-2 border-line hover:bg-warm-100 transition-colors active:scale-95"
         >
           {icon}
         </button>
         {showIconPicker && (
-          <div className="mb-5 p-3 bg-gray-50 rounded-xl">
+          <div className="mb-5 p-3 bg-warm-50 border border-line rounded-2xl">
             <EmojiPicker value={icon} onChange={e => { setIcon(e); setShowIconPicker(false) }} />
           </div>
         )}
 
         {/* Days */}
-        <label className="block text-sm font-semibold text-gray-500 mb-2 mt-3">
-          Jours planifiés
-          <span className="font-normal text-gray-400 ml-2">(aucun = à la demande)</span>
-        </label>
+        <FieldLabel className="mt-3" hint="(aucun = à la demande)">Jours planifiés</FieldLabel>
         <div className="mb-5">
           <DayOfWeekPicker value={days} onChange={setDays} />
         </div>
 
         {/* Tasks */}
-        <label className="block text-sm font-semibold text-gray-500 mb-3">Tâches</label>
+        <FieldLabel className="mb-3">Tâches</FieldLabel>
         <div className="space-y-2 mb-4">
           {tasks.map((task, i) => (
-            <div key={task.id} className="flex items-center gap-2 bg-white rounded-xl p-3 border-2 border-gray-100">
+            <div key={task.id} className="flex items-center gap-1.5 bg-white rounded-xl p-2.5 border-2 border-line">
               <button
                 type="button"
                 onClick={() => setTaskEmojiIndex(taskEmojiIndex === i ? null : i)}
-                className="text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100"
+                aria-label="Changer l'icône de la tâche"
+                className="text-xl w-11 h-11 flex items-center justify-center rounded-lg hover:bg-warm-100 active:scale-90 transition-transform shrink-0"
               >
                 {task.icon}
               </button>
-              <input
-                type="text"
+              <TextInput
+                variant="bare"
                 value={task.label}
-                onChange={e => updateTask(i, { label: e.target.value })}
+                onChange={v => updateTask(i, { label: v })}
                 placeholder="Nom de la tâche"
-                className="flex-1 min-w-0 border-0 text-base bg-transparent"
               />
-              <button
-                type="button"
-                onClick={() => moveTask(i, 'up')}
-                disabled={i === 0}
-                className="text-gray-400 disabled:opacity-20 px-1"
-              >
+              <IconButton size={44} ariaLabel="Monter la tâche" disabled={i === 0} onClick={() => moveTask(i, 'up')} className="text-ink-faint hover:bg-warm-100">
                 ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => moveTask(i, 'down')}
-                disabled={i === tasks.length - 1}
-                className="text-gray-400 disabled:opacity-20 px-1"
-              >
+              </IconButton>
+              <IconButton size={44} ariaLabel="Descendre la tâche" disabled={i === tasks.length - 1} onClick={() => moveTask(i, 'down')} className="text-ink-faint hover:bg-warm-100">
                 ↓
-              </button>
-              <button
-                type="button"
-                onClick={() => removeTask(i)}
-                className="text-gray-400 hover:text-red-400 px-1"
-              >
+              </IconButton>
+              <IconButton size={44} ariaLabel="Supprimer la tâche" onClick={() => removeTask(i)} className="text-ink-faint hover:text-danger-400 hover:bg-danger-50">
                 ✕
-              </button>
+              </IconButton>
             </div>
           ))}
 
           {taskEmojiIndex !== null && (
-            <div className="p-3 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-warm-50 border border-line rounded-2xl">
               <EmojiPicker
                 value={tasks[taskEmojiIndex]?.icon ?? '📋'}
                 onChange={e => {
@@ -502,22 +468,17 @@ function RoutineDetailStep({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={addTask}
-          className="text-blue-500 text-sm font-medium mb-6"
-        >
+        <Button variant="soft" size="md" onClick={addTask} className="mb-6">
           + Ajouter une tâche
-        </button>
+        </Button>
       </div>
 
-      <button
-        onClick={handleSave}
-        className="w-full py-4 bg-green-500 text-white rounded-xl text-lg font-semibold active:scale-95 transition-transform mt-auto"
-      >
-        Enregistrer
-      </button>
-      <div className="h-6" />
+      <div className="mt-auto">
+        <Button variant="primary" size="xl" onClick={handleSave}>
+          Enregistrer
+        </Button>
+      </div>
+      <div className="h-6 shrink-0" />
     </div>
   )
 }
