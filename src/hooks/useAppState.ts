@@ -5,7 +5,7 @@ import { defaultRoutines } from '../data/defaultRoutines'
 import { getRewardImagesForChild } from '../data/rewardImages'
 import { assetUrl } from '../utils/assetUrl'
 
-interface PersistedState {
+export interface PersistedState {
   children: Child[]
   routineTemplates: RoutineTemplate[]
   activeRoutines: ActiveRoutine[]
@@ -14,7 +14,7 @@ interface PersistedState {
   onboardingCompleted?: boolean
 }
 
-const CURRENT_SCHEMA_VERSION = 5
+export const CURRENT_SCHEMA_VERSION = 5
 
 const initialState: PersistedState = {
   children: [],
@@ -25,7 +25,7 @@ const initialState: PersistedState = {
   onboardingCompleted: false,
 }
 
-function migrateState(state: PersistedState): PersistedState {
+export function migrateState(state: PersistedState): PersistedState {
   let needsMigration = false
   let { children, activeTimers, routineTemplates } = state
   const version = state.schemaVersion ?? 1
