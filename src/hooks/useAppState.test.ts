@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
-import { migrateState, useAppState, CURRENT_SCHEMA_VERSION, PersistedState } from './useAppState'
+import {
+  migrateState,
+  useAppState,
+  CURRENT_SCHEMA_VERSION,
+  MAX_ROUTINE_TEMPLATES,
+  MAX_ACTIVE_TIMERS,
+  PersistedState,
+} from './useAppState'
 import { RoutineTemplate } from '../types'
 
 // Petits pools contrôlés pour tester le cycle de récompenses (3 images par pool)
@@ -283,6 +290,48 @@ describe('useAppState — routines', () => {
     expect(result.current.activeRoutines).toHaveLength(0)
   })
 
+  it('les routines éphémères sont purgées par resetAllRoutines, pas les pérennes', () => {
+    const { result } = setupHook({})
+    let ephemeralId = ''
+    act(() => {
+      ephemeralId = result.current.addRoutine({ name: 'À la volée', icon: '📋', ephemeral: true, tasks: [] })
+    })
+    act(() => result.current.resetAllRoutines())
+
+    expect(result.current.routineTemplates.find(r => r.id === ephemeralId)).toBeUndefined()
+    expect(result.current.routineTemplates.find(r => r.id === 'morning')).toBeDefined()
+  })
+
+  it('une routine éphémère éditée devient pérenne', () => {
+    const { result } = setupHook({})
+    let ephemeralId = ''
+    act(() => {
+      ephemeralId = result.current.addRoutine({ name: 'À la volée', icon: '📋', ephemeral: true, tasks: [] })
+    })
+    act(() => result.current.updateRoutine(ephemeralId, { name: 'Gardée' }))
+    act(() => result.current.resetAllRoutines())
+
+    expect(result.current.routineTemplates.find(r => r.id === ephemeralId)?.name).toBe('Gardée')
+  })
+
+  it('plafond de templates : addRoutine au-delà de la limite est ignoré', () => {
+    const templates = Array.from({ length: MAX_ROUTINE_TEMPLATES }, (_, i) => ({
+      ...twoTaskTemplate,
+      id: `r-${i}`,
+    }))
+    const { result } = setupHook({ routineTemplates: templates })
+    act(() => { result.current.addRoutine({ name: 'Trop', icon: '📋', tasks: [] }) })
+    expect(result.current.routineTemplates).toHaveLength(MAX_ROUTINE_TEMPLATES)
+  })
+
+  it('plafond de minuteurs : startTimer au-delà de la limite est ignoré', () => {
+    const { result } = setupHook({})
+    for (let i = 0; i < MAX_ACTIVE_TIMERS + 2; i++) {
+      act(() => result.current.startTimer(['c1'], 60, `T${i}`))
+    }
+    expect(result.current.activeTimers).toHaveLength(MAX_ACTIVE_TIMERS)
+  })
+
   it('removeChild supprime aussi ses routines actives', () => {
     const { result } = setupHook({})
     act(() => result.current.launchRoutine('morning', ['c1', 'c2']))
@@ -327,6 +376,16 @@ describe('useAppState — récompenses', () => {
     const child = result.current.children.find(c => c.id === 'c1')!
     expect(child.unlockedImages).toHaveLength(1)
     expect(child.completedCycles).toBe(1)
+  })
+
+  it('unlockReward retourne l’image effectivement débloquée', () => {
+    const { result } = setupHook({})
+    let returned: { id: string } | null = null
+    act(() => { returned = result.current.unlockReward('c1') })
+
+    const child = result.current.children.find(c => c.id === 'c1')!
+    expect(returned).not.toBeNull()
+    expect(child.unlockedImages).toEqual([returned!.id])
   })
 
   it('removeReward retire une image (sanction)', () => {

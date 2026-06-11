@@ -16,6 +16,10 @@ export interface PersistedState {
 
 export const CURRENT_SCHEMA_VERSION = 5
 
+// Plafonds anti-accumulation (enfants qui spamment, routines à la volée jamais nettoyées)
+export const MAX_ROUTINE_TEMPLATES = 30
+export const MAX_ACTIVE_TIMERS = 6
+
 const initialState: PersistedState = {
   children: [],
   routineTemplates: defaultRoutines,
@@ -199,6 +203,8 @@ export function useAppState() {
     setState(prev => ({
       ...prev,
       activeRoutines: [],
+      // Fin de journée : on purge les routines créées à la volée pour éviter l'accumulation
+      routineTemplates: prev.routineTemplates.filter(r => !r.ephemeral),
     }))
   }, [setState])
 
@@ -206,49 +212,48 @@ export function useAppState() {
     setState(prev => ({
       ...prev,
       activeRoutines: [],
+      routineTemplates: prev.routineTemplates.filter(r => !r.ephemeral),
     }))
     setActiveViewTemplateId(null)
     setCurrentScreen('home')
   }, [setState, setCurrentScreen, setActiveViewTemplateId])
 
+  // Le tirage est calculé AVANT setState (état du rendu courant) : la valeur de retour
+  // est fiable, là où un calcul dans l'updater dépendait de l'évaluation eager de React.
   const unlockReward = useCallback((childId: string): RewardImage | null => {
-    let unlockedImage: RewardImage | null = null
-    setState(prev => {
-      const childIndex = prev.children.findIndex(c => c.id === childId)
-      const child = childIndex >= 0 ? prev.children[childIndex] : undefined
-      if (!child) return prev
+    const childIndex = state.children.findIndex(c => c.id === childId)
+    const child = childIndex >= 0 ? state.children[childIndex] : undefined
+    if (!child) return null
 
-      const childImages = getRewardImagesForChild(childIndex)
-      if (childImages.length === 0) return prev
+    const childImages = getRewardImagesForChild(childIndex)
+    if (childImages.length === 0) return null
 
-      let currentUnlocked = [...child.unlockedImages]
-      let currentCycles = child.completedCycles
+    let currentUnlocked = [...child.unlockedImages]
+    let currentCycles = child.completedCycles
 
-      if (currentUnlocked.length >= childImages.length) {
-        currentUnlocked = []
-        currentCycles += 1
-      }
+    if (currentUnlocked.length >= childImages.length) {
+      currentUnlocked = []
+      currentCycles += 1
+    }
 
-      const available = childImages.filter(img => !currentUnlocked.includes(img.id))
-      if (available.length === 0) return prev
-      const picked = available[Math.floor(Math.random() * available.length)]
-      unlockedImage = picked
+    const available = childImages.filter(img => !currentUnlocked.includes(img.id))
+    if (available.length === 0) return null
+    const picked = available[Math.floor(Math.random() * available.length)]
 
-      return {
-        ...prev,
-        children: prev.children.map(c =>
-          c.id === childId
-            ? {
-                ...c,
-                unlockedImages: [...currentUnlocked, picked.id],
-                completedCycles: currentCycles,
-              }
-            : c
-        ),
-      }
-    })
-    return unlockedImage
-  }, [setState])
+    setState(prev => ({
+      ...prev,
+      children: prev.children.map(c =>
+        c.id === childId
+          ? {
+              ...c,
+              unlockedImages: [...currentUnlocked, picked.id],
+              completedCycles: currentCycles,
+            }
+          : c
+      ),
+    }))
+    return picked
+  }, [state, setState])
 
   const removeReward = useCallback((childId: string, imageId: string) => {
     setState(prev => ({
@@ -263,17 +268,21 @@ export function useAppState() {
 
   const addRoutine = useCallback((template: Omit<RoutineTemplate, 'id'>): string => {
     const id = `routine-${Date.now()}`
-    setState(prev => ({
-      ...prev,
-      routineTemplates: [...prev.routineTemplates, { ...template, id }],
-    }))
+    setState(prev => {
+      if (prev.routineTemplates.length >= MAX_ROUTINE_TEMPLATES) return prev
+      return {
+        ...prev,
+        routineTemplates: [...prev.routineTemplates, { ...template, id }],
+      }
+    })
     return id
   }, [setState])
 
   const updateRoutine = useCallback((id: string, updates: Partial<RoutineTemplate>) => {
     setState(prev => {
+      // Une routine éditée par un parent devient pérenne (le flag éphémère saute)
       const updatedTemplates = prev.routineTemplates.map(r =>
-        r.id === id ? { ...r, ...updates } : r
+        r.id === id ? { ...r, ...updates, ephemeral: undefined } : r
       )
 
       // If tasks changed, sync active routine instances
@@ -344,16 +353,20 @@ export function useAppState() {
   // Timer methods
   const startTimer = useCallback((childIds: string[], durationSeconds: number, label: string = 'Minuteur') => {
     const timer: ActiveTimer = {
-      id: `timer-${Date.now()}`,
+      // Suffixe aléatoire : deux minuteurs lancés dans la même milliseconde restent distincts
+      id: `timer-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       childIds,
       durationSeconds,
       startedAt: new Date().toISOString(),
       label,
     }
-    setState(prev => ({
-      ...prev,
-      activeTimers: [...(prev.activeTimers ?? []), timer],
-    }))
+    setState(prev => {
+      if ((prev.activeTimers ?? []).length >= MAX_ACTIVE_TIMERS) return prev
+      return {
+        ...prev,
+        activeTimers: [...(prev.activeTimers ?? []), timer],
+      }
+    })
   }, [setState])
 
   const cancelTimer = useCallback((timerId: string) => {

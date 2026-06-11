@@ -4,6 +4,7 @@ import ChildAvatar from './ChildAvatar'
 import ProgressBar from './ProgressBar'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
+import ParentGate from './ParentGate'
 import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
 
@@ -59,15 +60,16 @@ export default function HomeScreen({
   const [showGearHint, setShowGearHint] = useState(() => {
     return !localStorage.getItem('gearHintSeen')
   })
+  const [showParentGate, setShowParentGate] = useState(false)
   const { playTimerEnd } = useSound()
 
-  // Appui long pour accéder à l'espace parent
+  // Appui long puis défi parental pour accéder à l'espace parent
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleGearDown = useCallback(() => {
     longPressTimer.current = setTimeout(() => {
-      setCurrentScreen('parent')
+      setShowParentGate(true)
     }, 2000)
-  }, [setCurrentScreen])
+  }, [])
   const handleGearUp = useCallback(() => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }, [])
@@ -101,6 +103,7 @@ export default function HomeScreen({
     const templateId = addRoutine({
       name: customName.trim(),
       icon: '📋',
+      ephemeral: true,
       tasks: validTasks.map((t, i) => ({ id: `t-${Date.now()}-${i}`, label: t.trim(), icon: '📋' })),
     })
 
@@ -479,6 +482,17 @@ export default function HomeScreen({
           timer={expiredTimer}
           children={children}
           onDismiss={handleDismissExpired}
+        />
+      )}
+
+      {/* Défi parental avant l'espace parent */}
+      {showParentGate && (
+        <ParentGate
+          onSuccess={() => {
+            setShowParentGate(false)
+            setCurrentScreen('parent')
+          }}
+          onCancel={() => setShowParentGate(false)}
         />
       )}
     </div>

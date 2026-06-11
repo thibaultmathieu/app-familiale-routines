@@ -11,6 +11,8 @@ export interface RoutineTemplate {
   icon: string
   scheduledDays?: number[]
   tasks: TaskTemplate[]
+  /** Routine créée à la volée depuis l'accueil — purgée à la fin de la journée si plus active. */
+  ephemeral?: boolean
 }
 
 export interface ActiveTask {
