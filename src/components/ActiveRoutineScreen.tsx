@@ -8,6 +8,8 @@ import TimerExpiredOverlay from './TimerExpiredOverlay'
 import TaskTimerPopup from './TaskTimerPopup'
 import ChildAvatar from './ChildAvatar'
 import { useSound } from '../hooks/useSound'
+import { childTextColor, tint } from '../theme'
+import { Button, Overlay } from './ui'
 
 interface ActiveRoutineScreenProps {
   children: Child[]
@@ -133,10 +135,10 @@ export default function ActiveRoutineScreen({
   if (activeRoutines.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6">
-        <p className="text-xl text-gray-400 mb-4">Aucune routine en cours</p>
+        <p className="text-xl text-ink-faint mb-4">Aucune routine en cours</p>
         <button
           onClick={() => setCurrentScreen('home')}
-          className="px-6 py-3 bg-blue-100 text-blue-600 rounded-full text-lg font-medium"
+          className="min-h-12 px-6 py-3 bg-warm-100 text-ink-soft rounded-full text-lg font-display font-medium active:scale-95 transition-transform"
         >
           ← Accueil
         </button>
@@ -150,22 +152,22 @@ export default function ActiveRoutineScreen({
       <div className="flex items-center justify-between mb-2">
         <button
           onClick={() => setCurrentScreen('home')}
-          className="text-gray-400 text-lg font-medium px-4 py-2"
+          className="min-h-12 text-ink-faint text-lg font-display font-medium px-4 py-2 active:scale-95 transition-transform rounded-2xl"
         >
           ← Accueil
         </button>
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-display font-semibold text-ink">
           {template ? `${template.icon} ${template.name}` : 'Routine en cours'}
         </h1>
         <div className="w-12" />
       </div>
 
       {/* Split-screen : N colonnes */}
-      <div className={`flex-1 grid gap-6 overflow-hidden`} style={{ gridTemplateColumns: `repeat(${children.length}, 1fr)` }}>
-        {children.map((child, index) => {
+      <div className={`flex-1 grid gap-4 overflow-hidden`} style={{ gridTemplateColumns: `repeat(${children.length}, 1fr)` }}>
+        {children.map(child => {
           const childRoutine = viewRoutines.find(ar => ar.childId === child.id)
           if (!childRoutine) return (
-            <div key={child.id} className="flex items-center justify-center text-gray-300">
+            <div key={child.id} className="flex items-center justify-center text-ink-faint/50">
               Pas de routine
             </div>
           )
@@ -180,27 +182,26 @@ export default function ActiveRoutineScreen({
           return (
             <div
               key={child.id}
-              className={`flex flex-col rounded-2xl p-4 ${
-                index < children.length - 1 ? 'border-r border-gray-200' : ''
-              }`}
+              className="flex flex-col rounded-3xl p-4"
+              style={{ backgroundColor: tint(child.color, 0.07) }}
             >
               {/* Profil enfant + progression */}
               <div className="flex items-center gap-3 mb-3">
-                <div className="border-3 rounded-full" style={{ borderColor: child.color }}>
+                <div className="border-[3px] rounded-full bg-white" style={{ borderColor: child.color }}>
                   <ChildAvatar photo={child.photo} color={child.color} size={56} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h2
-                      className="text-xl font-bold"
-                      style={{ color: child.color }}
+                      className="text-xl font-display font-bold"
+                      style={{ color: childTextColor(child.color) }}
                     >
                       {child.name}
                     </h2>
                     <button
                       onClick={() => openGallery(child.id)}
-                      className="text-lg opacity-50 active:scale-90 transition-transform"
-                      title="Voir ma collection"
+                      className="w-11 h-11 flex items-center justify-center text-lg opacity-60 active:scale-90 transition-transform"
+                      aria-label={`Voir la collection de ${child.name}`}
                     >
                       📸
                     </button>
@@ -208,13 +209,13 @@ export default function ActiveRoutineScreen({
                   <ProgressBar done={done} total={total} color={child.color} />
                 </div>
                 {allDone && (
-                  <span className="text-3xl">🎉</span>
+                  <span className="text-3xl" role="img" aria-label="Routine terminée">🎉</span>
                 )}
               </div>
 
               {/* Timers — visible between header and tasks */}
               {childTimers.length > 0 && (
-                <div className="flex justify-center gap-4 mb-3 py-2 bg-amber-50 rounded-xl">
+                <div className="flex justify-center gap-4 mb-3 py-2 bg-honey-50 border border-honey-100 rounded-2xl">
                   {childTimers.map(timer => (
                     <TimerDisplay
                       key={timer.id}
@@ -255,28 +256,16 @@ export default function ActiveRoutineScreen({
 
       {/* Overlay fin de journée */}
       {showEndOfDay && !celebration && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-          onClick={() => setShowEndOfDay(false)}
-        >
-          <div
-            className="bg-white rounded-3xl p-10 text-center shadow-xl max-w-md mx-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="text-7xl mb-4">🌙✨</div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-3">Bravo à tous !</h2>
-            <p className="text-xl text-gray-500 mb-6">
-              Toutes les routines sont terminées.<br />Bonne nuit !
-            </p>
-            <button
-              onClick={() => setShowEndOfDay(false)}
-              className="px-8 py-3 bg-indigo-400 text-white rounded-full text-lg font-medium active:scale-95 transition-transform"
-            >
-              Bonne nuit 🌙
-            </button>
-          </div>
-        </div>
+        <Overlay dim="strong" onBackdropClick={() => setShowEndOfDay(false)} cardClassName="p-10 max-w-md w-full">
+          <div className="text-7xl mb-4" role="img" aria-label="Bonne nuit">🌙✨</div>
+          <h2 className="text-3xl font-display font-semibold text-ink mb-3">Bravo à tous !</h2>
+          <p className="text-xl text-ink-soft mb-6">
+            Toutes les routines sont terminées.<br />Bonne nuit !
+          </p>
+          <Button variant="night" size="lg" className="px-8 rounded-full" onClick={() => setShowEndOfDay(false)}>
+            Bonne nuit 🌙
+          </Button>
+        </Overlay>
       )}
 
       {/* Overlay de célébration */}

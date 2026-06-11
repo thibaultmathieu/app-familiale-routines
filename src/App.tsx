@@ -67,7 +67,7 @@ export default function App() {
       {music.isPlaying && (
         <button
           onClick={music.stop}
-          className="fixed bottom-4 left-4 z-50 px-4 py-2 rounded-full bg-gray-800 text-white text-sm font-medium shadow-lg active:scale-95 transition-transform"
+          className="fixed bottom-4 left-4 z-toast min-h-12 px-5 py-2 rounded-full bg-ink text-warm-50 text-sm font-display font-semibold shadow-overlay active:scale-95 transition-transform"
         >
           🔇 Stop musique
         </button>
