@@ -18,16 +18,17 @@ interface EmojiPickerProps {
 
 export default function EmojiPicker({ value, onChange }: EmojiPickerProps) {
   return (
-    <div className="grid grid-cols-10 gap-1">
+    <div className="grid grid-cols-8 gap-1">
       {EMOJIS.map(emoji => (
         <button
           key={emoji}
           type="button"
           onClick={() => onChange(emoji)}
-          className={`w-10 h-10 text-xl rounded-lg flex items-center justify-center transition-colors ${
+          aria-pressed={value === emoji}
+          className={`w-12 h-12 text-2xl rounded-xl flex items-center justify-center transition-colors active:scale-90 ${
             value === emoji
-              ? 'bg-blue-100 ring-2 ring-blue-400'
-              : 'hover:bg-gray-100'
+              ? 'bg-honey-100 ring-2 ring-honey-400'
+              : 'hover:bg-warm-100'
           }`}
         >
           {emoji}

@@ -8,6 +8,8 @@ const DAYS = [
   { label: 'D', value: 0 },
 ]
 
+const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
+
 interface DayOfWeekPickerProps {
   value: number[]
   onChange: (days: number[]) => void
@@ -23,7 +25,7 @@ export default function DayOfWeekPicker({ value, onChange }: DayOfWeekPickerProp
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 flex-wrap">
       {DAYS.map(day => {
         const selected = value.includes(day.value)
         return (
@@ -31,10 +33,12 @@ export default function DayOfWeekPicker({ value, onChange }: DayOfWeekPickerProp
             key={day.value}
             type="button"
             onClick={() => toggle(day.value)}
-            className={`w-10 h-10 rounded-full text-sm font-bold transition-colors ${
+            aria-pressed={selected}
+            aria-label={DAY_NAMES[day.value]}
+            className={`w-12 h-12 rounded-full text-base font-bold font-display transition-colors active:scale-95 ${
               selected
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-400'
+                ? 'bg-ink text-warm-50'
+                : 'bg-warm-100 text-ink-faint'
             }`}
           >
             {day.label}

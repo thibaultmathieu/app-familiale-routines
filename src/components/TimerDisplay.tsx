@@ -22,6 +22,11 @@ const FONT_MAP: Record<TimerSize, string> = {
   large: 'text-4xl',
 }
 
+// Tokens (cf. tailwind.config.js) — utilisés en SVG/inline
+const TRACK_COLOR = '#E8DFD5'   // warm-200
+const EXPIRED_COLOR = '#D98E20' // honey-500
+const TIME_COLOR = '#6F675F'    // ink-soft
+
 interface TimerDisplayProps {
   timer: ActiveTimer
   color: string
@@ -51,14 +56,14 @@ export default function TimerDisplay({ timer, color, size = 'small', onExpired }
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - progress)
 
-  const ringColor = isExpired ? '#F59E0B' : color
-  const ringOpacity = isExpired ? 1 : 0.4
+  const ringColor = isExpired ? EXPIRED_COLOR : color
+  const ringOpacity = isExpired ? 1 : 0.45
 
   return (
     <div className="flex flex-col items-center">
       {/* Label above the ring for medium/large */}
       {size !== 'small' && timer.label && (
-        <p className={`text-center font-medium text-gray-600 mb-1 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
+        <p className={`text-center font-display font-medium text-ink-soft mb-1 ${size === 'large' ? 'text-lg' : 'text-sm'}`}>
           {timer.label}
         </p>
       )}
@@ -70,7 +75,7 @@ export default function TimerDisplay({ timer, color, size = 'small', onExpired }
             cy={pixelSize / 2}
             r={radius}
             fill="none"
-            stroke="#e5e7eb"
+            stroke={TRACK_COLOR}
             strokeWidth={strokeWidth}
           />
           <circle
@@ -88,8 +93,8 @@ export default function TimerDisplay({ timer, color, size = 'small', onExpired }
           />
         </svg>
         <span
-          className={`${FONT_MAP[size]} font-medium absolute inset-0 flex items-center justify-center`}
-          style={{ color: isExpired ? '#F59E0B' : '#9CA3AF' }}
+          className={`${FONT_MAP[size]} font-bold font-display tabular-nums absolute inset-0 flex items-center justify-center`}
+          style={{ color: isExpired ? EXPIRED_COLOR : TIME_COLOR }}
         >
           {isExpired ? '✓' : timeStr}
         </span>

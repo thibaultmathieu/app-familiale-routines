@@ -7,7 +7,7 @@ interface DurationPickerProps {
 
 const MIN = 1
 const MAX = 60
-const ITEM_HEIGHT = 44
+const ITEM_HEIGHT = 48
 const VISIBLE_ITEMS = 3
 const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS
 
@@ -41,10 +41,10 @@ export default function DurationPicker({ value, onChange }: DurationPickerProps)
   const items = Array.from({ length: MAX - MIN + 1 }, (_, i) => i + MIN)
 
   return (
-    <div className="relative mx-auto" style={{ width: 120, height: CONTAINER_HEIGHT }}>
+    <div className="relative mx-auto" style={{ width: 132, height: CONTAINER_HEIGHT }}>
       {/* Highlight band */}
       <div
-        className="absolute left-0 right-0 bg-amber-100 rounded-xl pointer-events-none z-0"
+        className="absolute left-0 right-0 bg-honey-100 rounded-xl pointer-events-none z-0"
         style={{ top: ITEM_HEIGHT, height: ITEM_HEIGHT }}
       />
       {/* Scroll container */}
@@ -62,11 +62,11 @@ export default function DurationPicker({ value, onChange }: DurationPickerProps)
         {items.map(m => (
           <div
             key={m}
-            className="flex items-center justify-center font-bold text-lg select-none"
+            className="flex items-center justify-center font-bold font-display text-lg select-none"
             style={{
               height: ITEM_HEIGHT,
               scrollSnapAlign: 'center',
-              color: m === value ? '#B45309' : '#9CA3AF',
+              color: m === value ? '#945C10' : '#9C938A',
             }}
           >
             {m} min

@@ -1,6 +1,9 @@
 import { ReactNode, CSSProperties } from 'react'
 
-type Variant = 'primary' | 'honey' | 'soft' | 'danger' | 'outline' | 'ghost' | 'night'
+type Variant =
+  | 'primary' | 'honey' | 'night' | 'soft'
+  | 'honey-soft' | 'success-soft' | 'danger-soft' | 'night-soft'
+  | 'outline' | 'ghost'
 type Size = 'md' | 'lg' | 'xl'
 
 const VARIANTS: Record<Variant, string> = {
@@ -8,7 +11,10 @@ const VARIANTS: Record<Variant, string> = {
   honey: 'bg-honey-400 text-white',
   night: 'bg-night-500 text-white',
   soft: 'bg-warm-100 text-ink-soft',
-  danger: 'bg-danger-50 text-danger-500',
+  'honey-soft': 'bg-honey-50 text-honey-600',
+  'success-soft': 'bg-success-50 text-success-600',
+  'danger-soft': 'bg-danger-50 text-danger-500',
+  'night-soft': 'bg-[#EFEDF9] text-night-500',
   outline: 'bg-white border-2 border-dashed border-line-strong text-ink-faint',
   ghost: 'text-ink-faint',
 }
