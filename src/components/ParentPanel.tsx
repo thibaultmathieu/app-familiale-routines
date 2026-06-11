@@ -3,6 +3,8 @@ import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../t
 import ProgressBar from './ProgressBar'
 import ChildAvatar from './ChildAvatar'
 import { getRewardImagesForChild } from '../data/rewardImages'
+import { childTextColor, tint } from '../theme'
+import { Badge, Button, Card, ScreenHeader } from './ui'
 
 interface ParentPanelProps {
   children: Child[]
@@ -15,6 +17,10 @@ interface ParentPanelProps {
   removeReward: (childId: string, imageId: string) => void
   setTimerReturnScreen: (screen: Screen | null) => void
   setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-4">{children}</h2>
 }
 
 export default function ParentPanel({
@@ -57,23 +63,15 @@ export default function ParentPanel({
       })()
     : []
 
+  const timerCount = (activeTimers ?? []).length
+
   return (
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <button
-          onClick={() => setCurrentScreen('home')}
-          className="text-gray-400 text-lg font-medium px-4 py-2"
-        >
-          ← Retour
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">Espace Parent</h1>
-        <div className="w-24" />
-      </div>
+      <ScreenHeader className="mb-8" onBack={() => setCurrentScreen('home')} title="Espace parents" />
 
       {/* Routines en cours — grouped by template */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
-        <h2 className="text-lg font-semibold text-gray-500 mb-4">ROUTINES EN COURS</h2>
+      <Card className="p-6 mb-6">
+        <SectionTitle>Routines en cours</SectionTitle>
         {hasActiveRoutine ? (
           <>
             {activeTemplateIds.map(templateId => {
@@ -83,15 +81,12 @@ export default function ParentPanel({
               return (
                 <div key={templateId} className="mb-5 last:mb-0">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-lg font-bold text-gray-800">
+                    <p className="text-lg font-display font-semibold text-ink">
                       {template.icon} {template.name}
                     </p>
-                    <button
-                      onClick={() => resetRoutine(templateId)}
-                      className="text-sm text-orange-500 font-medium px-3 py-1 rounded-lg bg-orange-50 active:scale-95 transition-transform"
-                    >
+                    <Button variant="honey-soft" size="md" onClick={() => resetRoutine(templateId)}>
                       Réinitialiser
-                    </button>
+                    </Button>
                   </div>
                   {children.map(child => {
                     const childRoutine = routinesForTemplate.find(ar => ar.childId === child.id)
@@ -101,7 +96,7 @@ export default function ParentPanel({
                     return (
                       <div key={child.id} className="flex items-center gap-4 mb-3">
                         <ChildAvatar photo={child.photo} color={child.color} size={40} />
-                        <span className="font-medium text-gray-700 w-28">{child.name}</span>
+                        <span className="font-semibold text-ink w-28">{child.name}</span>
                         <div className="flex-1">
                           <ProgressBar done={done} total={total} color={child.color} />
                         </div>
@@ -112,83 +107,79 @@ export default function ParentPanel({
               )
             })}
             <div className="mt-4">
-              <button
-                onClick={handleNewDay}
-                className="w-full py-3 bg-amber-50 text-amber-600 rounded-xl font-medium active:scale-95 transition-transform"
-              >
-                Nouvelle journée
-              </button>
+              <Button variant="honey-soft" size="lg" className="w-full" onClick={handleNewDay}>
+                ☀️ Nouvelle journée
+              </Button>
             </div>
           </>
         ) : (
-          <p className="text-gray-400">Aucune routine en cours</p>
+          <p className="text-ink-faint">Aucune routine en cours</p>
         )}
-      </div>
+      </Card>
 
-      {/* Gérer les routines */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
-        <h2 className="text-lg font-semibold text-gray-500 mb-4">GÉRER LES ROUTINES</h2>
-        <button
-          onClick={() => setCurrentScreen('routine-list')}
-          className="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-medium active:scale-95 transition-transform"
-        >
-          📋 Modifier les routines
-        </button>
-      </div>
-
-      {/* Gérer les enfants */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
-        <h2 className="text-lg font-semibold text-gray-500 mb-4">GÉRER LES ENFANTS</h2>
-        <button
-          onClick={() => setCurrentScreen('child-editor')}
-          className="w-full py-3 bg-purple-50 text-purple-600 rounded-xl font-medium active:scale-95 transition-transform"
-        >
-          👶 Gérer les enfants
-        </button>
-      </div>
+      {/* Gérer les routines + enfants */}
+      <Card className="p-6 mb-6">
+        <SectionTitle>Gérer</SectionTitle>
+        <div className="flex flex-col gap-3">
+          <Button variant="success-soft" size="lg" className="w-full" onClick={() => setCurrentScreen('routine-list')}>
+            📋 Modifier les routines
+          </Button>
+          <Button variant="night-soft" size="lg" className="w-full" onClick={() => setCurrentScreen('child-editor')}>
+            👧 Gérer les enfants
+          </Button>
+        </div>
+      </Card>
 
       {/* Minuteur */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
-        <h2 className="text-lg font-semibold text-gray-500 mb-4">MINUTEUR</h2>
-        <button
+      <Card className="p-6 mb-6">
+        <SectionTitle>Minuteur</SectionTitle>
+        <Button
+          variant="honey-soft"
+          size="lg"
+          className="w-full"
           onClick={() => {
             setTimerReturnScreen('parent')
             setTimerPrefill(null)
             setCurrentScreen('timer')
           }}
-          className="w-full py-3 bg-amber-50 text-amber-600 rounded-xl font-medium active:scale-95 transition-transform"
         >
           ⏳ Ouvrir le minuteur
-          {(activeTimers ?? []).length > 0 && (
-            <span className="ml-2 bg-amber-200 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">
-              {(activeTimers ?? []).length} actif{(activeTimers ?? []).length > 1 ? 's' : ''}
-            </span>
+          {timerCount > 0 && (
+            <Badge tone="honey" className="ml-2">
+              {timerCount} actif{timerCount > 1 ? 's' : ''}
+            </Badge>
           )}
-        </button>
-      </div>
+        </Button>
+      </Card>
 
       {/* Sanctions */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-gray-100 mb-6">
-        <h2 className="text-lg font-semibold text-gray-500 mb-4">SANCTIONS</h2>
-        <p className="text-sm text-gray-400 mb-3">Retirer une image de la collection</p>
+      <Card className="p-6 mb-6">
+        <SectionTitle>Sanctions</SectionTitle>
+        <p className="text-sm text-ink-faint mb-3">Retirer une image de la collection</p>
 
         {/* Child selection */}
-        <div className="flex gap-3 mb-4">
-          {children.map(child => (
-            <button
-              key={child.id}
-              onClick={() => setSanctionChildId(child.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                sanctionChildId === child.id
-                  ? 'border-2 text-gray-700'
-                  : 'bg-gray-50 text-gray-500 border-2 border-gray-100'
-              }`}
-              style={sanctionChildId === child.id ? { borderColor: child.color, backgroundColor: child.color + '20' } : {}}
-            >
-              <ChildAvatar photo={child.photo} color={child.color} size={32} />
-              {child.name}
-            </button>
-          ))}
+        <div className="flex gap-3 mb-4 flex-wrap">
+          {children.map(child => {
+            const selected = sanctionChildId === child.id
+            return (
+              <button
+                key={child.id}
+                onClick={() => setSanctionChildId(child.id)}
+                aria-pressed={selected}
+                className={`min-h-12 flex items-center gap-2 px-4 py-2 rounded-full text-base font-display font-semibold border-2 transition-all active:scale-95 ${
+                  selected ? '' : 'bg-warm-50 text-ink-soft border-line'
+                }`}
+                style={selected ? {
+                  borderColor: child.color,
+                  backgroundColor: tint(child.color, 0.12),
+                  color: childTextColor(child.color),
+                } : {}}
+              >
+                <ChildAvatar photo={child.photo} color={child.color} size={32} />
+                {child.name}
+              </button>
+            )
+          })}
         </div>
 
         {/* Images grid */}
@@ -199,17 +190,17 @@ export default function ParentPanel({
                 <button
                   key={img.id}
                   onClick={() => handleRemoveReward(sanctionChildId!, img.id)}
-                  className="aspect-square rounded-lg overflow-hidden border-2 border-gray-100 hover:border-red-300 active:scale-95 transition-all"
+                  className="aspect-square rounded-xl overflow-hidden border-2 border-line hover:border-danger-300 active:scale-95 transition-all"
                 >
                   <img src={img.src} alt={`Image de la collection de ${sanctionChild.name}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">Aucune image à retirer</p>
+            <p className="text-ink-faint text-sm">Aucune image à retirer</p>
           )
         )}
-      </div>
+      </Card>
     </div>
   )
 }

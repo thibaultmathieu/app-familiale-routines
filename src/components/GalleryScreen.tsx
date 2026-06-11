@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { Child, Screen } from '../types'
 import { getRewardImagesForChild } from '../data/rewardImages'
+import { childTextColor, tint } from '../theme'
+import { ScreenHeader } from './ui'
 
 interface GalleryScreenProps {
   children: Child[]
@@ -43,10 +45,10 @@ export default function GalleryScreen({
   if (!currentChild) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6">
-        <p className="text-xl text-gray-400 mb-4">Aucun enfant configuré</p>
+        <p className="text-xl text-ink-faint mb-4">Aucun enfant configuré</p>
         <button
           onClick={handleBack}
-          className="px-6 py-3 bg-blue-100 text-blue-600 rounded-full text-lg font-medium"
+          className="min-h-12 px-6 py-3 bg-warm-100 text-ink-soft rounded-full text-lg font-display font-medium active:scale-95 transition-transform"
         >
           ← Retour
         </button>
@@ -54,28 +56,34 @@ export default function GalleryScreen({
     )
   }
 
+  const unlockedCount = childImages.filter(img => currentChild.unlockedImages.includes(img.id)).length
+
   return (
     <div className="h-full flex flex-col p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={handleBack}
-          className="text-gray-400 text-lg font-medium px-4 py-2"
-        >
-          ← Retour
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">
-          Collection de {currentChild.name}
-        </h1>
-        {otherChild && (
-          <button
-            onClick={() => setGalleryChildId(otherChild.id)}
-            className="text-blue-500 text-lg font-medium px-4 py-2"
-          >
-            {otherChild.name} →
-          </button>
-        )}
-      </div>
+      <ScreenHeader
+        className="mb-6"
+        onBack={handleBack}
+        title={
+          <>
+            Collection de{' '}
+            <span style={{ color: childTextColor(currentChild.color) }}>{currentChild.name}</span>
+          </>
+        }
+        right={
+          otherChild ? (
+            <button
+              onClick={() => setGalleryChildId(otherChild.id)}
+              className="min-h-12 px-5 py-2 rounded-full text-base font-display font-semibold active:scale-95 transition-transform"
+              style={{
+                color: childTextColor(otherChild.color),
+                backgroundColor: tint(otherChild.color, 0.12),
+              }}
+            >
+              {otherChild.name} →
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Grille d'images */}
       <div className="flex-1 overflow-y-auto">
@@ -90,8 +98,8 @@ export default function GalleryScreen({
                   aspect-square rounded-2xl flex items-center justify-center overflow-hidden
                   transition-all duration-200
                   ${unlocked
-                    ? 'bg-white shadow-sm border-2 border-gray-100 active:scale-95 cursor-pointer'
-                    : 'bg-gray-100 border-2 border-gray-100 cursor-default'
+                    ? 'bg-white shadow-card border-2 border-line active:scale-95 cursor-pointer'
+                    : 'bg-warm-200/70 border-2 border-line cursor-default'
                   }
                 `}
               >
@@ -108,29 +116,30 @@ export default function GalleryScreen({
 
       {/* Compteur */}
       <div className="text-center mt-4">
-        <span className="text-gray-400 text-lg">
-          {currentChild.unlockedImages.length} / {childImages.length} images
+        <span className="text-ink-faint text-lg font-display">
+          {unlockedCount} / {childImages.length} images
           {currentChild.completedCycles > 0 && (
-            <span className="ml-2 text-amber-400">
+            <span className="ml-2 text-honey-500 font-semibold">
               ({currentChild.completedCycles} {currentChild.completedCycles === 1 ? 'cycle' : 'cycles'})
             </span>
           )}
         </span>
       </div>
 
-      {/* Image plein écran avec pinch-to-zoom et pan */}
+      {/* Image plein écran */}
       {selectedImage && (() => {
         const image = childImages.find(r => r.id === selectedImage)
         if (!image) return null
         return (
           <div
-            className="fixed inset-0 z-50 bg-black/80 overflow-hidden"
+            className="fixed inset-0 z-modal bg-black/80 overflow-hidden"
             onClick={closeImage}
           >
             {/* Close button */}
             <button
               onClick={closeImage}
-              className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 text-white text-xl flex items-center justify-center"
+              className="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-black/50 text-white text-xl flex items-center justify-center active:scale-90 transition-transform"
+              aria-label="Fermer l'image"
             >
               ✕
             </button>
