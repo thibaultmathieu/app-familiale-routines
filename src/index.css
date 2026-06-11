@@ -11,7 +11,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Nunito Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Focus : pas d'outline au tap/clic, anneau net et visible au clavier (WCAG 2.4.7) */
