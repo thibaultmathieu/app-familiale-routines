@@ -42,8 +42,8 @@ export default function TaskCard({ icon, label, done, onToggle, color, onTimerPr
       <div
         className={`
           w-12 h-12 rounded-full border-[3px] flex items-center justify-center flex-shrink-0
-          transition-all duration-300 bg-white
-          ${done ? 'border-success-400 bg-success-400' : ''}
+          transition-all duration-300
+          ${done ? 'border-success-400 bg-success-400' : 'bg-white'}
         `}
         style={!done ? { borderColor: tint(color, 0.55) } : undefined}
       >

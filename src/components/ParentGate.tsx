@@ -22,10 +22,9 @@ export default function ParentGate({ onSuccess, onCancel }: ParentGateProps) {
   const [error, setError] = useState(false)
 
   const pressDigit = (d: string) => {
-    if (input.length < 3) {
-      setInput(input + d)
-      setError(false)
-    }
+    // Updater fonctionnel : robuste aux appuis très rapprochés (batching React)
+    setInput(prev => (prev.length < 3 ? prev + d : prev))
+    setError(false)
   }
 
   const erase = () => setInput(prev => prev.slice(0, -1))

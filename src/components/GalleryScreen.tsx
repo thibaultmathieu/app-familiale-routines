@@ -68,7 +68,7 @@ export default function GalleryScreen({
         onBack={handleBack}
         title={
           <>
-            Collection de{' '}
+            Collection {/^[aàâeéèêiîoôuûyh]/i.test(currentChild.name) ? "d'" : 'de '}
             <span style={{ color: childTextColor(currentChild.color) }}>{currentChild.name}</span>
           </>
         }
