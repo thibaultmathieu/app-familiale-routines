@@ -38,6 +38,12 @@ export interface Child {
   completedCycles: number
   /** Univers de récompenses dont l'enfant tire ses images (V6). Absent = pool par index (legacy). */
   universeId?: string
+  /** Univers possédés (choisis à la création, gagnés par progression ou offerts par un parent). */
+  unlockedUniverseIds?: string[]
+  /** Nombre de jours distincts avec au moins une routine terminée (progression univers). */
+  routineDayCount?: number
+  /** Dernier jour local (YYYY-MM-DD) comptabilisé dans routineDayCount. */
+  lastRoutineDay?: string
 }
 
 export interface RewardImage {

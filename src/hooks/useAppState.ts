@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines } from '../data/defaultRoutines'
-import { getRewardImagesForChildEntry, legacyUniverseIdForIndex } from '../data/rewardImages'
+import { findRewardImage, getRewardImagesForChildEntry, getRewardImagesForUniverse, legacyUniverseIdForIndex } from '../data/rewardImages'
+import { localDayKey } from '../data/universeProgress'
 import { assetUrl } from '../utils/assetUrl'
 
 export interface PersistedState {
@@ -95,10 +96,23 @@ export function migrateState(state: PersistedState): PersistedState {
     )
   }
 
-  // V6→V7: retire la tâche pré-enregistrée « pipi » (retour famille 12/06) du
-  // template du soir et des instances actives qui la référencent.
+  // V6→V7: (a) re-mappe les enfants dont l'univers a disparu (retrait des
+  // collections legacy sous copyright) et retire les IDs d'images qui ne
+  // résolvent plus vers aucun pool ; (b) retire la tâche pré-enregistrée
+  // « pipi » (retour famille 12/06) du template du soir et des instances.
   if (version < 7) {
     needsMigration = true
+    children = children.map((child, index) => {
+      const hasValidUniverse = !!child.universeId && getRewardImagesForUniverse(child.universeId).length > 0
+      const universeId = hasValidUniverse ? child.universeId : legacyUniverseIdForIndex(index)
+      return {
+        ...child,
+        universeId,
+        unlockedImages: child.unlockedImages.filter(id => findRewardImage(id) !== undefined),
+        unlockedUniverseIds: child.unlockedUniverseIds ?? (universeId ? [universeId] : []),
+        routineDayCount: child.routineDayCount ?? 0,
+      }
+    })
     const isPipiTask = (t: { id: string; label: string }) => t.id === 'e3' && /pipi/i.test(t.label)
     routineTemplates = routineTemplates.map(r =>
       r.id === 'evening' && r.tasks.some(isPipiTask)
@@ -189,9 +203,10 @@ export function useAppState() {
   }, [setState, setCurrentScreen, setActiveViewTemplateId])
 
   const toggleTask = useCallback((routineId: string, taskId: string) => {
-    setState(prev => ({
-      ...prev,
-      activeRoutines: prev.activeRoutines.map(ar => {
+    setState(prev => {
+      // Enfant dont la routine vient d'être terminée par ce toggle (progression univers)
+      let completedChildId: string | null = null
+      const activeRoutines = prev.activeRoutines.map(ar => {
         if (ar.id !== routineId) return ar
         const task = ar.tasks.find(t => t.taskId === taskId)
         if (!task || task.done) return ar
@@ -199,13 +214,25 @@ export function useAppState() {
           t.taskId === taskId ? { ...t, done: true } : t
         )
         const allDone = updatedTasks.every(t => t.done)
+        if (allDone) completedChildId = ar.childId
         return {
           ...ar,
           tasks: updatedTasks,
           completedAt: allDone ? new Date().toISOString() : null,
         }
-      }),
-    }))
+      })
+
+      let children = prev.children
+      if (completedChildId) {
+        const today = localDayKey()
+        children = prev.children.map(c => {
+          if (c.id !== completedChildId || c.lastRoutineDay === today) return c
+          return { ...c, routineDayCount: (c.routineDayCount ?? 0) + 1, lastRoutineDay: today }
+        })
+      }
+
+      return { ...prev, activeRoutines, children }
+    })
   }, [setState])
 
   const resetChildRoutine = useCallback((childId: string, templateId?: string) => {
@@ -429,6 +456,23 @@ export function useAppState() {
     }))
   }, [setState])
 
+  // Univers : ajouter un univers aux possessions de l'enfant (déblocage par
+  // progression ou offert par un parent) et le rendre actif
+  const addChildUniverse = useCallback((childId: string, universeId: string) => {
+    setState(prev => ({
+      ...prev,
+      children: prev.children.map(c => {
+        if (c.id !== childId) return c
+        const owned = c.unlockedUniverseIds ?? (c.universeId ? [c.universeId] : [])
+        return {
+          ...c,
+          unlockedUniverseIds: owned.includes(universeId) ? owned : [...owned, universeId],
+          universeId,
+        }
+      }),
+    }))
+  }, [setState])
+
   // Child CRUD
   const updateChild = useCallback((id: string, updates: Partial<Pick<Child, 'name' | 'photo' | 'color'>>) => {
     setState(prev => ({
@@ -503,6 +547,7 @@ export function useAppState() {
     startTimer,
     cancelTimer,
     setChildUniverse,
+    addChildUniverse,
     updateChild,
     addChild,
     removeChild,

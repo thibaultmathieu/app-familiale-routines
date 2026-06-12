@@ -7,7 +7,10 @@ import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
 import TaskTimerPopup from './TaskTimerPopup'
 import ChildAvatar from './ChildAvatar'
+import UniverseUnlockOverlay from './UniverseUnlockOverlay'
 import { useSound } from '../hooks/useSound'
+import { ACTIVE_UNIVERSES } from '../data/universes'
+import { ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
 import { childTextColor, tint } from '../theme'
 import { Button, Overlay } from './ui'
 
@@ -22,6 +25,7 @@ interface ActiveRoutineScreenProps {
   setGalleryReturnScreen: (screen: Screen | null) => void
   toggleTask: (routineId: string, taskId: string) => void
   unlockReward: (childId: string) => RewardImage | null
+  addChildUniverse: (childId: string, universeId: string) => void
   startTimer: (childIds: string[], durationSeconds: number, label?: string) => void
   cancelTimer: (timerId: string) => void
   musicPlay: () => void
@@ -38,11 +42,13 @@ export default function ActiveRoutineScreen({
   setGalleryReturnScreen,
   toggleTask,
   unlockReward,
+  addChildUniverse,
   startTimer,
   cancelTimer,
   musicPlay,
 }: ActiveRoutineScreenProps) {
-  const [celebration, setCelebration] = useState<{ childName: string; reward: RewardImage | null } | null>(null)
+  const [celebration, setCelebration] = useState<{ childId: string; childName: string; reward: RewardImage | null } | null>(null)
+  const [universePickChildId, setUniversePickChildId] = useState<string | null>(null)
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
   const [taskTimerPopup, setTaskTimerPopup] = useState<{ label: string; childId: string } | null>(null)
   const [showEndOfDay, setShowEndOfDay] = useState(false)
@@ -89,7 +95,7 @@ export default function ActiveRoutineScreen({
       const child = children.find(c => c.id === childId)
       if (child) {
         const reward = unlockReward(childId)
-        setCelebration({ childName: child.name, reward })
+        setCelebration({ childId, childName: child.name, reward })
       }
 
       // If this was the evening routine, check if all other children already finished too
@@ -268,14 +274,41 @@ export default function ActiveRoutineScreen({
         </Overlay>
       )}
 
-      {/* Overlay de célébration */}
+      {/* Overlay de célébration — à la fermeture, propose le choix d'un
+          nouvel univers si la progression vient d'en débloquer un */}
       {celebration && (
         <CelebrationOverlay
           childName={celebration.childName}
           reward={celebration.reward}
-          onClose={() => setCelebration(null)}
+          onClose={() => {
+            const childId = celebration.childId
+            setCelebration(null)
+            const childIndex = children.findIndex(c => c.id === childId)
+            const child = childIndex >= 0 ? children[childIndex] : undefined
+            if (child && pendingUniverseChoices(child, childIndex, ACTIVE_UNIVERSES.length) > 0) {
+              setUniversePickChildId(childId)
+            }
+          }}
         />
       )}
+
+      {/* Choix du nouvel univers débloqué */}
+      {universePickChildId && !celebration && (() => {
+        const childIndex = children.findIndex(c => c.id === universePickChildId)
+        const child = childIndex >= 0 ? children[childIndex] : undefined
+        if (!child) return null
+        return (
+          <UniverseUnlockOverlay
+            child={child}
+            ownedIds={ownedUniverseIds(child, childIndex)}
+            onPick={universeId => {
+              addChildUniverse(child.id, universeId)
+              setUniversePickChildId(null)
+            }}
+            onLater={() => setUniversePickChildId(null)}
+          />
+        )
+      })()}
 
       {/* Timer expired overlay */}
       {expiredTimer && !celebration && (

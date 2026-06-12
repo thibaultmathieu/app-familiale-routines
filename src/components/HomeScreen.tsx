@@ -5,8 +5,11 @@ import ProgressBar from './ProgressBar'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
 import ParentGate from './ParentGate'
+import UniverseUnlockOverlay from './UniverseUnlockOverlay'
 import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
+import { ACTIVE_UNIVERSES } from '../data/universes'
+import { ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
 import { tint } from '../theme'
 import { Badge, Button, Card, Pill, TextInput } from './ui'
 
@@ -24,6 +27,7 @@ interface HomeScreenProps {
   setTimerReturnScreen: (screen: Screen | null) => void
   setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
   cancelTimer: (timerId: string) => void
+  addChildUniverse: (childId: string, universeId: string) => void
   parentPin?: string
 }
 
@@ -54,6 +58,7 @@ export default function HomeScreen({
   setTimerReturnScreen,
   setTimerPrefill,
   cancelTimer,
+  addChildUniverse,
   parentPin,
 }: HomeScreenProps) {
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -65,6 +70,7 @@ export default function HomeScreen({
     return !localStorage.getItem('gearHintSeen')
   })
   const [showParentGate, setShowParentGate] = useState(false)
+  const [universePickChildId, setUniversePickChildId] = useState<string | null>(null)
   const { playTimerEnd } = useSound()
 
   // Appui long pour accéder à l'espace parents ; code en plus seulement si configuré
@@ -384,6 +390,25 @@ export default function HomeScreen({
         </div>
       )}
 
+      {/* 4bis. Nouvel univers gagné — invitation douce à choisir */}
+      {children.map((child, childIndex) => {
+        if (pendingUniverseChoices(child, childIndex, ACTIVE_UNIVERSES.length) === 0) return null
+        return (
+          <div key={`unlock-${child.id}`} className="mt-6 max-w-3xl mx-auto w-full">
+            <Card
+              onClick={() => setUniversePickChildId(child.id)}
+              className="w-full p-4 !border-2 !border-honey-200 flex items-center gap-3"
+            >
+              <span className="text-3xl" aria-hidden="true">🎁</span>
+              <span className="font-display font-semibold text-ink flex-1 text-left">
+                {child.name}, un nouvel univers t'attend !
+              </span>
+              <span className="text-honey-600 font-semibold text-sm">Choisir →</span>
+            </Card>
+          </div>
+        )
+      })}
+
       {/* 5. Collections */}
       <div className="mt-6 max-w-3xl mx-auto w-full">
         <h2 className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Collections</h2>
@@ -467,6 +492,24 @@ export default function HomeScreen({
           onDismiss={handleDismissExpired}
         />
       )}
+
+      {/* Choix du nouvel univers débloqué */}
+      {universePickChildId && (() => {
+        const childIndex = children.findIndex(c => c.id === universePickChildId)
+        const child = childIndex >= 0 ? children[childIndex] : undefined
+        if (!child) return null
+        return (
+          <UniverseUnlockOverlay
+            child={child}
+            ownedIds={ownedUniverseIds(child, childIndex)}
+            onPick={universeId => {
+              addChildUniverse(child.id, universeId)
+              setUniversePickChildId(null)
+            }}
+            onLater={() => setUniversePickChildId(null)}
+          />
+        )
+      })()}
 
       {/* Code parents avant l'espace parents (seulement si configuré) */}
       {showParentGate && parentPin && (

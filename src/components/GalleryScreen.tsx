@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
 import { Child, Screen } from '../types'
 import { getRewardImagesForChildEntry, resolveUniverseId } from '../data/rewardImages'
-import { getUniverse } from '../data/universes'
+import { ACTIVE_UNIVERSES, getUniverse } from '../data/universes'
+import { daysUntilNextUnlock, pendingUniverseChoices } from '../data/universeProgress'
 import { childTextColor, tint } from '../theme'
 import { ScreenHeader } from './ui'
 
@@ -134,6 +135,22 @@ export default function GalleryScreen({
             </span>
           )}
         </span>
+        {/* Progression vers le prochain univers — encouragement doux */}
+        {(() => {
+          const pending = pendingUniverseChoices(currentChild, currentChildIndex, ACTIVE_UNIVERSES.length)
+          const daysLeft = daysUntilNextUnlock(currentChild, currentChildIndex, ACTIVE_UNIVERSES.length)
+          if (pending > 0) {
+            return <p className="text-sm font-display font-semibold text-honey-600 mt-1">🎁 Tu as un nouvel univers à choisir !</p>
+          }
+          if (daysLeft !== null && daysLeft > 0) {
+            return (
+              <p className="text-sm text-ink-faint mt-1">
+                ✨ Plus que {daysLeft} jour{daysLeft > 1 ? 's' : ''} de routines réussies pour débloquer un nouvel univers
+              </p>
+            )
+          }
+          return null
+        })()}
       </div>
 
       {/* Image plein écran */}

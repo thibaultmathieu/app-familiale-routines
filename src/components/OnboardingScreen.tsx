@@ -4,7 +4,9 @@ import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
 import DayOfWeekPicker from './DayOfWeekPicker'
 import EmojiPicker from './EmojiPicker'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { COLOR_PALETTE } from '../theme'
+import { ACTIVE_UNIVERSES } from '../data/universes'
+import { getRewardImagesForUniverse } from '../data/rewardImages'
+import { childTextColor, COLOR_PALETTE, tint } from '../theme'
 import AppLogo from './AppLogo'
 import { Button, Card, FieldLabel, IconButton, TextInput } from './ui'
 
@@ -18,17 +20,18 @@ interface LocalChild {
   name: string
   color: string
   photo: string
+  universeId?: string
 }
 
 interface OnboardingScreenProps {
   routineTemplates: RoutineTemplate[]
-  addChild: (child: { id: string; name: string; photo: string; color: string }) => void
+  addChild: (child: { id: string; name: string; photo: string; color: string; universeId?: string; unlockedUniverseIds?: string[] }) => void
   updateRoutine: (id: string, updates: Partial<RoutineTemplate>) => void
   addRoutine: (template: Omit<RoutineTemplate, 'id'>) => string
   completeOnboarding: () => void
 }
 
-type Step = 'welcome' | 'children' | 'routines' | 'routine-detail'
+type Step = 'welcome' | 'children' | 'universes' | 'routines' | 'routine-detail'
 
 export default function OnboardingScreen({
   routineTemplates,
@@ -106,7 +109,14 @@ export default function OnboardingScreen({
   const handleComplete = () => {
     localChildren
       .filter(c => c.name.trim())
-      .forEach(c => addChild({ id: c.id, name: c.name.trim(), photo: c.photo, color: c.color }))
+      .forEach(c => addChild({
+        id: c.id,
+        name: c.name.trim(),
+        photo: c.photo,
+        color: c.color,
+        universeId: c.universeId,
+        unlockedUniverseIds: c.universeId ? [c.universeId] : undefined,
+      }))
     localStorage.removeItem(DRAFT_CHILDREN_KEY)
     localStorage.removeItem(DRAFT_STEP_KEY)
     completeOnboarding()
@@ -114,12 +124,17 @@ export default function OnboardingScreen({
 
   // --- Step indicator ---
 
-  const StepDots = () => (
-    <div className="flex justify-center gap-2 mb-6">
-      <div className={`w-3 h-3 rounded-full transition-colors ${step === 'children' ? 'bg-honey-400' : 'bg-warm-200'}`} />
-      <div className={`w-3 h-3 rounded-full transition-colors ${step !== 'children' ? 'bg-honey-400' : 'bg-warm-200'}`} />
-    </div>
-  )
+  const StepDots = () => {
+    const steps: Step[] = ['children', 'universes', 'routines']
+    const activeIndex = step === 'routine-detail' ? 2 : steps.indexOf(step)
+    return (
+      <div className="flex justify-center gap-2 mb-6">
+        {steps.map((s, i) => (
+          <div key={s} className={`w-3 h-3 rounded-full transition-colors ${i <= activeIndex ? 'bg-honey-400' : 'bg-warm-200'}`} />
+        ))}
+      </div>
+    )
+  }
 
   // --- Welcome step ---
 
@@ -172,6 +187,83 @@ export default function OnboardingScreen({
     )
   }
 
+  // --- Universes step ---
+
+  if (step === 'universes') {
+    const namedChildren = localChildren.filter(c => c.name.trim())
+    const allChosen = namedChildren.every(c => c.universeId)
+    return (
+      <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
+        <StepDots />
+
+        <button
+          onClick={() => setStep('children')}
+          className="min-h-12 px-4 py-2 -ml-4 rounded-2xl text-ink-faint text-base font-display font-medium self-start mb-2 active:scale-95 transition-transform"
+        >
+          ← Retour
+        </button>
+
+        <h1 className="text-2xl font-display font-semibold text-ink mb-2">L'univers de chaque enfant</h1>
+        <p className="text-ink-faint text-sm mb-1">
+          Chaque routine terminée fait gagner une image de l'univers choisi.
+        </p>
+        <p className="text-ink-faint text-sm mb-6">
+          💡 Choisissez ensemble : c'est sa collection ! Il en débloquera de nouveaux en réussissant ses routines.
+        </p>
+
+        <div className="space-y-6 flex-1">
+          {namedChildren.map(child => (
+            <div key={child.id}>
+              <h2 className="text-lg font-display font-bold mb-3" style={{ color: childTextColor(child.color) }}>
+                {child.name}
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                {ACTIVE_UNIVERSES.map(universe => {
+                  const thumbnail = getRewardImagesForUniverse(universe.id)[0]?.src
+                  const selected = child.universeId === universe.id
+                  return (
+                    <button
+                      key={universe.id}
+                      onClick={() => updateLocalChild(child.id, { universeId: universe.id })}
+                      aria-pressed={selected}
+                      className={`relative rounded-2xl border-2 overflow-hidden bg-white shadow-card text-center active:scale-95 transition-all ${
+                        selected ? '' : 'border-line hover:border-line-strong'
+                      }`}
+                      style={selected ? { borderColor: child.color, backgroundColor: tint(child.color, 0.08) } : undefined}
+                    >
+                      {selected && (
+                        <span
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full text-white text-sm flex items-center justify-center z-10"
+                          style={{ backgroundColor: childTextColor(child.color) }}
+                          role="img"
+                          aria-label="Univers choisi"
+                        >
+                          ✓
+                        </span>
+                      )}
+                      {thumbnail && (
+                        <img src={thumbnail} alt="" aria-hidden="true" className="w-full aspect-square object-cover" />
+                      )}
+                      <div className="p-2">
+                        <span className="block text-xl" aria-hidden="true">{universe.emoji}</span>
+                        <span className="font-display font-semibold text-ink text-xs leading-tight">{universe.name}</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Button variant="primary" size="xl" className="mt-6" disabled={!allChosen} onClick={() => setStep('routines')}>
+          Suivant
+        </Button>
+        <div className="h-6 shrink-0" />
+      </div>
+    )
+  }
+
   // --- Routines step ---
 
   if (step === 'routines') {
@@ -180,7 +272,7 @@ export default function OnboardingScreen({
         <StepDots />
 
         <button
-          onClick={() => setStep('children')}
+          onClick={() => setStep('universes')}
           className="min-h-12 px-4 py-2 -ml-4 rounded-2xl text-ink-faint text-base font-display font-medium self-start mb-2 active:scale-95 transition-transform"
         >
           ← Retour
@@ -274,7 +366,7 @@ export default function OnboardingScreen({
         </Button>
       </div>
 
-      <Button variant="primary" size="xl" className="mt-6" disabled={!canProceed} onClick={() => setStep('routines')}>
+      <Button variant="primary" size="xl" className="mt-6" disabled={!canProceed} onClick={() => setStep('universes')}>
         Suivant
       </Button>
       <div className="h-6 shrink-0" />

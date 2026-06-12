@@ -92,14 +92,14 @@ describe('migrateState', () => {
 
   it('conserve les IDs récompenses modernes', () => {
     const state = {
-      children: [makeChild('c1', { unlockedImages: ['evangelina-001', 'evangelina-014'] })],
+      children: [makeChild('c1', { unlockedImages: ['a-001', 'a-003'] })],
       routineTemplates: [twoTaskTemplate],
       activeRoutines: [],
       activeTimers: [],
     } as unknown as PersistedState
 
     const out = migrateState(state)
-    expect(out.children[0].unlockedImages).toEqual(['evangelina-001', 'evangelina-014'])
+    expect(out.children[0].unlockedImages).toEqual(['a-001', 'a-003'])
   })
 
   it('ajoute activeTimers manquant et label aux timers sans label', () => {
@@ -164,6 +164,32 @@ describe('migrateState', () => {
     const out = migrateState(state)
     expect(out.children.map(c => c.universeId)).toEqual(['a', 'b', 'a'])
     expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
+  })
+
+  it('V6→V7 : re-mappe un univers disparu et retire les IDs d\'images orphelins', () => {
+    const state = {
+      children: [
+        makeChild('c1', { universeId: 'evangelina', unlockedImages: ['evangelina-001', 'a-002', 'noah-010'] }),
+        makeChild('c2', { universeId: 'b', unlockedImages: ['b-001'] }),
+      ],
+      routineTemplates: [],
+      activeRoutines: [],
+      activeTimers: [],
+      schemaVersion: 6,
+      onboardingCompleted: true,
+    } as unknown as PersistedState
+
+    const out = migrateState(state)
+    // c1 : pool 'evangelina' disparu → retombe sur l'attribution par index ; IDs morts purgés
+    expect(out.children[0].universeId).toBe('a')
+    expect(out.children[0].unlockedImages).toEqual(['a-002'])
+    // c2 : univers valide et IDs vivants → intacts
+    expect(out.children[1].universeId).toBe('b')
+    expect(out.children[1].unlockedImages).toEqual(['b-001'])
+    // Progression univers initialisée : l'univers actif est possédé, compteur à zéro
+    expect(out.children[0].unlockedUniverseIds).toEqual(['a'])
+    expect(out.children[1].unlockedUniverseIds).toEqual(['b'])
+    expect(out.children.every(c => c.routineDayCount === 0)).toBe(true)
   })
 
   it('V6→V7 : retire la tâche « pipi » du template du soir et des instances actives', () => {
@@ -517,6 +543,55 @@ describe('useAppState — récompenses', () => {
     const imageId = result.current.children.find(c => c.id === 'c1')!.unlockedImages[0]
     act(() => result.current.removeReward('c1', imageId))
     expect(result.current.children.find(c => c.id === 'c1')!.unlockedImages).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useAppState — progression des univers (déblocage doux)
+// ---------------------------------------------------------------------------
+
+describe('useAppState — progression des univers', () => {
+  it('compléter une routine compte un jour, une seule fois par jour', () => {
+    const { result } = setupHook({})
+    act(() => result.current.launchRoutine('morning', ['c1']))
+    const routineId = result.current.activeRoutines[0].id
+
+    act(() => result.current.toggleTask(routineId, 'm1'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount ?? 0).toBe(0)
+
+    act(() => result.current.toggleTask(routineId, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+
+    // Une seconde routine terminée le même jour ne recompte pas
+    act(() => result.current.resetChildRoutine('c1'))
+    act(() => result.current.toggleTask(routineId, 'm1'))
+    act(() => result.current.toggleTask(routineId, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+  })
+
+  it('un jour différent du dernier jour compté incrémente à nouveau', () => {
+    const { result } = setupHook({
+      children: [makeChild('c1', { routineDayCount: 3, lastRoutineDay: '2026-01-01' })],
+    })
+    act(() => result.current.launchRoutine('morning', ['c1']))
+    const routineId = result.current.activeRoutines[0].id
+    act(() => result.current.toggleTask(routineId, 'm1'))
+    act(() => result.current.toggleTask(routineId, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(4)
+  })
+
+  it('addChildUniverse ajoute l\'univers aux possessions et le rend actif', () => {
+    const { result } = setupHook({
+      children: [makeChild('c1', { universeId: 'a', unlockedUniverseIds: ['a'] })],
+    })
+    act(() => result.current.addChildUniverse('c1', 'b'))
+    const child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.unlockedUniverseIds).toEqual(['a', 'b'])
+    expect(child.universeId).toBe('b')
+
+    // Idempotent : ré-ajouter un univers possédé ne crée pas de doublon
+    act(() => result.current.addChildUniverse('c1', 'b'))
+    expect(result.current.children.find(c => c.id === 'c1')!.unlockedUniverseIds).toEqual(['a', 'b'])
   })
 })
 
