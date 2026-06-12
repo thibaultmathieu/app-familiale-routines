@@ -146,8 +146,9 @@ export default function OnboardingScreen({
           Bienvenue dans Routines Familiales
         </h1>
         <p className="text-lg text-ink-soft mb-8 max-w-md">
-          Des routines que vos enfants ont envie de cocher,
-          des images à collectionner en récompense — et vous gardez la main.
+          Des routines que vos enfants ont envie de cocher, un minuteur rigolo
+          pour les missions du quotidien, des images à collectionner en
+          récompense — et vous gardez la main.
         </p>
 
         <div className="w-full max-w-md space-y-3 mb-8 text-left">
@@ -158,6 +159,10 @@ export default function OnboardingScreen({
           <Card className="p-4 flex items-center gap-4">
             <span className="text-3xl" aria-hidden="true">✅</span>
             <p className="text-ink-soft text-sm"><span className="font-semibold text-ink">Ajustez vos routines</span> — matin, retour d'école, soir… ou les vôtres</p>
+          </Card>
+          <Card className="p-4 flex items-center gap-4">
+            <span className="text-3xl" aria-hidden="true">⏳</span>
+            <p className="text-ink-soft text-sm"><span className="font-semibold text-ink">Minuteur malin inclus</span> — brossage de dents, bain, devoirs… lancé en deux taps</p>
           </Card>
           <Card className="p-4 flex items-center gap-4">
             <span className="text-3xl" aria-hidden="true">🎁</span>
