@@ -323,15 +323,20 @@ function ChildCard({
         <div className="border-[3px] rounded-full" style={{ borderColor: child.color }}>
           <ChildAvatar photo={child.photo} color={child.color} size={64} />
         </div>
-        <label className="min-h-12 px-4 py-2 bg-warm-100 text-ink-soft rounded-xl text-sm font-semibold inline-flex items-center active:scale-95 transition-transform hover:bg-warm-200 cursor-pointer">
-          📷 Photo
-          <input
-            type="file"
-            accept="image/*,.heic,.heif"
-            className="hidden"
-            onChange={e => onPhotoUpload(child.id, e)}
-          />
-        </label>
+        <div className="flex-1">
+          <label className="min-h-12 px-4 py-2 bg-warm-100 text-ink-soft rounded-xl text-sm font-semibold inline-flex items-center active:scale-95 transition-transform hover:bg-warm-200 cursor-pointer">
+            📷 Ajouter une photo
+            <input
+              type="file"
+              accept="image/*,.heic,.heif"
+              className="hidden"
+              onChange={e => onPhotoUpload(child.id, e)}
+            />
+          </label>
+          <p className="text-xs text-ink-faint mt-1.5">
+            Fortement recommandée : la photo est le repère visuel de votre enfant dans l'app.
+          </p>
+        </div>
       </div>
 
       {/* Name */}
@@ -343,6 +348,9 @@ function ChildCard({
       />
 
       {/* Color picker */}
+      <p className="text-xs text-ink-faint -mb-1">
+        💡 Sa couleur : demandez-lui de la choisir, il s'y retrouvera d'autant mieux !
+      </p>
       <div className="flex gap-2 flex-wrap">
         {COLOR_PALETTE.map(color => (
           <button
