@@ -166,6 +166,68 @@ describe('migrateState', () => {
     expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 
+  it('V6→V7 : retire la tâche « pipi » du template du soir et des instances actives', () => {
+    const evening: RoutineTemplate = {
+      id: 'evening',
+      name: 'Routine du soir',
+      icon: '🌙',
+      scheduledDays: [1, 2, 3, 4, 5],
+      tasks: [
+        { id: 'e1', label: 'je débarrasse la table', icon: '🍽️' },
+        { id: 'e2', label: 'je me lave les dents', icon: '🪥' },
+        { id: 'e3', label: "j'ai bien fait pipi 3 fois aujourd'hui", icon: '🚽' },
+      ],
+    }
+    const state = {
+      children: [],
+      routineTemplates: [evening],
+      activeRoutines: [
+        {
+          id: 'evening-c1-1',
+          templateId: 'evening',
+          childId: 'c1',
+          tasks: [
+            { taskId: 'e1', done: true },
+            { taskId: 'e2', done: true },
+            { taskId: 'e3', done: false },
+          ],
+          startedAt: new Date().toISOString(),
+          completedAt: null,
+        },
+      ],
+      activeTimers: [],
+      schemaVersion: 6,
+      onboardingCompleted: true,
+    } as unknown as PersistedState
+
+    const out = migrateState(state)
+    expect(out.routineTemplates.find(r => r.id === 'evening')!.tasks.map(t => t.id)).toEqual(['e1', 'e2'])
+    // L'instance perd la tâche retirée et se complète (les deux restantes sont faites)
+    expect(out.activeRoutines[0].tasks.map(t => t.taskId)).toEqual(['e1', 'e2'])
+    expect(out.activeRoutines[0].completedAt).not.toBeNull()
+  })
+
+  it('V6→V7 : une tâche e3 renommée par les parents est conservée', () => {
+    const state = {
+      children: [],
+      routineTemplates: [
+        {
+          id: 'evening',
+          name: 'Soir',
+          icon: '🌙',
+          tasks: [{ id: 'e3', label: 'je range ma chambre', icon: '🧸' }],
+        },
+      ],
+      activeRoutines: [],
+      activeTimers: [],
+      schemaVersion: 6,
+      onboardingCompleted: true,
+    } as unknown as PersistedState
+
+    const out = migrateState(state)
+    expect(out.routineTemplates[0].tasks.map(t => t.id)).toEqual(['e3'])
+  })
+
   it('état déjà à jour : retourne la même référence (pas de boucle de re-render)', () => {
     const state: PersistedState = {
       children: [makeChild('c1')],

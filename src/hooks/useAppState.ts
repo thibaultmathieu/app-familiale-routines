@@ -16,7 +16,7 @@ export interface PersistedState {
   parentPin?: string
 }
 
-export const CURRENT_SCHEMA_VERSION = 6
+export const CURRENT_SCHEMA_VERSION = 7
 
 // Plafonds anti-accumulation (enfants qui spamment, routines à la volée jamais nettoyées)
 export const MAX_ROUTINE_TEMPLATES = 30
@@ -33,7 +33,7 @@ const initialState: PersistedState = {
 
 export function migrateState(state: PersistedState): PersistedState {
   let needsMigration = false
-  let { children, activeTimers, routineTemplates } = state
+  let { children, activeTimers, routineTemplates, activeRoutines } = state
   const version = state.schemaVersion ?? 1
 
   // V1→V2: detect old emoji-based reward IDs and reset them
@@ -95,12 +95,39 @@ export function migrateState(state: PersistedState): PersistedState {
     )
   }
 
+  // V6→V7: retire la tâche pré-enregistrée « pipi » (retour famille 12/06) du
+  // template du soir et des instances actives qui la référencent.
+  if (version < 7) {
+    needsMigration = true
+    const isPipiTask = (t: { id: string; label: string }) => t.id === 'e3' && /pipi/i.test(t.label)
+    routineTemplates = routineTemplates.map(r =>
+      r.id === 'evening' && r.tasks.some(isPipiTask)
+        ? { ...r, tasks: r.tasks.filter(t => !isPipiTask(t)) }
+        : r
+    )
+    const eveningTaskIds = new Set(
+      routineTemplates.find(r => r.id === 'evening')?.tasks.map(t => t.id) ?? []
+    )
+    activeRoutines = activeRoutines.map(ar => {
+      if (ar.templateId !== 'evening') return ar
+      const tasks = ar.tasks.filter(t => eveningTaskIds.has(t.taskId))
+      if (tasks.length === ar.tasks.length) return ar
+      const allDone = tasks.length > 0 && tasks.every(t => t.done)
+      return {
+        ...ar,
+        tasks,
+        completedAt: allDone ? (ar.completedAt ?? new Date().toISOString()) : ar.completedAt,
+      }
+    })
+  }
+
   if (needsMigration) {
     return {
       ...state,
       children,
       activeTimers,
       routineTemplates,
+      activeRoutines,
       schemaVersion: CURRENT_SCHEMA_VERSION,
       onboardingCompleted: state.onboardingCompleted ?? true,
     }
