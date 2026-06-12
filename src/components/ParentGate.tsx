@@ -1,103 +1,53 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import PinPad from './PinPad'
 import { Overlay } from './ui'
 
 interface ParentGateProps {
+  /** Code parents configuré — le gate n'est affiché que s'il existe. */
+  pin: string
   onSuccess: () => void
   onCancel: () => void
 }
 
-// Multiplication volontairement hors des tables (12-19 × 4-9) : triviale pour un
-// parent, hors de portée d'un enfant de 6-8 ans — pas de PIN à retenir.
-function makeChallenge() {
-  const a = 12 + Math.floor(Math.random() * 8)
-  const b = 4 + Math.floor(Math.random() * 6)
-  return { a, b, answer: a * b }
-}
-
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'erase', '0', 'ok'] as const
-
-export default function ParentGate({ onSuccess, onCancel }: ParentGateProps) {
-  const [challenge, setChallenge] = useState(makeChallenge)
+/**
+ * Saisie du code parents (4 chiffres). Sans code configuré, l'appui long
+ * suffit et ce composant n'est jamais monté (cf. HomeScreen).
+ */
+export default function ParentGate({ pin, onSuccess, onCancel }: ParentGateProps) {
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
 
-  const pressDigit = (d: string) => {
-    // Updater fonctionnel : robuste aux appuis très rapprochés (batching React)
-    setInput(prev => (prev.length < 3 ? prev + d : prev))
-    setError(false)
-  }
-
-  const erase = () => setInput(prev => prev.slice(0, -1))
-
-  const validate = () => {
-    if (input !== '' && parseInt(input, 10) === challenge.answer) {
+  // Validation automatique au 4ᵉ chiffre — petit délai pour que le point s'affiche
+  useEffect(() => {
+    if (input.length !== pin.length) return
+    if (input === pin) {
       onSuccess()
-    } else {
+      return
+    }
+    const timer = setTimeout(() => {
       setError(true)
       setInput('')
-      setChallenge(makeChallenge())
-    }
-  }
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [input, pin, onSuccess])
 
   return (
     <Overlay onBackdropClick={onCancel} cardClassName="p-8 max-w-sm w-full">
       <h2 className="text-xl font-display font-semibold text-ink mb-1">Espace parents</h2>
       <p className="text-sm text-ink-faint mb-4">
-        {error ? 'Mauvaise réponse, nouvelle question :' : 'Réponds pour entrer :'}
+        {error ? 'Code incorrect, réessayez :' : 'Saisissez votre code :'}
       </p>
 
-      <p className="text-3xl font-display font-bold text-ink mb-3" aria-live="polite">
-        {challenge.a} × {challenge.b} = ?
-      </p>
+      <PinPad
+        value={input}
+        error={error}
+        onChange={v => {
+          setInput(v)
+          setError(false)
+        }}
+      />
 
-      <div
-        className={`h-14 mb-4 rounded-xl border-2 flex items-center justify-center text-2xl font-bold tracking-widest tabular-nums ${
-          error ? 'border-danger-300 bg-danger-50 text-danger-500' : 'border-line bg-warm-50 text-ink'
-        }`}
-        aria-label="Réponse saisie"
-      >
-        {input || '···'}
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {KEYS.map(key => {
-          if (key === 'erase') {
-            return (
-              <button
-                key={key}
-                onClick={erase}
-                className="h-14 rounded-xl bg-warm-100 text-ink-soft text-xl font-bold active:scale-95 transition-transform"
-                aria-label="Effacer"
-              >
-                ⌫
-              </button>
-            )
-          }
-          if (key === 'ok') {
-            return (
-              <button
-                key={key}
-                onClick={validate}
-                className="h-14 rounded-xl bg-success-500 text-white text-xl font-display font-bold active:scale-95 transition-transform"
-                aria-label="Valider"
-              >
-                OK
-              </button>
-            )
-          }
-          return (
-            <button
-              key={key}
-              onClick={() => pressDigit(key)}
-              className="h-14 rounded-xl bg-warm-100 text-ink text-xl font-bold tabular-nums active:scale-95 transition-transform"
-            >
-              {key}
-            </button>
-          )
-        })}
-      </div>
-
-      <button onClick={onCancel} className="w-full min-h-12 py-3 text-ink-faint font-semibold active:scale-95 transition-transform">
+      <button onClick={onCancel} className="w-full min-h-12 py-3 mt-4 text-ink-faint font-semibold active:scale-95 transition-transform">
         Annuler
       </button>
     </Overlay>

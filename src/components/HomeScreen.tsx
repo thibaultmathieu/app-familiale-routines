@@ -24,6 +24,7 @@ interface HomeScreenProps {
   setTimerReturnScreen: (screen: Screen | null) => void
   setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
   cancelTimer: (timerId: string) => void
+  parentPin?: string
 }
 
 function TimerExpirationWatcher({ timer, onExpired }: {
@@ -53,6 +54,7 @@ export default function HomeScreen({
   setTimerReturnScreen,
   setTimerPrefill,
   cancelTimer,
+  parentPin,
 }: HomeScreenProps) {
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName] = useState('')
@@ -65,13 +67,17 @@ export default function HomeScreen({
   const [showParentGate, setShowParentGate] = useState(false)
   const { playTimerEnd } = useSound()
 
-  // Appui long puis défi parental pour accéder à l'espace parent
+  // Appui long pour accéder à l'espace parents ; code en plus seulement si configuré
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleGearDown = useCallback(() => {
     longPressTimer.current = setTimeout(() => {
-      setShowParentGate(true)
+      if (parentPin) {
+        setShowParentGate(true)
+      } else {
+        setCurrentScreen('parent')
+      }
     }, 2000)
-  }, [])
+  }, [parentPin, setCurrentScreen])
   const handleGearUp = useCallback(() => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }, [])
@@ -462,9 +468,10 @@ export default function HomeScreen({
         />
       )}
 
-      {/* Défi parental avant l'espace parent */}
-      {showParentGate && (
+      {/* Code parents avant l'espace parents (seulement si configuré) */}
+      {showParentGate && parentPin && (
         <ParentGate
+          pin={parentPin}
           onSuccess={() => {
             setShowParentGate(false)
             setCurrentScreen('parent')

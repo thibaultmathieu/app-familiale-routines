@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../types'
 import ProgressBar from './ProgressBar'
 import ChildAvatar from './ChildAvatar'
+import PinSetupOverlay from './PinSetupOverlay'
 import { getRewardImagesForChildEntry } from '../data/rewardImages'
 import { childTextColor, tint } from '../theme'
 import { Badge, Button, Card, ScreenHeader } from './ui'
@@ -17,6 +18,8 @@ interface ParentPanelProps {
   removeReward: (childId: string, imageId: string) => void
   setTimerReturnScreen: (screen: Screen | null) => void
   setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
+  parentPin?: string
+  setParentPin: (pin: string | null) => void
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -34,8 +37,17 @@ export default function ParentPanel({
   removeReward,
   setTimerReturnScreen,
   setTimerPrefill,
+  parentPin,
+  setParentPin,
 }: ParentPanelProps) {
   const [sanctionChildId, setSanctionChildId] = useState<string | null>(null)
+  const [showPinSetup, setShowPinSetup] = useState(false)
+
+  const handleRemovePin = () => {
+    if (window.confirm('Retirer le code ? L\'espace parents s\'ouvrira par appui long seul.')) {
+      setParentPin(null)
+    }
+  }
 
   const hasActiveRoutine = activeRoutines.length > 0
   const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
@@ -153,6 +165,30 @@ export default function ParentPanel({
         </Button>
       </Card>
 
+      {/* Accès parents */}
+      <Card className="p-6 mb-6">
+        <SectionTitle>Accès parents</SectionTitle>
+        <p className="text-sm text-ink-faint mb-3">
+          {parentPin
+            ? 'L\'espace parents s\'ouvre par appui long sur ⚙️, puis votre code à 4 chiffres.'
+            : 'L\'espace parents s\'ouvre par un appui long (2 s) sur ⚙️. Ajoutez un code si votre enfant découvre l\'astuce.'}
+        </p>
+        {parentPin ? (
+          <div className="flex gap-3">
+            <Button variant="soft" size="lg" className="flex-1" onClick={() => setShowPinSetup(true)}>
+              Modifier le code
+            </Button>
+            <Button variant="soft" size="lg" className="flex-1" onClick={handleRemovePin}>
+              Retirer le code
+            </Button>
+          </div>
+        ) : (
+          <Button variant="soft" size="lg" className="w-full" onClick={() => setShowPinSetup(true)}>
+            🔒 Ajouter un code (4 chiffres)
+          </Button>
+        )}
+      </Card>
+
       {/* Sanctions */}
       <Card className="p-6 mb-6">
         <SectionTitle>Sanctions</SectionTitle>
@@ -202,6 +238,17 @@ export default function ParentPanel({
           )
         )}
       </Card>
+
+      {/* Définition du code parents */}
+      {showPinSetup && (
+        <PinSetupOverlay
+          onSave={pin => {
+            setParentPin(pin)
+            setShowPinSetup(false)
+          }}
+          onCancel={() => setShowPinSetup(false)}
+        />
+      )}
     </div>
   )
 }

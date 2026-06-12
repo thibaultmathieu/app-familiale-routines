@@ -12,6 +12,8 @@ export interface PersistedState {
   activeTimers: ActiveTimer[]
   schemaVersion?: number
   onboardingCompleted?: boolean
+  /** Code parents à 4 chiffres (optionnel) — absent = appui long seul. */
+  parentPin?: string
 }
 
 export const CURRENT_SCHEMA_VERSION = 6
@@ -427,6 +429,13 @@ export function useAppState() {
     setState(prev => ({ ...prev, onboardingCompleted: true }))
   }, [setState])
 
+  const setParentPin = useCallback((pin: string | null) => {
+    setState(prev => {
+      const { parentPin: _removed, ...rest } = prev
+      return pin ? { ...rest, parentPin: pin } : rest
+    })
+  }, [setState])
+
   const childrenWithPhotos = useMemo(
     () => state.children.map(c => ({
       ...c,
@@ -471,5 +480,6 @@ export function useAppState() {
     addChild,
     removeChild,
     completeOnboarding,
+    setParentPin,
   }
 }
