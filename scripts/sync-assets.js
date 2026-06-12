@@ -55,13 +55,14 @@ for (const child of childrenDirs) {
   }
 
   const files = fs.readdirSync(srcDir)
-    .filter(f => f.toLowerCase().endsWith('.png'))
+    .filter(f => /\.(png|jpe?g|webp)$/i.test(f))
     .sort()
 
   const images = []
   files.forEach((file, i) => {
     const num = String(i + 1).padStart(3, '0')
-    const newName = `${child.name}-${num}.png`
+    const ext = path.extname(file).toLowerCase().replace('jpeg', 'jpg')
+    const newName = `${child.name}-${num}${ext}`
     fs.copyFileSync(path.join(srcDir, file), path.join(destDir, newName))
     images.push({ id: `${child.name}-${num}`, src: `/rewards/${child.name}/${newName}` })
   })

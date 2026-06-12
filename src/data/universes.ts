@@ -13,30 +13,55 @@ import { rewardImagesByChild } from './rewardManifest'
  */
 const UNIVERSE_DEFS: Universe[] = [
   {
-    id: 'evangelina',
-    name: 'Princesses & Merveilles',
-    emoji: '👑',
-    description: 'Des images féériques à collectionner',
-  },
-  {
-    id: 'noah',
-    name: 'Aventures & Héros',
-    emoji: '🦸',
-    description: 'Des images d’aventure à collectionner',
-  },
-  {
-    id: 'monstres',
-    name: 'Petits Monstres',
-    emoji: '👾',
-    description: 'Bientôt disponible…',
-    comingSoon: true,
+    id: 'kpop',
+    name: 'K-Pop Stars',
+    emoji: '🎤',
+    description: 'Des idoles qui brillent sur scène',
   },
   {
     id: 'kawaii',
     name: 'Kawaii & Capybaras',
     emoji: '🐹',
+    description: 'Des copains tout doux',
+  },
+  {
+    id: 'chiens',
+    name: 'Copains Chiens',
+    emoji: '🐶',
+    description: 'Les plus adorables des toutous',
+  },
+  {
+    id: 'super-heros',
+    name: 'Super-Héros',
+    emoji: '🦸',
+    description: 'Des héros prêts à tout sauver',
+  },
+  {
+    id: 'animaux-imaginaires',
+    name: 'Animaux Imaginaires',
+    emoji: '🦄',
+    description: 'Des créatures de rêve trop mignonnes',
+  },
+  {
+    id: 'creatures',
+    name: 'Créatures de Poche',
+    emoji: '🐉',
     description: 'Bientôt disponible…',
+    // Génération en attente : cap de dépense mensuel du projet Google atteint.
+    // Relever le cap puis : node scripts/generate-universe-images.mjs creatures animaux-imaginaires
     comingSoon: true,
+  },
+  {
+    id: 'evangelina',
+    name: 'Collection d’Évangéline',
+    emoji: '⭐',
+    description: 'La collection historique',
+  },
+  {
+    id: 'noah',
+    name: 'Collection de Noah',
+    emoji: '🌟',
+    description: 'La collection historique',
   },
 ]
 
