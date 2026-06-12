@@ -49,6 +49,44 @@ export default function ParentPanel({
     }
   }
 
+  // Sauvegarde : les données vivent uniquement en localStorage sur l'appareil —
+  // l'export/import est le filet de sécurité (changement d'appareil, perte de données)
+  const handleExportBackup = () => {
+    const raw = localStorage.getItem('routines-familiales')
+    if (!raw) return
+    const blob = new Blob([raw], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const d = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    link.href = url
+    link.download = `routines-sauvegarde-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result))
+        if (!Array.isArray(parsed.children) || !Array.isArray(parsed.routineTemplates)) {
+          throw new Error('format invalide')
+        }
+        if (!window.confirm('Remplacer les données actuelles (enfants, routines, collections) par cette sauvegarde ?')) return
+        // La chaîne de migration s'applique au rechargement (sauvegardes anciennes incluses)
+        localStorage.setItem('routines-familiales', JSON.stringify(parsed))
+        window.location.reload()
+      } catch {
+        window.alert('Ce fichier n\'est pas une sauvegarde valide.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
   const hasActiveRoutine = activeRoutines.length > 0
   const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
 
@@ -237,6 +275,27 @@ export default function ParentPanel({
             <p className="text-ink-faint text-sm">Aucune image à retirer</p>
           )
         )}
+      </Card>
+
+      {/* Sauvegarde */}
+      <Card className="p-6 mb-6">
+        <SectionTitle>Sauvegarde</SectionTitle>
+        <p className="text-sm text-ink-faint mb-3">
+          Les données (enfants, routines, collections d'images) vivent uniquement sur cet appareil.
+          Exportez une sauvegarde de temps en temps — elle permet de tout restaurer.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="soft" size="lg" className="flex-1" onClick={handleExportBackup}>
+            💾 Exporter
+          </Button>
+          <label className="flex-1">
+            <span className="sr-only">Restaurer une sauvegarde</span>
+            <input type="file" accept="application/json,.json" className="hidden" onChange={handleImportBackup} />
+            <Button variant="soft" size="lg" className="w-full pointer-events-none">
+              📂 Restaurer…
+            </Button>
+          </label>
+        </div>
       </Card>
 
       {/* Définition du code parents */}
