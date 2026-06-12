@@ -34,17 +34,21 @@ The Vitest suite in `src/hooks/useAppState.test.ts` is the contract for state lo
 **Design system**: warm tokens in `tailwind.config.js` (`warm`, `ink`, `line`, `success`, `honey`, `danger`, `night` + `shadow-card/raised/overlay` + `z-overlay/modal/toast`), brand fonts self-hosted via `@fontsource-variable/fredoka` (display) and `@fontsource-variable/nunito` (body), UI primitives in `src/components/ui/` (Card, Button, Pill, Badge, Overlay, ScreenHeader, IconButton, TextInput, FieldLabel). Child identity colors live in `src/theme.ts` (`COLOR_PALETTE`, `tint()` for translucent surfaces, `childTextColor()` for AA-readable colored text). Never concatenate hex + alpha (`color + '15'`) — use `tint()`.
 
 **Screens** (rendered by `src/App.tsx` based on `currentScreen`):
-- `home` → `HomeScreen` — routine launcher + custom routine form + parental gate (long-press gear → math challenge in `ParentGate.tsx`)
-- `routine` → `ActiveRoutineScreen` — split-screen (2 children side by side), sounds, music, timers
-- `parent` → `ParentPanel` — reset/stop controls, timer launcher, sanctions, universe access
-- `gallery` → `GalleryScreen` — per-child reward image collection (universe-aware)
-- `universe-select` → `UniverseSelectScreen` — per-child reward universe choice (parent side)
+- `home` → `HomeScreen` — routine launcher + custom routine form + parent access (long-press gear; PIN gate in `ParentGate.tsx` only if a code is set) + universe-unlock banner
+- `routine` → `ActiveRoutineScreen` — split-screen (2 children side by side), sounds, music, timers, universe-unlock choice after celebration
+- `parent` → `ParentPanel` — reset/stop controls, timer launcher, sanctions, universe access, optional 4-digit parent PIN (`PinSetupOverlay.tsx`/`PinPad.tsx`)
+- `gallery` → `GalleryScreen` — per-child reward image collection (universe-aware, shows progress to next universe unlock)
+- `universe-select` → `UniverseSelectScreen` — per-child universes (parent side): switch among owned, grant locked ones early
 
-**Universe system (schema V6)**: each child has a `universeId` pointing to a pool key in `rewardManifest.ts`. Universe metadata lives in `src/data/universes.ts` (active + `comingSoon` teasers). Pool resolution: `getRewardImagesForChildEntry()` in `src/data/rewardImages.ts` (falls back to legacy index round-robin). Per-universe progress = intersection `unlockedImages ∩ pool`, so switching universes loses nothing; cycle reset only clears the current universe's ids. To add a universe: drop an image folder in `images_rewards/<Name>/`, run `npm run sync-assets`, add an entry in `universes.ts` (id = lowercased folder name; legacy aliases map `Evangeline→evangelina`, `Noah→noah`).
+**Onboarding** (`OnboardingScreen.tsx`, when `onboardingCompleted` is false): welcome → children (photo strongly suggested, color picked with the child) → starting universe per child → routines. A static splash in `index.html` (`#splash`) shows before React mounts; `App.tsx` fades it out. Logo source: `public/icons/icon.svg` (`AppLogo.tsx` inline copy; `node scripts/generate-icons.mjs` regenerates the PNG icons).
+
+**Universe system (schema V7)**: each child has `universeId` (active pool key in `rewardManifest.ts`) and `unlockedUniverseIds` (owned universes). Universe metadata lives in `src/data/universes.ts`. Pool resolution: `getRewardImagesForChildEntry()` in `src/data/rewardImages.ts` (falls back to legacy index round-robin). Per-universe progress = intersection `unlockedImages ∩ pool`, so switching universes loses nothing; cycle reset only clears the current universe's ids. To add a universe: drop an image folder in `images_rewards/<Name>/` (or generate one via `node scripts/generate-universe-images.mjs <id>` — requires `GEMINI_API_KEY` in `.env.local`, never committed), run `npm run sync-assets`, add an entry in `universes.ts` (id = slugified folder name).
+
+**Universe progression** (`src/data/universeProgress.ts`): gentle gamification — completing ≥1 routine in a day increments `routineDayCount` (once per local day, tracked via `lastRoutineDay`). A child may own `allowedUniverseCount(dayCount)` universes: 1 at start, +1 at 2 days, then +1 every 5 days. When `pendingUniverseChoices() > 0`, the child picks a new universe (`UniverseUnlockOverlay.tsx`, offered after celebration and via a home banner). Parents can grant any universe early from `UniverseSelectScreen`. No streaks, no loss mechanics — keep it that way.
 
 **Guard rails**: custom routines created from Home are `ephemeral: true` and purged on "Nouvelle journée"/stop (editing one in the routine editor makes it permanent). Caps: `MAX_ROUTINE_TEMPLATES` (30), `MAX_ACTIVE_TIMERS` (6). Onboarding drafts persist in localStorage (`routines-onboarding-draft`/`-step`) and are cleared on completion.
 
-**Asset pipeline**: Raw images live in `images_rewards/Evangeline/` and `images_rewards/Noah/` (not committed). `scripts/sync-assets.js` copies and renames them to `public/rewards/{child}/` and generates two TypeScript manifests:
+**Asset pipeline**: Raw images live in `images_rewards/<Universe>/` folders (not committed). `scripts/sync-assets.js` copies and renames them to `public/rewards/{universe}/`, purges orphan destination pools, and generates two TypeScript manifests:
 - `src/data/rewardManifest.ts` — per-child image arrays (auto-generated, do not edit)
 - `src/data/musicManifest.ts` — music track list (auto-generated, do not edit)
 
@@ -62,4 +66,4 @@ Run `npm run sync-assets` after adding/removing source images or music files.
 
 **Gallery navigation**: `galleryReturnScreen` in state (`'routine'` or `'parent'`) controls where the back button goes. Set it before calling `setCurrentScreen('gallery')`.
 
-**Migrations**: `migrateState()` in `useAppState` chains V1→V6 (V2 reward-id reset, V3 scheduledDays, V5 onboarding flag, V6 universeId assignment). Bump `CURRENT_SCHEMA_VERSION` and add a guarded block + tests for any persisted-shape change.
+**Migrations**: `migrateState()` in `useAppState` chains V1→V7 (V2 reward-id reset, V3 scheduledDays, V5 onboarding flag, V6 universeId assignment, V7 legacy-pool remap + dead reward-id cleanup + pipi preset removal + universe progression init). Bump `CURRENT_SCHEMA_VERSION` and add a guarded block + tests for any persisted-shape change.
