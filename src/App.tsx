@@ -45,6 +45,18 @@ export default function App() {
     return initAudioOnGesture()
   }, [])
 
+  // Retire l'écran interstitiel (index.html) en fondu — durée minimale pour
+  // éviter le flash de marque quand l'app est déjà en cache.
+  useEffect(() => {
+    const splash = document.getElementById('splash')
+    if (!splash) return
+    const hide = setTimeout(() => {
+      splash.classList.add('splash-hide')
+      setTimeout(() => splash.remove(), 450)
+    }, 900)
+    return () => clearTimeout(hide)
+  }, [])
+
   if (!appState.onboardingCompleted) {
     return (
       <div className="h-full bg-warm-100 no-select">

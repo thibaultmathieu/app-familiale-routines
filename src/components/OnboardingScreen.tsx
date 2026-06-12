@@ -5,6 +5,7 @@ import DayOfWeekPicker from './DayOfWeekPicker'
 import EmojiPicker from './EmojiPicker'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { COLOR_PALETTE } from '../theme'
+import AppLogo from './AppLogo'
 import { Button, Card, FieldLabel, IconButton, TextInput } from './ui'
 
 const DRAFT_CHILDREN_KEY = 'routines-onboarding-draft'
@@ -27,7 +28,7 @@ interface OnboardingScreenProps {
   completeOnboarding: () => void
 }
 
-type Step = 'children' | 'routines' | 'routine-detail'
+type Step = 'welcome' | 'children' | 'routines' | 'routine-detail'
 
 export default function OnboardingScreen({
   routineTemplates,
@@ -37,7 +38,7 @@ export default function OnboardingScreen({
   completeOnboarding,
 }: OnboardingScreenProps) {
   // Brouillon persisté : un reload en plein onboarding ne perd ni les enfants saisis ni l'étape
-  const [step, setStep] = useLocalStorage<Step>(DRAFT_STEP_KEY, 'children')
+  const [step, setStep] = useLocalStorage<Step>(DRAFT_STEP_KEY, 'welcome')
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null)
   const [localChildren, setLocalChildren] = useLocalStorage<LocalChild[]>(DRAFT_CHILDREN_KEY, [
     { id: `child-${Date.now()}`, name: '', color: COLOR_PALETTE[0], photo: DEFAULT_AVATAR_PATH },
@@ -119,6 +120,44 @@ export default function OnboardingScreen({
       <div className={`w-3 h-3 rounded-full transition-colors ${step !== 'children' ? 'bg-honey-400' : 'bg-warm-200'}`} />
     </div>
   )
+
+  // --- Welcome step ---
+
+  if (step === 'welcome') {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6 max-w-xl mx-auto text-center overflow-y-auto">
+        <AppLogo size={110} className="mb-5 drop-shadow-sm" />
+        <h1 className="text-3xl font-display font-semibold text-ink mb-3">
+          Bienvenue dans Routines Familiales
+        </h1>
+        <p className="text-lg text-ink-soft mb-8 max-w-md">
+          Des routines que vos enfants ont envie de cocher,
+          des images à collectionner en récompense — et vous gardez la main.
+        </p>
+
+        <div className="w-full max-w-md space-y-3 mb-8 text-left">
+          <Card className="p-4 flex items-center gap-4">
+            <span className="text-3xl" aria-hidden="true">👧</span>
+            <p className="text-ink-soft text-sm"><span className="font-semibold text-ink">Créez le profil de vos enfants</span> — prénom, photo, couleur préférée</p>
+          </Card>
+          <Card className="p-4 flex items-center gap-4">
+            <span className="text-3xl" aria-hidden="true">✅</span>
+            <p className="text-ink-soft text-sm"><span className="font-semibold text-ink">Ajustez vos routines</span> — matin, retour d'école, soir… ou les vôtres</p>
+          </Card>
+          <Card className="p-4 flex items-center gap-4">
+            <span className="text-3xl" aria-hidden="true">🎁</span>
+            <p className="text-ink-soft text-sm"><span className="font-semibold text-ink">C'est prêt !</span> — chaque routine terminée fait gagner une image à collectionner</p>
+          </Card>
+        </div>
+
+        <Button variant="primary" size="xl" className="w-full max-w-md" onClick={() => setStep('children')}>
+          Commencer
+        </Button>
+        <p className="text-sm text-ink-faint mt-3">⏱️ Prêt en 2 minutes</p>
+        <div className="h-6 shrink-0" />
+      </div>
+    )
+  }
 
   // --- Routine detail sub-step ---
 

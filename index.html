@@ -6,10 +6,62 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Routines" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>Routines Familiales</title>
+    <style>
+      /* Écran interstitiel — affiché avant le chargement du JS, retiré par React au montage */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        background: #F5F0EB;
+        transition: opacity 0.4s ease;
+      }
+      #splash.splash-hide { opacity: 0; pointer-events: none; }
+      #splash svg { animation: splash-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+      #splash p {
+        margin: 0;
+        font-family: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+        font-size: 24px;
+        font-weight: 600;
+        color: #3F3A35;
+        animation: splash-fade 0.8s ease 0.2s both;
+      }
+      @keyframes splash-pop {
+        from { transform: scale(0.7); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      @keyframes splash-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    </style>
   </head>
   <body class="bg-warm-100">
+    <div id="splash" aria-hidden="true">
+      <svg viewBox="0 0 512 512" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" rx="116" fill="#FDFBF7"/>
+        <g stroke="#ECC178" stroke-width="22" stroke-linecap="round">
+          <line x1="256" y1="64" x2="256" y2="100"/>
+          <line x1="256" y1="412" x2="256" y2="448"/>
+          <line x1="64" y1="256" x2="100" y2="256"/>
+          <line x1="412" y1="256" x2="448" y2="256"/>
+          <line x1="120.2" y1="120.2" x2="145.7" y2="145.7"/>
+          <line x1="366.3" y1="366.3" x2="391.8" y2="391.8"/>
+          <line x1="120.2" y1="391.8" x2="145.7" y2="366.3"/>
+          <line x1="366.3" y1="145.7" x2="391.8" y2="120.2"/>
+        </g>
+        <circle cx="256" cy="256" r="118" fill="#E8A33D"/>
+        <path d="M 200 258 L 240 298 L 318 212" fill="none" stroke="#FDFBF7" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p>Routines Familiales</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
