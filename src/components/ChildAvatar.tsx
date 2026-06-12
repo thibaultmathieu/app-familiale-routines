@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface ChildAvatarProps {
   photo: string
   color: string
@@ -14,7 +16,10 @@ export function isDefaultAvatar(photo: string): boolean {
 }
 
 export default function ChildAvatar({ photo, color, size = 56, className = '', alt = '' }: ChildAvatarProps) {
-  if (isDefaultAvatar(photo)) {
+  // Photo qui ne charge plus (fichier disparu d'une ancienne installation) → silhouette
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  if (isDefaultAvatar(photo) || loadFailed) {
     return (
       <svg
         viewBox="0 0 100 100"
@@ -41,6 +46,7 @@ export default function ChildAvatar({ photo, color, size = 56, className = '', a
       width={size}
       height={size}
       className={`rounded-full object-cover ${className}`}
+      onError={() => setLoadFailed(true)}
     />
   )
 }

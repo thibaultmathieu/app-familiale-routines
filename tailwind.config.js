@@ -56,9 +56,6 @@ export default {
           400: '#8B85D6',
           500: '#6F68C4',
         },
-        // Couleurs legacy par enfant (utilisées par d'anciens états persistés)
-        evangelina: '#A78BFA',
-        noah: '#60A5FA',
       },
       fontFamily: {
         display: ['"Fredoka Variable"', 'ui-rounded', 'system-ui', 'sans-serif'],

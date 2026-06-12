@@ -84,6 +84,42 @@ export const rewardImagesByChild: Record<string, { id: string; src: string }[]> 
     {
       "id": "animaux-imaginaires-021",
       "src": "/rewards/animaux-imaginaires/animaux-imaginaires-021.webp"
+    },
+    {
+      "id": "animaux-imaginaires-022",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-022.webp"
+    },
+    {
+      "id": "animaux-imaginaires-023",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-023.webp"
+    },
+    {
+      "id": "animaux-imaginaires-024",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-024.webp"
+    },
+    {
+      "id": "animaux-imaginaires-025",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-025.webp"
+    },
+    {
+      "id": "animaux-imaginaires-026",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-026.webp"
+    },
+    {
+      "id": "animaux-imaginaires-027",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-027.webp"
+    },
+    {
+      "id": "animaux-imaginaires-028",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-028.webp"
+    },
+    {
+      "id": "animaux-imaginaires-029",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-029.webp"
+    },
+    {
+      "id": "animaux-imaginaires-030",
+      "src": "/rewards/animaux-imaginaires/animaux-imaginaires-030.webp"
     }
   ],
   "chiens": [
@@ -208,214 +244,126 @@ export const rewardImagesByChild: Record<string, { id: string; src: string }[]> 
       "src": "/rewards/chiens/chiens-030.webp"
     }
   ],
-  "evangelina": [
+  "creatures": [
     {
-      "id": "evangelina-001",
-      "src": "/rewards/evangelina/evangelina-001.png"
+      "id": "creatures-001",
+      "src": "/rewards/creatures/creatures-001.webp"
     },
     {
-      "id": "evangelina-002",
-      "src": "/rewards/evangelina/evangelina-002.png"
+      "id": "creatures-002",
+      "src": "/rewards/creatures/creatures-002.webp"
     },
     {
-      "id": "evangelina-003",
-      "src": "/rewards/evangelina/evangelina-003.png"
+      "id": "creatures-003",
+      "src": "/rewards/creatures/creatures-003.webp"
     },
     {
-      "id": "evangelina-004",
-      "src": "/rewards/evangelina/evangelina-004.png"
+      "id": "creatures-004",
+      "src": "/rewards/creatures/creatures-004.webp"
     },
     {
-      "id": "evangelina-005",
-      "src": "/rewards/evangelina/evangelina-005.png"
+      "id": "creatures-005",
+      "src": "/rewards/creatures/creatures-005.webp"
     },
     {
-      "id": "evangelina-006",
-      "src": "/rewards/evangelina/evangelina-006.png"
+      "id": "creatures-006",
+      "src": "/rewards/creatures/creatures-006.webp"
     },
     {
-      "id": "evangelina-007",
-      "src": "/rewards/evangelina/evangelina-007.png"
+      "id": "creatures-007",
+      "src": "/rewards/creatures/creatures-007.webp"
     },
     {
-      "id": "evangelina-008",
-      "src": "/rewards/evangelina/evangelina-008.png"
+      "id": "creatures-008",
+      "src": "/rewards/creatures/creatures-008.webp"
     },
     {
-      "id": "evangelina-009",
-      "src": "/rewards/evangelina/evangelina-009.png"
+      "id": "creatures-009",
+      "src": "/rewards/creatures/creatures-009.webp"
     },
     {
-      "id": "evangelina-010",
-      "src": "/rewards/evangelina/evangelina-010.png"
+      "id": "creatures-010",
+      "src": "/rewards/creatures/creatures-010.webp"
     },
     {
-      "id": "evangelina-011",
-      "src": "/rewards/evangelina/evangelina-011.png"
+      "id": "creatures-011",
+      "src": "/rewards/creatures/creatures-011.webp"
     },
     {
-      "id": "evangelina-012",
-      "src": "/rewards/evangelina/evangelina-012.png"
+      "id": "creatures-012",
+      "src": "/rewards/creatures/creatures-012.webp"
     },
     {
-      "id": "evangelina-013",
-      "src": "/rewards/evangelina/evangelina-013.png"
+      "id": "creatures-013",
+      "src": "/rewards/creatures/creatures-013.webp"
     },
     {
-      "id": "evangelina-014",
-      "src": "/rewards/evangelina/evangelina-014.png"
+      "id": "creatures-014",
+      "src": "/rewards/creatures/creatures-014.webp"
     },
     {
-      "id": "evangelina-015",
-      "src": "/rewards/evangelina/evangelina-015.png"
+      "id": "creatures-015",
+      "src": "/rewards/creatures/creatures-015.webp"
     },
     {
-      "id": "evangelina-016",
-      "src": "/rewards/evangelina/evangelina-016.png"
+      "id": "creatures-016",
+      "src": "/rewards/creatures/creatures-016.webp"
     },
     {
-      "id": "evangelina-017",
-      "src": "/rewards/evangelina/evangelina-017.png"
+      "id": "creatures-017",
+      "src": "/rewards/creatures/creatures-017.webp"
     },
     {
-      "id": "evangelina-018",
-      "src": "/rewards/evangelina/evangelina-018.png"
+      "id": "creatures-018",
+      "src": "/rewards/creatures/creatures-018.webp"
     },
     {
-      "id": "evangelina-019",
-      "src": "/rewards/evangelina/evangelina-019.png"
+      "id": "creatures-019",
+      "src": "/rewards/creatures/creatures-019.webp"
     },
     {
-      "id": "evangelina-020",
-      "src": "/rewards/evangelina/evangelina-020.png"
+      "id": "creatures-020",
+      "src": "/rewards/creatures/creatures-020.webp"
     },
     {
-      "id": "evangelina-021",
-      "src": "/rewards/evangelina/evangelina-021.png"
+      "id": "creatures-021",
+      "src": "/rewards/creatures/creatures-021.webp"
     },
     {
-      "id": "evangelina-022",
-      "src": "/rewards/evangelina/evangelina-022.png"
+      "id": "creatures-022",
+      "src": "/rewards/creatures/creatures-022.webp"
     },
     {
-      "id": "evangelina-023",
-      "src": "/rewards/evangelina/evangelina-023.png"
+      "id": "creatures-023",
+      "src": "/rewards/creatures/creatures-023.webp"
     },
     {
-      "id": "evangelina-024",
-      "src": "/rewards/evangelina/evangelina-024.png"
+      "id": "creatures-024",
+      "src": "/rewards/creatures/creatures-024.webp"
     },
     {
-      "id": "evangelina-025",
-      "src": "/rewards/evangelina/evangelina-025.png"
+      "id": "creatures-025",
+      "src": "/rewards/creatures/creatures-025.webp"
     },
     {
-      "id": "evangelina-026",
-      "src": "/rewards/evangelina/evangelina-026.png"
+      "id": "creatures-026",
+      "src": "/rewards/creatures/creatures-026.webp"
     },
     {
-      "id": "evangelina-027",
-      "src": "/rewards/evangelina/evangelina-027.png"
+      "id": "creatures-027",
+      "src": "/rewards/creatures/creatures-027.webp"
     },
     {
-      "id": "evangelina-028",
-      "src": "/rewards/evangelina/evangelina-028.png"
+      "id": "creatures-028",
+      "src": "/rewards/creatures/creatures-028.webp"
     },
     {
-      "id": "evangelina-029",
-      "src": "/rewards/evangelina/evangelina-029.png"
+      "id": "creatures-029",
+      "src": "/rewards/creatures/creatures-029.webp"
     },
     {
-      "id": "evangelina-030",
-      "src": "/rewards/evangelina/evangelina-030.png"
-    },
-    {
-      "id": "evangelina-031",
-      "src": "/rewards/evangelina/evangelina-031.png"
-    },
-    {
-      "id": "evangelina-032",
-      "src": "/rewards/evangelina/evangelina-032.png"
-    },
-    {
-      "id": "evangelina-033",
-      "src": "/rewards/evangelina/evangelina-033.png"
-    },
-    {
-      "id": "evangelina-034",
-      "src": "/rewards/evangelina/evangelina-034.png"
-    },
-    {
-      "id": "evangelina-035",
-      "src": "/rewards/evangelina/evangelina-035.png"
-    },
-    {
-      "id": "evangelina-036",
-      "src": "/rewards/evangelina/evangelina-036.png"
-    },
-    {
-      "id": "evangelina-037",
-      "src": "/rewards/evangelina/evangelina-037.png"
-    },
-    {
-      "id": "evangelina-038",
-      "src": "/rewards/evangelina/evangelina-038.png"
-    },
-    {
-      "id": "evangelina-039",
-      "src": "/rewards/evangelina/evangelina-039.png"
-    },
-    {
-      "id": "evangelina-040",
-      "src": "/rewards/evangelina/evangelina-040.png"
-    },
-    {
-      "id": "evangelina-041",
-      "src": "/rewards/evangelina/evangelina-041.png"
-    },
-    {
-      "id": "evangelina-042",
-      "src": "/rewards/evangelina/evangelina-042.png"
-    },
-    {
-      "id": "evangelina-043",
-      "src": "/rewards/evangelina/evangelina-043.png"
-    },
-    {
-      "id": "evangelina-044",
-      "src": "/rewards/evangelina/evangelina-044.png"
-    },
-    {
-      "id": "evangelina-045",
-      "src": "/rewards/evangelina/evangelina-045.png"
-    },
-    {
-      "id": "evangelina-046",
-      "src": "/rewards/evangelina/evangelina-046.png"
-    },
-    {
-      "id": "evangelina-047",
-      "src": "/rewards/evangelina/evangelina-047.png"
-    },
-    {
-      "id": "evangelina-048",
-      "src": "/rewards/evangelina/evangelina-048.png"
-    },
-    {
-      "id": "evangelina-049",
-      "src": "/rewards/evangelina/evangelina-049.png"
-    },
-    {
-      "id": "evangelina-050",
-      "src": "/rewards/evangelina/evangelina-050.png"
-    },
-    {
-      "id": "evangelina-051",
-      "src": "/rewards/evangelina/evangelina-051.png"
-    },
-    {
-      "id": "evangelina-052",
-      "src": "/rewards/evangelina/evangelina-052.png"
+      "id": "creatures-030",
+      "src": "/rewards/creatures/creatures-030.webp"
     }
   ],
   "kawaii": [
@@ -660,192 +608,6 @@ export const rewardImagesByChild: Record<string, { id: string; src: string }[]> 
     {
       "id": "kpop-030",
       "src": "/rewards/kpop/kpop-030.webp"
-    }
-  ],
-  "noah": [
-    {
-      "id": "noah-001",
-      "src": "/rewards/noah/noah-001.png"
-    },
-    {
-      "id": "noah-002",
-      "src": "/rewards/noah/noah-002.png"
-    },
-    {
-      "id": "noah-003",
-      "src": "/rewards/noah/noah-003.png"
-    },
-    {
-      "id": "noah-004",
-      "src": "/rewards/noah/noah-004.png"
-    },
-    {
-      "id": "noah-005",
-      "src": "/rewards/noah/noah-005.png"
-    },
-    {
-      "id": "noah-006",
-      "src": "/rewards/noah/noah-006.png"
-    },
-    {
-      "id": "noah-007",
-      "src": "/rewards/noah/noah-007.png"
-    },
-    {
-      "id": "noah-008",
-      "src": "/rewards/noah/noah-008.png"
-    },
-    {
-      "id": "noah-009",
-      "src": "/rewards/noah/noah-009.png"
-    },
-    {
-      "id": "noah-010",
-      "src": "/rewards/noah/noah-010.png"
-    },
-    {
-      "id": "noah-011",
-      "src": "/rewards/noah/noah-011.png"
-    },
-    {
-      "id": "noah-012",
-      "src": "/rewards/noah/noah-012.png"
-    },
-    {
-      "id": "noah-013",
-      "src": "/rewards/noah/noah-013.png"
-    },
-    {
-      "id": "noah-014",
-      "src": "/rewards/noah/noah-014.png"
-    },
-    {
-      "id": "noah-015",
-      "src": "/rewards/noah/noah-015.png"
-    },
-    {
-      "id": "noah-016",
-      "src": "/rewards/noah/noah-016.png"
-    },
-    {
-      "id": "noah-017",
-      "src": "/rewards/noah/noah-017.png"
-    },
-    {
-      "id": "noah-018",
-      "src": "/rewards/noah/noah-018.png"
-    },
-    {
-      "id": "noah-019",
-      "src": "/rewards/noah/noah-019.png"
-    },
-    {
-      "id": "noah-020",
-      "src": "/rewards/noah/noah-020.png"
-    },
-    {
-      "id": "noah-021",
-      "src": "/rewards/noah/noah-021.png"
-    },
-    {
-      "id": "noah-022",
-      "src": "/rewards/noah/noah-022.png"
-    },
-    {
-      "id": "noah-023",
-      "src": "/rewards/noah/noah-023.png"
-    },
-    {
-      "id": "noah-024",
-      "src": "/rewards/noah/noah-024.png"
-    },
-    {
-      "id": "noah-025",
-      "src": "/rewards/noah/noah-025.png"
-    },
-    {
-      "id": "noah-026",
-      "src": "/rewards/noah/noah-026.png"
-    },
-    {
-      "id": "noah-027",
-      "src": "/rewards/noah/noah-027.png"
-    },
-    {
-      "id": "noah-028",
-      "src": "/rewards/noah/noah-028.png"
-    },
-    {
-      "id": "noah-029",
-      "src": "/rewards/noah/noah-029.png"
-    },
-    {
-      "id": "noah-030",
-      "src": "/rewards/noah/noah-030.png"
-    },
-    {
-      "id": "noah-031",
-      "src": "/rewards/noah/noah-031.png"
-    },
-    {
-      "id": "noah-032",
-      "src": "/rewards/noah/noah-032.png"
-    },
-    {
-      "id": "noah-033",
-      "src": "/rewards/noah/noah-033.png"
-    },
-    {
-      "id": "noah-034",
-      "src": "/rewards/noah/noah-034.png"
-    },
-    {
-      "id": "noah-035",
-      "src": "/rewards/noah/noah-035.png"
-    },
-    {
-      "id": "noah-036",
-      "src": "/rewards/noah/noah-036.png"
-    },
-    {
-      "id": "noah-037",
-      "src": "/rewards/noah/noah-037.png"
-    },
-    {
-      "id": "noah-038",
-      "src": "/rewards/noah/noah-038.png"
-    },
-    {
-      "id": "noah-039",
-      "src": "/rewards/noah/noah-039.png"
-    },
-    {
-      "id": "noah-040",
-      "src": "/rewards/noah/noah-040.png"
-    },
-    {
-      "id": "noah-041",
-      "src": "/rewards/noah/noah-041.png"
-    },
-    {
-      "id": "noah-042",
-      "src": "/rewards/noah/noah-042.png"
-    },
-    {
-      "id": "noah-043",
-      "src": "/rewards/noah/noah-043.png"
-    },
-    {
-      "id": "noah-044",
-      "src": "/rewards/noah/noah-044.png"
-    },
-    {
-      "id": "noah-045",
-      "src": "/rewards/noah/noah-045.png"
-    },
-    {
-      "id": "noah-046",
-      "src": "/rewards/noah/noah-046.png"
     }
   ],
   "super-heros": [

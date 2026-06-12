@@ -46,22 +46,7 @@ const UNIVERSE_DEFS: Universe[] = [
     id: 'creatures',
     name: 'Créatures de Poche',
     emoji: '🐉',
-    description: 'Bientôt disponible…',
-    // Génération en attente : cap de dépense mensuel du projet Google atteint.
-    // Relever le cap puis : node scripts/generate-universe-images.mjs creatures animaux-imaginaires
-    comingSoon: true,
-  },
-  {
-    id: 'evangelina',
-    name: 'Collection d’Évangéline',
-    emoji: '⭐',
-    description: 'La collection historique',
-  },
-  {
-    id: 'noah',
-    name: 'Collection de Noah',
-    emoji: '🌟',
-    description: 'La collection historique',
+    description: 'Des petites créatures élémentaires',
   },
 ]
 

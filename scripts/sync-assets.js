@@ -6,12 +6,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 
 // Config — chaque sous-dossier de images_rewards/ devient un pool d'univers.
-// Les alias préservent les clés historiques du manifeste (IDs d'images déjà
-// débloquées en localStorage) ; tout nouveau dossier est slugifié automatiquement.
-const POOL_KEY_ALIASES = {
-  Evangeline: 'evangelina',
-  Noah: 'noah',
-}
+// Les alias préservent une clé de manifeste historique si elle diffère du slug
+// du dossier ; tout nouveau dossier est slugifié automatiquement.
+const POOL_KEY_ALIASES = {}
 
 function slugifyPoolKey(folderName) {
   return folderName
@@ -42,6 +39,18 @@ const musicTitles = {
 
 // --- Images ---
 const rewardManifest = {}
+
+// Purge les pools de destination dont le dossier source a disparu
+const rewardsDest = path.join(ROOT, 'public', 'rewards')
+if (fs.existsSync(rewardsDest)) {
+  const validNames = new Set(childrenDirs.map(c => c.name))
+  for (const entry of fs.readdirSync(rewardsDest, { withFileTypes: true })) {
+    if (entry.isDirectory() && !validNames.has(entry.name)) {
+      fs.rmSync(path.join(rewardsDest, entry.name), { recursive: true })
+      console.log(`[sync-assets] ${entry.name}: pool orphelin supprimé de public/rewards`)
+    }
+  }
+}
 
 for (const child of childrenDirs) {
   const srcDir = path.join(ROOT, child.sourceDir)
