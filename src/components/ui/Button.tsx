@@ -28,6 +28,10 @@ const SIZES: Record<Size, string> = {
 interface ButtonProps {
   children: ReactNode
   onClick?: () => void
+  /** Début d'appui (souris/tactile) — pour les actions à appui long (verrou parental). */
+  onPressStart?: () => void
+  /** Fin/annulation d'appui (relâché, quitté, fin de touche). */
+  onPressEnd?: () => void
   variant?: Variant
   size?: Size
   disabled?: boolean
@@ -40,6 +44,8 @@ interface ButtonProps {
 export default function Button({
   children,
   onClick,
+  onPressStart,
+  onPressEnd,
   variant = 'primary',
   size = 'lg',
   disabled,
@@ -52,6 +58,11 @@ export default function Button({
     <button
       type={type}
       onClick={onClick}
+      onMouseDown={onPressStart}
+      onMouseUp={onPressEnd}
+      onMouseLeave={onPressEnd}
+      onTouchStart={onPressStart}
+      onTouchEnd={onPressEnd}
       disabled={disabled}
       style={style}
       aria-label={ariaLabel}

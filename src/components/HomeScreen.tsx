@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { ActiveRoutine, ActiveTimer, RoutineTemplate, Screen, Child } from '../types'
 import ChildAvatar from './ChildAvatar'
+import ChildTargetPicker from './ChildTargetPicker'
 import ProgressBar from './ProgressBar'
 import TimerDisplay from './TimerDisplay'
 import TimerExpiredOverlay from './TimerExpiredOverlay'
@@ -11,7 +12,7 @@ import { useTimerTick } from '../hooks/useTimer'
 import { ACTIVE_UNIVERSES } from '../data/universes'
 import { ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
 import { tint } from '../theme'
-import { Badge, Button, Card, Pill, TextInput } from './ui'
+import { Badge, Button, Card, TextInput } from './ui'
 
 interface HomeScreenProps {
   children: Child[]
@@ -64,7 +65,10 @@ export default function HomeScreen({
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customName, setCustomName] = useState('')
   const [customTasks, setCustomTasks] = useState<string[]>([''])
-  const [customTargetIds, setCustomTargetIds] = useState<string[]>(() => children.map(c => c.id))
+  const [customTarget, setCustomTarget] = useState<string[] | undefined>(undefined)
+  const [showMissionForm, setShowMissionForm] = useState(false)
+  const [missionLabel, setMissionLabel] = useState('')
+  const [missionTarget, setMissionTarget] = useState<string[] | undefined>(undefined)
   const [expiredTimer, setExpiredTimer] = useState<ActiveTimer | null>(null)
   const [showGearHint, setShowGearHint] = useState(() => {
     return !localStorage.getItem('gearHintSeen')
@@ -73,18 +77,24 @@ export default function HomeScreen({
   const [universePickChildId, setUniversePickChildId] = useState<string | null>(null)
   const { playTimerEnd } = useSound()
 
-  // Appui long pour accéder à l'espace parents ; code en plus seulement si configuré
+  // Verrou parental unifié : appui long 2 s sur une action « parents », + code si
+  // configuré. Sert la roue crantée ET la création de tâches à récompense
+  // (mission express, routine perso) — les enfants ne peuvent pas en créer.
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const handleGearDown = useCallback(() => {
+  const pendingAction = useRef<(() => void) | null>(null)
+
+  const startLongPress = useCallback((action: () => void) => {
     longPressTimer.current = setTimeout(() => {
       if (parentPin) {
+        pendingAction.current = action
         setShowParentGate(true)
       } else {
-        setCurrentScreen('parent')
+        action()
       }
     }, 2000)
-  }, [parentPin, setCurrentScreen])
-  const handleGearUp = useCallback(() => {
+  }, [parentPin])
+
+  const cancelLongPress = useCallback(() => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }, [])
 
@@ -98,6 +108,9 @@ export default function HomeScreen({
 
   // Group active routines by templateId
   const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
+
+  // Toutes les routines du jour sont-elles terminées ? (message « nouvelle journée »)
+  const allRoutinesDone = activeRoutines.length > 0 && activeRoutines.every(ar => ar.completedAt != null)
 
   const handleLaunchFixed = (templateId: string) => {
     // If routine already active, just navigate to it
@@ -121,12 +134,31 @@ export default function HomeScreen({
       tasks: validTasks.map((t, i) => ({ id: `t-${Date.now()}-${i}`, label: t.trim(), icon: '📋' })),
     })
 
-    const childIds = customTargetIds.length > 0 ? customTargetIds : children.map(c => c.id)
+    const childIds = customTarget && customTarget.length > 0 ? customTarget : children.map(c => c.id)
 
     launchRoutine(templateId, childIds)
     setShowCustomForm(false)
     setCustomName('')
     setCustomTasks([''])
+    setCustomTarget(undefined)
+  }
+
+  // Mission express : tâche ponctuelle hors routine qui débloque une image.
+  // Créée derrière le verrou parental (anti-triche), purgée à la nouvelle journée.
+  const handleLaunchMission = () => {
+    const label = missionLabel.trim()
+    if (!label) return
+    const templateId = addRoutine({
+      name: label,
+      icon: '🎯',
+      ephemeral: true,
+      tasks: [{ id: `mission-${Date.now()}`, label, icon: '🎯' }],
+    })
+    const childIds = missionTarget && missionTarget.length > 0 ? missionTarget : children.map(c => c.id)
+    launchRoutine(templateId, childIds)
+    setShowMissionForm(false)
+    setMissionLabel('')
+    setMissionTarget(undefined)
   }
 
   const openGallery = (childId: string) => {
@@ -150,7 +182,7 @@ export default function HomeScreen({
   const safeTimers = activeTimers ?? []
 
   return (
-    <div className="h-full flex flex-col p-6 overflow-y-auto">
+    <div className="h-full flex flex-col p-6 overflow-y-auto scroll-touch">
       {/* Timer expiration watchers */}
       {safeTimers.map(timer => (
         <TimerExpirationWatcher
@@ -164,6 +196,21 @@ export default function HomeScreen({
       <h1 className="text-3xl font-display font-semibold text-ink text-center mb-6">
         Routines Familiales
       </h1>
+
+      {/* Message « nouvelle journée » — quand tout est terminé */}
+      {allRoutinesDone && (
+        <div className="mb-6 max-w-3xl mx-auto w-full">
+          <Card className="p-5 !border-2 !border-honey-200 text-center">
+            <p className="text-3xl mb-1" aria-hidden="true">🎉</p>
+            <p className="font-display font-semibold text-ink mb-1">
+              Toutes les routines du jour sont terminées, bravo !
+            </p>
+            <p className="text-sm text-ink-soft">
+              Pour démarrer une nouvelle journée, un parent garde le doigt <strong>2 secondes</strong> sur le bouton ⚙️ (en bas à droite).
+            </p>
+          </Card>
+        </div>
+      )}
 
       {/* 2. Zone mission/timer active */}
       {safeTimers.length > 0 && (
@@ -243,7 +290,7 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Bouton minuteur */}
+        {/* Bouton minuteur — accessible à tous (ne débloque pas d'image) */}
         <Button
           variant="honey-soft"
           size="lg"
@@ -257,12 +304,70 @@ export default function HomeScreen({
           ⏳ Minuteur
         </Button>
 
-        {/* Bouton routine personnalisée */}
-        {!showCustomForm ? (
-          <Button variant="outline" size="lg" className="w-full max-w-md" onClick={() => setShowCustomForm(true)}>
-            ➕ Routine personnalisée
-          </Button>
-        ) : (
+        {/* Actions parents — création de tâches à récompense (appui long) */}
+        {!showCustomForm && !showMissionForm && (
+          <div className="w-full max-w-md">
+            <p className="text-center text-[11px] font-bold text-ink-faint/70 uppercase tracking-wide mb-2">
+              Réservé aux parents · appui long
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="honey-soft"
+                size="lg"
+                className="w-full border-2 border-honey-200"
+                onPressStart={() => startLongPress(() => setShowMissionForm(true))}
+                onPressEnd={cancelLongPress}
+              >
+                🎯 Mission express
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onPressStart={() => startLongPress(() => setShowCustomForm(true))}
+                onPressEnd={cancelLongPress}
+              >
+                ➕ Routine personnalisée
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Formulaire mission express */}
+        {showMissionForm && (
+          <Card className="p-6 w-full">
+            <h3 className="text-lg font-display font-semibold text-ink mb-1">🎯 Mission express</h3>
+            <p className="text-sm text-ink-faint mb-4">
+              Une tâche ponctuelle qui débloque une image. À réserver aux exceptions (les images se gagnent normalement avec les routines).
+            </p>
+            <TextInput value={missionLabel} onChange={setMissionLabel} placeholder="Ex : débarrasser la table" className="mb-4" />
+
+            {children.length >= 2 && (
+              <>
+                <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Pour qui ?</p>
+                <div className="mb-4">
+                  <ChildTargetPicker children={children} value={missionTarget} onChange={setMissionTarget} />
+                </div>
+              </>
+            )}
+
+            <div className="flex gap-3">
+              <Button variant="primary" size="lg" className="flex-1" onClick={handleLaunchMission}>
+                Lancer la mission
+              </Button>
+              <Button
+                variant="soft"
+                size="lg"
+                onClick={() => { setShowMissionForm(false); setMissionLabel(''); setMissionTarget(undefined) }}
+              >
+                Annuler
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Formulaire routine personnalisée */}
+        {showCustomForm && (
           <Card className="p-6 w-full">
             <h3 className="text-lg font-display font-semibold text-ink mb-4">Nouvelle routine</h3>
             <TextInput value={customName} onChange={setCustomName} placeholder="Nom de la routine" className="mb-3" />
@@ -295,35 +400,14 @@ export default function HomeScreen({
             </Button>
 
             {/* Sélection de la cible */}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              <Pill
-                selected={customTargetIds.length === children.length}
-                selectedClassName="bg-ink text-warm-50 border-ink"
-                onClick={() => setCustomTargetIds(children.map(c => c.id))}
-              >
-                Tous
-              </Pill>
-              {children.map(child => {
-                const isSelected = customTargetIds.includes(child.id)
-                return (
-                  <Pill
-                    key={child.id}
-                    selected={isSelected && customTargetIds.length < children.length}
-                    selectedClassName="bg-ink text-warm-50 border-ink"
-                    onClick={() => {
-                      if (isSelected) {
-                        const next = customTargetIds.filter(id => id !== child.id)
-                        setCustomTargetIds(next.length > 0 ? next : [child.id])
-                      } else {
-                        setCustomTargetIds([...customTargetIds, child.id])
-                      }
-                    }}
-                  >
-                    {child.name}
-                  </Pill>
-                )
-              })}
-            </div>
+            {children.length >= 2 && (
+              <>
+                <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Pour qui ?</p>
+                <div className="mb-4">
+                  <ChildTargetPicker children={children} value={customTarget} onChange={setCustomTarget} />
+                </div>
+              </>
+            )}
 
             <div className="flex gap-3">
               <Button variant="primary" size="lg" className="flex-1" onClick={handleLaunchCustom}>
@@ -332,7 +416,7 @@ export default function HomeScreen({
               <Button
                 variant="soft"
                 size="lg"
-                onClick={() => { setShowCustomForm(false); setCustomName(''); setCustomTasks(['']) }}
+                onClick={() => { setShowCustomForm(false); setCustomName(''); setCustomTasks(['']); setCustomTarget(undefined) }}
               >
                 Annuler
               </Button>
@@ -440,11 +524,11 @@ export default function HomeScreen({
         <span className="text-[10px] font-bold text-ink-faint/60 uppercase tracking-wide">Parents</span>
         <span className="text-[8px] text-ink-faint/50 -mt-1">appui long</span>
         <button
-          onMouseDown={handleGearDown}
-          onMouseUp={handleGearUp}
-          onMouseLeave={handleGearUp}
-          onTouchStart={handleGearDown}
-          onTouchEnd={handleGearUp}
+          onMouseDown={() => startLongPress(() => setCurrentScreen('parent'))}
+          onMouseUp={cancelLongPress}
+          onMouseLeave={cancelLongPress}
+          onTouchStart={() => startLongPress(() => setCurrentScreen('parent'))}
+          onTouchEnd={cancelLongPress}
           className="w-12 h-12 rounded-full bg-warm-200 flex items-center justify-center text-ink-faint text-xl"
           aria-label="Espace parents (appui long)"
         >
@@ -511,15 +595,17 @@ export default function HomeScreen({
         )
       })()}
 
-      {/* Code parents avant l'espace parents (seulement si configuré) */}
+      {/* Code parents avant une action parents (seulement si configuré) */}
       {showParentGate && parentPin && (
         <ParentGate
           pin={parentPin}
           onSuccess={() => {
             setShowParentGate(false)
-            setCurrentScreen('parent')
+            const action = pendingAction.current
+            pendingAction.current = null
+            action?.()
           }}
-          onCancel={() => setShowParentGate(false)}
+          onCancel={() => { setShowParentGate(false); pendingAction.current = null }}
         />
       )}
     </div>
