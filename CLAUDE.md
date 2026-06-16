@@ -34,10 +34,10 @@ The Vitest suite in `src/hooks/useAppState.test.ts` is the contract for state lo
 **Design system**: warm tokens in `tailwind.config.js` (`warm`, `ink`, `line`, `success`, `honey`, `danger`, `night` + `shadow-card/raised/overlay` + `z-overlay/modal/toast`), brand fonts self-hosted via `@fontsource-variable/fredoka` (display) and `@fontsource-variable/nunito` (body), UI primitives in `src/components/ui/` (Card, Button, Pill, Badge, Overlay, ScreenHeader, IconButton, TextInput, FieldLabel). Child identity colors live in `src/theme.ts` (`COLOR_PALETTE`, `tint()` for translucent surfaces, `childTextColor()` for AA-readable colored text). Never concatenate hex + alpha (`color + '15'`) — use `tint()`.
 
 **Screens** (rendered by `src/App.tsx` based on `currentScreen`):
-- `home` → `HomeScreen` — routine launcher + custom routine form + parent access (long-press gear; PIN gate in `ParentGate.tsx` only if a code is set) + universe-unlock banner
+- `home` → `HomeScreen` — routine launcher + timer + parent-gated creation (custom routine form + "Mission express") + universe-unlock banner + "all routines done → new day" banner. Parent access and reward-bearing creation share one **long-press (2 s) gate** (`startLongPress`), with the optional 4-digit `ParentGate.tsx` on top when a PIN is set
 - `routine` → `ActiveRoutineScreen` — split-screen (2 children side by side), sounds, music, timers, universe-unlock choice after celebration
 - `parent` → `ParentPanel` — reset/stop controls, timer launcher, sanctions, universe access, optional 4-digit parent PIN (`PinSetupOverlay.tsx`/`PinPad.tsx`)
-- `gallery` → `GalleryScreen` — per-child reward image collection (universe-aware, shows progress to next universe unlock)
+- `gallery` → `GalleryScreen` — per-child reward image collection, **one section per owned universe** on a single scrollable page, shows progress to next universe unlock
 - `universe-select` → `UniverseSelectScreen` — per-child universes (parent side): switch among owned, grant locked ones early
 
 **Onboarding** (`OnboardingScreen.tsx`, when `onboardingCompleted` is false): welcome → children (photo strongly suggested, color picked with the child) → starting universe per child → routines. A static splash in `index.html` (`#splash`) shows before React mounts; `App.tsx` fades it out. Logo source: `public/icons/icon.svg` (`AppLogo.tsx` inline copy; `node scripts/generate-icons.mjs` regenerates the PNG icons).
@@ -46,7 +46,11 @@ The Vitest suite in `src/hooks/useAppState.test.ts` is the contract for state lo
 
 **Universe progression** (`src/data/universeProgress.ts`): gentle gamification — completing ≥1 routine in a day increments `routineDayCount` (once per local day, tracked via `lastRoutineDay`). A child may own `allowedUniverseCount(dayCount)` universes: 1 at start, +1 at 2 days, then +1 every 5 days. When `pendingUniverseChoices() > 0`, the child picks a new universe (`UniverseUnlockOverlay.tsx`, offered after celebration and via a home banner). Parents can grant any universe early from `UniverseSelectScreen`. No streaks, no loss mechanics — keep it that way.
 
-**Guard rails**: custom routines created from Home are `ephemeral: true` and purged on "Nouvelle journée"/stop (editing one in the routine editor makes it permanent). Caps: `MAX_ROUTINE_TEMPLATES` (30), `MAX_ACTIVE_TIMERS` (6). Onboarding drafts persist in localStorage (`routines-onboarding-draft`/`-step`) and are cleared on completion.
+**Guard rails**: custom routines and "Mission express" tasks created from Home are `ephemeral: true` and purged on "Nouvelle journée"/stop (editing a custom one in the routine editor makes it permanent). Creating either unlocks images, so both sit behind the parent long-press gate (+ PIN if set) — kids can launch/complete but not mint reward sources. `launchRoutine` skips children with zero applicable tasks (no empty "instantly complete" routine). Caps: `MAX_ROUTINE_TEMPLATES` (30), `MAX_ACTIVE_TIMERS` (6). Onboarding drafts persist in localStorage (`routines-onboarding-draft`/`-step`) and are cleared on completion.
+
+**Per-task child assignment**: `TaskTemplate.childIds` (undefined = all). Edited via `ChildTargetPicker.tsx` (chips: Tous • child…) in the routine editor (per task) and the Home custom/mission forms (per routine/mission). Selection logic lives in pure `src/data/childTarget.ts` (`toggleChildTarget` — from "Tous", tapping one child selects only that child; tested in `childTarget.test.ts`). `launchRoutine`/`updateRoutine` filter each child's tasks by `childIds`.
+
+**Touch scrolling**: full-screen scroll containers carry `overflow-y-auto scroll-touch` (`.scroll-touch` in `index.css` = iOS momentum + `touch-action: pan-y` + `overflow-x: hidden`) so swipes scroll across the whole width on iPad, including the margins beside centered content.
 
 **Asset pipeline**: Raw images live in `images_rewards/<Universe>/` folders (not committed). `scripts/sync-assets.js` copies and renames them to `public/rewards/{universe}/`, purges orphan destination pools, and generates two TypeScript manifests:
 - `src/data/rewardManifest.ts` — per-child image arrays (auto-generated, do not edit)
