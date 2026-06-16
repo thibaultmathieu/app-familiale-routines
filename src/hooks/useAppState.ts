@@ -182,16 +182,22 @@ export function useAppState() {
 
       if (newChildIds.length === 0) return prev
 
-      const newRoutines: ActiveRoutine[] = newChildIds.map(childId => ({
-        id: `${templateId}-${childId}-${Date.now()}`,
-        templateId,
-        childId,
-        tasks: template.tasks
-          .filter(t => !t.childIds || t.childIds.includes(childId))
-          .map(t => ({ taskId: t.id, done: false })),
-        startedAt: new Date().toISOString(),
-        completedAt: null,
-      }))
+      const newRoutines: ActiveRoutine[] = newChildIds
+        .map(childId => ({
+          id: `${templateId}-${childId}-${Date.now()}`,
+          templateId,
+          childId,
+          tasks: template.tasks
+            .filter(t => !t.childIds || t.childIds.includes(childId))
+            .map(t => ({ taskId: t.id, done: false })),
+          startedAt: new Date().toISOString(),
+          completedAt: null,
+        }))
+        // Un enfant sans aucune tâche applicable n'obtient pas d'instance
+        // (sinon une routine vide serait considérée « terminée » d'office)
+        .filter(ar => ar.tasks.length > 0)
+
+      if (newRoutines.length === 0) return prev
 
       return {
         ...prev,

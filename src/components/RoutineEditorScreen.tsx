@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ActiveRoutine, Child, RoutineTemplate, Screen, TaskTemplate } from '../types'
 import DayOfWeekPicker from './DayOfWeekPicker'
 import EmojiPicker from './EmojiPicker'
+import ChildTargetPicker from './ChildTargetPicker'
 import { Button, FieldLabel, IconButton, TextInput } from './ui'
 
 interface RoutineEditorScreenProps {
@@ -103,7 +104,7 @@ export default function RoutineEditorScreen({
   }
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
+    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto scroll-touch">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -151,53 +152,51 @@ export default function RoutineEditorScreen({
         <FieldLabel className="mb-3">Tâches</FieldLabel>
         <div className="space-y-2 mb-4">
           {tasks.map((task, i) => (
-            <div key={task.id} className="flex items-center gap-1.5 bg-white rounded-xl p-2.5 border-2 border-line">
-              {/* Task emoji */}
-              <button
-                type="button"
-                onClick={() => setTaskEmojiIndex(taskEmojiIndex === i ? null : i)}
-                aria-label="Changer l'icône de la tâche"
-                className="text-xl w-11 h-11 flex items-center justify-center rounded-lg hover:bg-warm-100 active:scale-90 transition-transform shrink-0"
-              >
-                {task.icon}
-              </button>
+            <div key={task.id} className="bg-white rounded-xl p-2.5 border-2 border-line">
+              <div className="flex items-center gap-1.5">
+                {/* Task emoji */}
+                <button
+                  type="button"
+                  onClick={() => setTaskEmojiIndex(taskEmojiIndex === i ? null : i)}
+                  aria-label="Changer l'icône de la tâche"
+                  className="text-xl w-11 h-11 flex items-center justify-center rounded-lg hover:bg-warm-100 active:scale-90 transition-transform shrink-0"
+                >
+                  {task.icon}
+                </button>
 
-              {/* Label */}
-              <TextInput
-                variant="bare"
-                value={task.label}
-                onChange={v => updateTask(i, { label: v })}
-                placeholder="Nom de la tâche"
-              />
+                {/* Label */}
+                <TextInput
+                  variant="bare"
+                  value={task.label}
+                  onChange={v => updateTask(i, { label: v })}
+                  placeholder="Nom de la tâche"
+                />
 
-              {/* Child filter */}
-              <select
-                value={task.childIds ? JSON.stringify(task.childIds) : ''}
-                onChange={e => {
-                  const val = e.target.value
-                  updateTask(i, { childIds: val ? JSON.parse(val) : undefined })
-                }}
-                aria-label="Pour quel enfant ?"
-                className="text-sm min-h-11 bg-warm-50 rounded-lg px-2 border border-line text-ink-soft shrink-0"
-              >
-                <option value="">Tous</option>
-                {children.map(c => (
-                  <option key={c.id} value={JSON.stringify([c.id])}>{c.name}</option>
-                ))}
-              </select>
+                {/* Up/Down */}
+                <IconButton size={44} ariaLabel="Monter la tâche" disabled={i === 0} onClick={() => moveTask(i, 'up')} className="text-ink-faint hover:bg-warm-100">
+                  ↑
+                </IconButton>
+                <IconButton size={44} ariaLabel="Descendre la tâche" disabled={i === tasks.length - 1} onClick={() => moveTask(i, 'down')} className="text-ink-faint hover:bg-warm-100">
+                  ↓
+                </IconButton>
 
-              {/* Up/Down */}
-              <IconButton size={44} ariaLabel="Monter la tâche" disabled={i === 0} onClick={() => moveTask(i, 'up')} className="text-ink-faint hover:bg-warm-100">
-                ↑
-              </IconButton>
-              <IconButton size={44} ariaLabel="Descendre la tâche" disabled={i === tasks.length - 1} onClick={() => moveTask(i, 'down')} className="text-ink-faint hover:bg-warm-100">
-                ↓
-              </IconButton>
+                {/* Delete */}
+                <IconButton size={44} ariaLabel="Supprimer la tâche" onClick={() => removeTask(i)} className="text-ink-faint hover:text-danger-400 hover:bg-danger-50">
+                  ✕
+                </IconButton>
+              </div>
 
-              {/* Delete */}
-              <IconButton size={44} ariaLabel="Supprimer la tâche" onClick={() => removeTask(i)} className="text-ink-faint hover:text-danger-400 hover:bg-danger-50">
-                ✕
-              </IconButton>
+              {/* Assignation par tâche (masquée s'il n'y a qu'un enfant) */}
+              {children.length >= 2 && (
+                <div className="mt-2.5 pt-2.5 border-t border-line">
+                  <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Pour qui ?</p>
+                  <ChildTargetPicker
+                    children={children}
+                    value={task.childIds}
+                    onChange={v => updateTask(i, { childIds: v })}
+                  />
+                </div>
+              )}
             </div>
           ))}
 

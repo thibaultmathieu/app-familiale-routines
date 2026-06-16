@@ -318,6 +318,21 @@ describe('useAppState — routines', () => {
     expect(forC2.tasks.map(t => t.taskId)).toEqual(['x1'])
   })
 
+  it('launchRoutine n\'instancie pas un enfant sans aucune tâche applicable', () => {
+    const template: RoutineTemplate = {
+      ...twoTaskTemplate,
+      id: 'solo',
+      tasks: [
+        { id: 's1', label: 'pour c1', icon: '📋', childIds: ['c1'] },
+        { id: 's2', label: 'pour c1 aussi', icon: '📋', childIds: ['c1'] },
+      ],
+    }
+    const { result } = setupHook({ routineTemplates: [template] })
+    act(() => result.current.launchRoutine('solo', ['c1', 'c2']))
+    // c2 n'a aucune tâche → pas d'instance « vide » terminée d'office
+    expect(result.current.activeRoutines.map(ar => ar.childId)).toEqual(['c1'])
+  })
+
   it('relancer une routine déjà active ne crée pas de doublon', () => {
     const { result } = setupHook({})
     act(() => result.current.launchRoutine('morning', ['c1', 'c2']))
