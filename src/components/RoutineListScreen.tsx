@@ -35,7 +35,7 @@ export default function RoutineListScreen({
   }
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
+    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto scroll-touch">
       <ScreenHeader className="mb-8" onBack={() => setCurrentScreen('parent')} title="Gérer les routines" />
 
       <div className="space-y-3 mb-6">

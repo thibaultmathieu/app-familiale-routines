@@ -114,7 +114,7 @@ export default function ParentPanel({
   const timerCount = (activeTimers ?? []).length
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
+    <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto scroll-touch">
       <ScreenHeader className="mb-8" onBack={() => setCurrentScreen('home')} title="Espace parents" />
 
       {/* Routines en cours — grouped by template */}

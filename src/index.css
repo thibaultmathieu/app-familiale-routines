@@ -28,6 +28,20 @@ html, body, #root {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Scroll tactile fiable sur iPad (PWA / WebView) : inertie iOS sur TOUT conteneur
+   scrollable (le tap au milieu marchait, pas sur les côtés → inertie manquante). */
+.overflow-y-auto, .overflow-y-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+/* Conteneurs plein écran : capter le geste vertical partout (y compris marges
+   latérales du contenu centré) et éviter le rebond horizontal qui « bloque ». */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  overflow-x: hidden;
+}
+
 /* Empêcher la sélection de texte sur les éléments interactifs (enfants) */
 .no-select {
   -webkit-user-select: none;
