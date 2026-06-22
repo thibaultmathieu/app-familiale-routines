@@ -552,6 +552,36 @@ describe('useAppState — récompenses', () => {
     expect(child.unlockedImages.filter(id => id.startsWith('a-'))).toHaveLength(1)
   })
 
+  it('multi-univers : unlockReward tire dans TOUS les univers possédés', () => {
+    const { result } = setupHook({
+      children: [makeChild('c1', { universeId: 'a', unlockedUniverseIds: ['a', 'b'] })],
+    })
+    // 6 images au total (3 'a' + 3 'b') : toutes obtenables avant tout reset
+    for (let i = 0; i < 6; i++) {
+      act(() => { result.current.unlockReward('c1') })
+    }
+    const child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.unlockedImages).toHaveLength(6)
+    expect(new Set(child.unlockedImages).size).toBe(6)
+    expect(child.unlockedImages.some(id => id.startsWith('a-'))).toBe(true)
+    expect(child.unlockedImages.some(id => id.startsWith('b-'))).toBe(true)
+    expect(child.completedCycles).toBe(0)
+  })
+
+  it('multi-univers : le reset de cycle n\'arrive qu\'une fois tous les univers épuisés', () => {
+    const { result } = setupHook({
+      children: [makeChild('c1', { universeId: 'a', unlockedUniverseIds: ['a', 'b'] })],
+    })
+    for (let i = 0; i < 6; i++) {
+      act(() => { result.current.unlockReward('c1') })
+    }
+    // 7e tirage : pool combiné (6 images) épuisé → reset de cycle
+    act(() => { result.current.unlockReward('c1') })
+    const child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.completedCycles).toBe(1)
+    expect(child.unlockedImages).toHaveLength(1)
+  })
+
   it('removeReward retire une image (sanction)', () => {
     const { result } = setupHook({})
     act(() => { result.current.unlockReward('c1') })

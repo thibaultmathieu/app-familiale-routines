@@ -3,7 +3,8 @@ import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../t
 import ProgressBar from './ProgressBar'
 import ChildAvatar from './ChildAvatar'
 import PinSetupOverlay from './PinSetupOverlay'
-import { getRewardImagesForChildEntry } from '../data/rewardImages'
+import { getRewardImagesForUniverse } from '../data/rewardImages'
+import { ownedUniverseIds } from '../data/universeProgress'
 import { childTextColor, tint } from '../theme'
 import { Badge, Button, Card, ScreenHeader } from './ui'
 
@@ -106,7 +107,8 @@ export default function ParentPanel({
   const sanctionImages = sanctionChild
     ? (() => {
         const childIndex = children.findIndex(c => c.id === sanctionChild.id)
-        const allImages = getRewardImagesForChildEntry(sanctionChild, childIndex)
+        // Toutes les images possédées, tous univers débloqués confondus
+        const allImages = ownedUniverseIds(sanctionChild, childIndex).flatMap(getRewardImagesForUniverse)
         return allImages.filter(img => sanctionChild.unlockedImages.includes(img.id))
       })()
     : []

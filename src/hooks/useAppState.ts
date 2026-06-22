@@ -2,8 +2,8 @@ import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines } from '../data/defaultRoutines'
-import { findRewardImage, getRewardImagesForChildEntry, getRewardImagesForUniverse, legacyUniverseIdForIndex } from '../data/rewardImages'
-import { localDayKey } from '../data/universeProgress'
+import { findRewardImage, getRewardImagesForUniverse, legacyUniverseIdForIndex } from '../data/rewardImages'
+import { localDayKey, ownedUniverseIds } from '../data/universeProgress'
 import { assetUrl } from '../utils/assetUrl'
 
 export interface PersistedState {
@@ -291,14 +291,16 @@ export function useAppState() {
 
   // Le tirage est calculé AVANT setState (état du rendu courant) : la valeur de retour
   // est fiable, là où un calcul dans l'updater dépendait de l'évaluation eager de React.
-  // Le pool est celui de l'univers de l'enfant ; la progression d'un univers est
-  // l'intersection unlockedImages ∩ pool, ce qui rend le changement d'univers sans perte.
+  // Le pool est l'UNION de TOUS les univers possédés par l'enfant (pas seulement
+  // l'actif) : un enfant qui a débloqué plusieurs univers reçoit des images des
+  // deux, au hasard. La progression vit dans unlockedImages, donc le cycle ne se
+  // réinitialise qu'une fois toutes les images de tous ses univers obtenues.
   const unlockReward = useCallback((childId: string): RewardImage | null => {
     const childIndex = state.children.findIndex(c => c.id === childId)
     const child = childIndex >= 0 ? state.children[childIndex] : undefined
     if (!child) return null
 
-    const childImages = getRewardImagesForChildEntry(child, childIndex)
+    const childImages = ownedUniverseIds(child, childIndex).flatMap(getRewardImagesForUniverse)
     if (childImages.length === 0) return null
 
     const poolIds = new Set(childImages.map(img => img.id))
