@@ -24,7 +24,7 @@ const ROOT = path.resolve(__dirname, '..')
 // --- Clé API ---------------------------------------------------------------
 function loadApiKey() {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY
-  const envPath = path.join(ROOT, '.env.local')
+  const envPath = 'C:/secrets/keys.env'  // coffre local hors OneDrive (cf. ref-secrets.md)
   if (fs.existsSync(envPath)) {
     const m = fs.readFileSync(envPath, 'utf8').match(/^GEMINI_API_KEY=(.+)$/m)
     if (m) return m[1].trim()
