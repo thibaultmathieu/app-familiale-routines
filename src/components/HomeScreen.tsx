@@ -10,7 +10,7 @@ import UniverseUnlockOverlay from './UniverseUnlockOverlay'
 import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
 import { ACTIVE_UNIVERSES } from '../data/universes'
-import { ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
+import { localDayKey, ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
 import { tint } from '../theme'
 import { Badge, Button, Card, TextInput } from './ui'
 
@@ -62,10 +62,6 @@ export default function HomeScreen({
   addChildUniverse,
   parentPin,
 }: HomeScreenProps) {
-  const [showCustomForm, setShowCustomForm] = useState(false)
-  const [customName, setCustomName] = useState('')
-  const [customTasks, setCustomTasks] = useState<string[]>([''])
-  const [customTarget, setCustomTarget] = useState<string[] | undefined>(undefined)
   const [showMissionForm, setShowMissionForm] = useState(false)
   const [missionLabel, setMissionLabel] = useState('')
   const [missionTarget, setMissionTarget] = useState<string[] | undefined>(undefined)
@@ -109,8 +105,22 @@ export default function HomeScreen({
   // Group active routines by templateId
   const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
 
-  // Toutes les routines du jour sont-elles terminées ? (message « nouvelle journée »)
-  const allRoutinesDone = activeRoutines.length > 0 && activeRoutines.every(ar => ar.completedAt != null)
+  // Message « nouvelle journée » : n'apparaît que si TOUTES les routines
+  // programmées du jour ont été lancées aujourd'hui ET terminées. Ferme les
+  // faux positifs qui donnaient l'impression d'un message « collé » :
+  //  - après la seule routine du matin (l'après-midi / le soir restaient à faire) ;
+  //  - sur une simple mission express éphémère terminée (hors `todayRoutines`) ;
+  //  - avec des routines de la veille restées à l'écran un nouveau jour.
+  const todayKey = localDayKey()
+  const startedToday = (ar: ActiveRoutine) => localDayKey(new Date(ar.startedAt)) === todayKey
+  const scheduledInstancesToday = activeRoutines.filter(
+    ar => startedToday(ar) && todayRoutines.some(t => t.id === ar.templateId)
+  )
+  const allRoutinesDone =
+    todayRoutines.length > 0 &&
+    todayRoutines.every(t => scheduledInstancesToday.some(ar => ar.templateId === t.id)) &&
+    scheduledInstancesToday.length > 0 &&
+    scheduledInstancesToday.every(ar => ar.completedAt != null)
 
   const handleLaunchFixed = (templateId: string) => {
     // If routine already active, just navigate to it
@@ -121,26 +131,6 @@ export default function HomeScreen({
     }
     const childIds = children.map(c => c.id)
     launchRoutine(templateId, childIds)
-  }
-
-  const handleLaunchCustom = () => {
-    const validTasks = customTasks.filter(t => t.trim())
-    if (!customName.trim() || validTasks.length === 0) return
-
-    const templateId = addRoutine({
-      name: customName.trim(),
-      icon: '📋',
-      ephemeral: true,
-      tasks: validTasks.map((t, i) => ({ id: `t-${Date.now()}-${i}`, label: t.trim(), icon: '📋' })),
-    })
-
-    const childIds = customTarget && customTarget.length > 0 ? customTarget : children.map(c => c.id)
-
-    launchRoutine(templateId, childIds)
-    setShowCustomForm(false)
-    setCustomName('')
-    setCustomTasks([''])
-    setCustomTarget(undefined)
   }
 
   // Mission express : tâche ponctuelle hors routine qui débloque une image.
@@ -305,7 +295,7 @@ export default function HomeScreen({
         </Button>
 
         {/* Actions parents — création de tâches à récompense (appui long) */}
-        {!showCustomForm && !showMissionForm && (
+        {!showMissionForm && (
           <div className="w-full max-w-md">
             <p className="text-center text-[11px] font-bold text-ink-faint/70 uppercase tracking-wide mb-2">
               Réservé aux parents · appui long
@@ -319,15 +309,6 @@ export default function HomeScreen({
                 onPressEnd={cancelLongPress}
               >
                 🎯 Mission express
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full"
-                onPressStart={() => startLongPress(() => setShowCustomForm(true))}
-                onPressEnd={cancelLongPress}
-              >
-                ➕ Routine personnalisée
               </Button>
             </div>
           </div>
@@ -366,63 +347,6 @@ export default function HomeScreen({
           </Card>
         )}
 
-        {/* Formulaire routine personnalisée */}
-        {showCustomForm && (
-          <Card className="p-6 w-full">
-            <h3 className="text-lg font-display font-semibold text-ink mb-4">Nouvelle routine</h3>
-            <TextInput value={customName} onChange={setCustomName} placeholder="Nom de la routine" className="mb-3" />
-            {customTasks.map((task, i) => (
-              <div key={i} className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  placeholder={`Tâche ${i + 1}`}
-                  value={task}
-                  onChange={e => {
-                    const updated = [...customTasks]
-                    updated[i] = e.target.value
-                    setCustomTasks(updated)
-                  }}
-                  className="flex-1 border-2 border-line rounded-xl px-4 py-2 text-lg bg-white text-ink placeholder:text-ink-faint/70 focus:border-honey-300 transition-colors"
-                />
-                {customTasks.length > 1 && (
-                  <button
-                    onClick={() => setCustomTasks(customTasks.filter((_, j) => j !== i))}
-                    className="w-11 text-ink-faint hover:text-danger-400 text-xl active:scale-90 transition-transform"
-                    aria-label={`Supprimer la tâche ${i + 1}`}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-            <Button variant="soft" size="md" className="mb-4" onClick={() => setCustomTasks([...customTasks, ''])}>
-              + Ajouter une tâche
-            </Button>
-
-            {/* Sélection de la cible */}
-            {children.length >= 2 && (
-              <>
-                <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Pour qui ?</p>
-                <div className="mb-4">
-                  <ChildTargetPicker children={children} value={customTarget} onChange={setCustomTarget} />
-                </div>
-              </>
-            )}
-
-            <div className="flex gap-3">
-              <Button variant="primary" size="lg" className="flex-1" onClick={handleLaunchCustom}>
-                Lancer
-              </Button>
-              <Button
-                variant="soft"
-                size="lg"
-                onClick={() => { setShowCustomForm(false); setCustomName(''); setCustomTasks(['']); setCustomTarget(undefined) }}
-              >
-                Annuler
-              </Button>
-            </div>
-          </Card>
-        )}
       </div>
 
       {/* 4. Résumé routines en cours — grouped by templateId */}
