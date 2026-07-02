@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
-import { Child, Screen } from '../types'
+import { BonusReward, Child, Screen } from '../types'
 import { getRewardImagesForUniverse } from '../data/rewardImages'
 import { ACTIVE_UNIVERSES, getUniverse } from '../data/universes'
 import { daysUntilNextUnlock, ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
+import { rarityOf } from '../data/rarity'
+import { bonusStatusFor } from '../data/bonusRewards'
 import { childTextColor, tint } from '../theme'
 import { ScreenHeader } from './ui'
 
@@ -10,6 +12,7 @@ interface GalleryScreenProps {
   children: Child[]
   galleryChildId: string | null
   galleryReturnScreen: Screen | null
+  bonusRewards: BonusReward[]
   setCurrentScreen: (screen: Screen) => void
   setGalleryChildId: (id: string | null) => void
   setGalleryReturnScreen: (screen: Screen | null) => void
@@ -19,6 +22,7 @@ export default function GalleryScreen({
   children,
   galleryChildId,
   galleryReturnScreen,
+  bonusRewards,
   setCurrentScreen,
   setGalleryChildId,
   setGalleryReturnScreen,
@@ -115,23 +119,42 @@ export default function GalleryScreen({
                 <div className="grid grid-cols-5 gap-4">
                   {images.map((image, index) => {
                     const unlocked = currentChild.unlockedImages.includes(image.id)
+                    const rarity = rarityOf(image.id)
+                    const frame = unlocked
+                      ? rarity === 'legendaire'
+                        ? 'bg-white shadow-card border-2 border-honey-400 ring-2 ring-honey-300 active:scale-95 cursor-pointer'
+                        : rarity === 'rare'
+                          ? 'bg-white shadow-card border-2 border-honey-300 active:scale-95 cursor-pointer'
+                          : 'bg-white shadow-card border-2 border-line active:scale-95 cursor-pointer'
+                      : rarity === 'legendaire'
+                        ? 'bg-honey-100/80 border-2 border-honey-200 cursor-default'
+                        : 'bg-warm-200/70 border-2 border-line cursor-default'
                     return (
                       <button
                         key={image.id}
                         onClick={unlocked ? () => openImage(image.id) : undefined}
-                        className={`
-                          aspect-square rounded-2xl flex items-center justify-center overflow-hidden
-                          transition-all duration-200
-                          ${unlocked
-                            ? 'bg-white shadow-card border-2 border-line active:scale-95 cursor-pointer'
-                            : 'bg-warm-200/70 border-2 border-line cursor-default'
-                          }
-                        `}
+                        className={`relative aspect-square rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-200 ${frame}`}
                       >
                         {unlocked ? (
-                          <img src={image.src} alt={`${universe.name} — image ${index + 1} de la collection de ${currentChild.name}`} className="w-full h-full object-cover rounded-xl" />
+                          <>
+                            <img src={image.src} alt={`${universe.name} — image ${index + 1} de la collection de ${currentChild.name}`} className="w-full h-full object-cover rounded-xl" />
+                            {rarity !== 'commune' && (
+                              <span
+                                className="absolute top-1 right-1 text-base drop-shadow"
+                                role="img"
+                                aria-label={rarity === 'legendaire' ? 'Image légendaire' : 'Image rare'}
+                              >
+                                {rarity === 'legendaire' ? '🌟' : '✨'}
+                              </span>
+                            )}
+                          </>
                         ) : (
-                          <span className="text-4xl opacity-30" role="img" aria-label="Image encore verrouillée">🔒</span>
+                          <>
+                            <span className="text-4xl opacity-30" role="img" aria-label="Image encore verrouillée">🔒</span>
+                            {rarity === 'legendaire' && (
+                              <span className="absolute top-1 right-1 text-base opacity-60" aria-hidden="true">🌟</span>
+                            )}
+                          </>
                         )}
                       </button>
                     )
@@ -160,6 +183,24 @@ export default function GalleryScreen({
             ✨ Termine toutes tes routines pendant encore {daysLeft} jour{daysLeft > 1 ? 's' : ''} pour débloquer un nouvel univers
           </p>
         ) : null}
+        {(() => {
+          const { reached, next } = bonusStatusFor(currentChild, bonusRewards)
+          if (reached.length > 0) {
+            return (
+              <p className="text-sm font-display font-semibold text-success-600 mt-1">
+                🎁 Tu as gagné : {reached.map(b => `${b.emoji} ${b.label}`).join(' · ')} — va le dire à un parent !
+              </p>
+            )
+          }
+          if (next) {
+            return (
+              <p className="text-sm text-ink-faint mt-1">
+                {next.bonus.emoji} Encore {next.remaining} image{next.remaining > 1 ? 's' : ''} pour gagner : {next.bonus.label}
+              </p>
+            )
+          }
+          return null
+        })()}
       </div>
 
       {/* Image plein écran */}

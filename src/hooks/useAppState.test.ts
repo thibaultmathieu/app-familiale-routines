@@ -254,14 +254,32 @@ describe('migrateState', () => {
     expect(out.routineTemplates[0].tasks.map(t => t.id)).toEqual(['e3'])
   })
 
+  it('V7→V8 : initialise le total cumulé, les bons remis et la liste des bons', () => {
+    const state = {
+      children: [makeChild('c1', { unlockedImages: ['a-001', 'b-002'] })],
+      routineTemplates: [],
+      activeRoutines: [],
+      activeTimers: [],
+      schemaVersion: 7,
+      onboardingCompleted: true,
+    } as unknown as PersistedState
+
+    const out = migrateState(state)
+    expect(out.children[0].totalUnlocked).toBe(2)
+    expect(out.children[0].claimedBonuses).toEqual([])
+    expect(out.bonusRewards).toEqual([])
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
+  })
+
   it('état déjà à jour : retourne la même référence (pas de boucle de re-render)', () => {
     const state: PersistedState = {
-      children: [makeChild('c1')],
+      children: [makeChild('c1', { totalUnlocked: 0, claimedBonuses: [] })],
       routineTemplates: [twoTaskTemplate],
       activeRoutines: [],
       activeTimers: [],
       schemaVersion: CURRENT_SCHEMA_VERSION,
       onboardingCompleted: false,
+      bonusRewards: [],
     }
     expect(migrateState(state)).toBe(state)
   })
@@ -588,6 +606,86 @@ describe('useAppState — récompenses', () => {
     const imageId = result.current.children.find(c => c.id === 'c1')!.unlockedImages[0]
     act(() => result.current.removeReward('c1', imageId))
     expect(result.current.children.find(c => c.id === 'c1')!.unlockedImages).toHaveLength(0)
+  })
+
+  it("unlockReward attribue l'image mystère annoncée (ordre du jour déterministe)", async () => {
+    const { mysteryImageFor } = await import('../data/mystery')
+    const { result } = setupHook({})
+    const before = result.current.children.find(c => c.id === 'c1')!
+    const expected = mysteryImageFor(before, 0)!
+    let returned: { id: string } | null = null
+    act(() => { returned = result.current.unlockReward('c1') })
+    expect(returned!.id).toBe(expected.id)
+  })
+
+  it('totalUnlocked cumule sans jamais baisser (cycles et sanctions compris)', () => {
+    const { result } = setupHook({})
+    for (let i = 0; i < 3; i++) {
+      act(() => { result.current.unlockReward('c1') })
+    }
+    let child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.totalUnlocked).toBe(3)
+
+    // Sanction : la collection baisse, pas le total
+    act(() => result.current.removeReward('c1', child.unlockedImages[0]))
+    child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.unlockedImages).toHaveLength(2)
+    expect(child.totalUnlocked).toBe(3)
+
+    // Le pool (3 images, 1 retirée) se complète puis repart en cycle : total toujours croissant
+    act(() => { result.current.unlockReward('c1') })
+    act(() => { result.current.unlockReward('c1') })
+    child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.completedCycles).toBe(1)
+    expect(child.totalUnlocked).toBe(5)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useAppState — bons cadeaux (récompenses réelles)
+// ---------------------------------------------------------------------------
+
+describe('useAppState — bons cadeaux', () => {
+  it('cycle de vie : créer → atteindre → marquer remis → supprimer', async () => {
+    const { bonusStatusFor } = await import('../data/bonusRewards')
+    const { result } = setupHook({})
+
+    act(() => result.current.addBonusReward({ label: 'Soirée pizza', emoji: '🍕', threshold: 2 }))
+    expect(result.current.bonusRewards).toHaveLength(1)
+    const bonusId = result.current.bonusRewards[0].id
+
+    // 1 image : pas encore atteint, c'est le prochain objectif
+    act(() => { result.current.unlockReward('c1') })
+    let child = result.current.children.find(c => c.id === 'c1')!
+    let status = bonusStatusFor(child, result.current.bonusRewards)
+    expect(status.reached).toHaveLength(0)
+    expect(status.next!.remaining).toBe(1)
+
+    // 2 images : atteint
+    act(() => { result.current.unlockReward('c1') })
+    child = result.current.children.find(c => c.id === 'c1')!
+    status = bonusStatusFor(child, result.current.bonusRewards)
+    expect(status.reached.map(b => b.id)).toEqual([bonusId])
+
+    // Remis par un parent : sort des « atteints »
+    act(() => result.current.markBonusGiven('c1', bonusId))
+    child = result.current.children.find(c => c.id === 'c1')!
+    expect(child.claimedBonuses).toEqual([bonusId])
+    expect(bonusStatusFor(child, result.current.bonusRewards).reached).toHaveLength(0)
+
+    // Suppression : le bon disparaît et la trace « remis » est purgée
+    act(() => result.current.deleteBonusReward(bonusId))
+    expect(result.current.bonusRewards).toHaveLength(0)
+    expect(result.current.children.find(c => c.id === 'c1')!.claimedBonuses).toEqual([])
+  })
+
+  it('markBonusGiven est idempotent', () => {
+    const { result } = setupHook({})
+    act(() => result.current.addBonusReward({ label: 'Ciné', emoji: '🎬', threshold: 1 }))
+    const bonusId = result.current.bonusRewards[0].id
+    act(() => result.current.markBonusGiven('c1', bonusId))
+    act(() => result.current.markBonusGiven('c1', bonusId))
+    expect(result.current.children.find(c => c.id === 'c1')!.claimedBonuses).toEqual([bonusId])
   })
 })
 

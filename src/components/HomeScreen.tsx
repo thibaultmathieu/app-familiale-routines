@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { ActiveRoutine, ActiveTimer, RoutineTemplate, Screen, Child } from '../types'
+import { ActiveRoutine, ActiveTimer, BonusReward, RoutineTemplate, Screen, Child } from '../types'
 import ChildAvatar from './ChildAvatar'
 import ChildTargetPicker from './ChildTargetPicker'
 import ProgressBar from './ProgressBar'
@@ -11,6 +11,8 @@ import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
 import { ACTIVE_UNIVERSES } from '../data/universes'
 import { localDayKey, ownedUniverseIds, pendingUniverseChoices, scheduledTemplatesForDay } from '../data/universeProgress'
+import { mysteryImageFor } from '../data/mystery'
+import { bonusStatusFor } from '../data/bonusRewards'
 import { tint } from '../theme'
 import { Badge, Button, Card, TextInput } from './ui'
 
@@ -19,6 +21,7 @@ interface HomeScreenProps {
   routineTemplates: RoutineTemplate[]
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
+  bonusRewards: BonusReward[]
   setCurrentScreen: (screen: Screen) => void
   launchRoutine: (templateId: string, childIds: string[]) => void
   addRoutine: (template: Omit<import('../types').RoutineTemplate, 'id'>) => string
@@ -50,6 +53,7 @@ export default function HomeScreen({
   routineTemplates,
   activeRoutines,
   activeTimers,
+  bonusRewards,
   setCurrentScreen,
   launchRoutine,
   addRoutine,
@@ -199,6 +203,21 @@ export default function HomeScreen({
         </div>
       )}
 
+      {/* Bons cadeaux gagnés — à réclamer auprès d'un parent */}
+      {children.flatMap(child =>
+        bonusStatusFor(child, bonusRewards).reached.map(bonus => (
+          <div key={`bonus-${child.id}-${bonus.id}`} className="mb-6 max-w-3xl mx-auto w-full">
+            <Card className="p-5 !border-2 !border-success-200 text-center">
+              <p className="text-3xl mb-1" aria-hidden="true">🎁</p>
+              <p className="font-display font-semibold text-ink mb-1">
+                {child.name} a gagné : {bonus.emoji} {bonus.label} !
+              </p>
+              <p className="text-sm text-ink-soft">Va vite le dire à un parent 🎉</p>
+            </Card>
+          </div>
+        ))
+      )}
+
       {/* 2. Zone mission/timer active */}
       {safeTimers.length > 0 && (
         <div className="mb-6 max-w-3xl mx-auto w-full">
@@ -250,6 +269,47 @@ export default function HomeScreen({
             })}
           </div>
         )}
+
+        {/* Image mystère du jour — la prochaine image à gagner, floutée (suspense !) */}
+        {(() => {
+          const mysteries = children
+            .map((child, childIndex) => ({ child, mystery: mysteryImageFor(child, childIndex) }))
+            .filter((m): m is { child: Child; mystery: NonNullable<typeof m.mystery> } => m.mystery !== null)
+          if (mysteries.length === 0) return null
+          return (
+            <Card className="w-full p-4">
+              <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">
+                🔮 Image mystère du jour
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {mysteries.map(({ child, mystery }) => (
+                  <div key={child.id} className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="relative w-14 h-14 rounded-2xl overflow-hidden shrink-0 border-2 border-line bg-warm-200">
+                      <img
+                        src={mystery.src}
+                        alt=""
+                        aria-hidden="true"
+                        className="w-full h-full object-cover scale-125"
+                        style={{ filter: 'blur(10px) saturate(1.4)' }}
+                      />
+                      <span
+                        className="absolute inset-0 flex items-center justify-center text-2xl font-display font-bold text-white"
+                        style={{ textShadow: '0 1px 6px rgba(0, 0, 0, 0.55)' }}
+                        aria-hidden="true"
+                      >
+                        ?
+                      </span>
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <p className="font-display font-semibold text-ink truncate">{child.name}</p>
+                      <p className="text-xs text-ink-faint">Termine tes routines pour la découvrir !</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )
+        })()}
 
         {/* On-demand routines */}
         {onDemandRoutines.length > 0 && (
@@ -418,22 +478,30 @@ export default function HomeScreen({
       <div className="mt-6 max-w-3xl mx-auto w-full">
         <h2 className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Collections</h2>
         <div className="flex gap-4">
-          {children.map(child => (
-            <button
-              key={child.id}
-              onClick={() => openGallery(child.id)}
-              className="flex-1 flex items-center gap-3 p-4 rounded-3xl active:scale-95 transition-transform"
-              style={{ backgroundColor: tint(child.color, 0.10) }}
-            >
-              <div className="border-2 rounded-full" style={{ borderColor: child.color }}>
-                <ChildAvatar photo={child.photo} color={child.color} size={48} />
-              </div>
-              <div className="text-left">
-                <p className="font-display font-semibold text-ink">{child.name}</p>
-                <p className="text-sm text-ink-faint">{child.unlockedImages.length} images</p>
-              </div>
-            </button>
-          ))}
+          {children.map(child => {
+            const nextBonus = bonusStatusFor(child, bonusRewards).next
+            return (
+              <button
+                key={child.id}
+                onClick={() => openGallery(child.id)}
+                className="flex-1 flex items-center gap-3 p-4 rounded-3xl active:scale-95 transition-transform"
+                style={{ backgroundColor: tint(child.color, 0.10) }}
+              >
+                <div className="border-2 rounded-full" style={{ borderColor: child.color }}>
+                  <ChildAvatar photo={child.photo} color={child.color} size={48} />
+                </div>
+                <div className="text-left min-w-0">
+                  <p className="font-display font-semibold text-ink">{child.name}</p>
+                  <p className="text-sm text-ink-faint">{child.unlockedImages.length} images</p>
+                  {nextBonus && (
+                    <p className="text-xs text-honey-600 font-semibold truncate">
+                      {nextBonus.bonus.emoji} Encore {nextBonus.remaining} image{nextBonus.remaining > 1 ? 's' : ''} → {nextBonus.bonus.label}
+                    </p>
+                  )}
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 

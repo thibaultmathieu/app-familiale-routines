@@ -48,3 +48,57 @@ html, body, #root {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* --- Rituel de révélation (carte à retourner) ------------------------------ */
+.perspective-1000 { perspective: 1000px; }
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+
+/* Invitation au toucher : la carte face cachée se balance doucement */
+@keyframes card-wiggle {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.03); }
+}
+.animate-card-wiggle { animation: card-wiggle 1.6s ease-in-out infinite; }
+
+/* Confettis de célébration (pilotés par variables CSS inline) */
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, -10px, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(var(--confetti-x, 0px), 60vh, 0) rotate(var(--confetti-spin, 540deg)); opacity: 0; }
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall var(--confetti-duration, 2.4s) ease-in forwards;
+  animation-delay: var(--confetti-delay, 0s);
+  opacity: 0;
+}
+
+/* Halo doré pulsé — images légendaires */
+@keyframes legendary-glow {
+  0%, 100% { box-shadow: 0 0 18px 2px rgba(217, 142, 32, 0.45); }
+  50% { box-shadow: 0 0 34px 10px rgba(217, 142, 32, 0.75); }
+}
+.animate-legendary-glow { animation: legendary-glow 1.8s ease-in-out infinite; }
+
+/* --- Impression (cartes de collection / autocollants) ----------------------- */
+@media print {
+  html, body, #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body * { visibility: hidden; }
+  .print-sheet, .print-sheet * { visibility: visible; }
+  .print-sheet {
+    position: absolute !important;
+    inset: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+  .print-hide { display: none !important; }
+}
+@page { size: A4 portrait; margin: 8mm; }

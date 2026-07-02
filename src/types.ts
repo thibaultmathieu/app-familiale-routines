@@ -40,10 +40,28 @@ export interface Child {
   universeId?: string
   /** Univers possédés (choisis à la création, gagnés par progression ou offerts par un parent). */
   unlockedUniverseIds?: string[]
-  /** Nombre de jours distincts avec au moins une routine terminée (progression univers). */
+  /** Nombre de journées de routines complètes (progression univers). */
   routineDayCount?: number
   /** Dernier jour local (YYYY-MM-DD) comptabilisé dans routineDayCount. */
   lastRoutineDay?: string
+  /** Total d'images gagnées depuis le début — ne baisse jamais (bons cadeaux, V8). */
+  totalUnlocked?: number
+  /** Ids des bons cadeaux déjà remis par un parent (V8). */
+  claimedBonuses?: string[]
+}
+
+/**
+ * Bon cadeau : récompense réelle configurée par les parents, gagnée quand le
+ * total d'images d'un enfant atteint le seuil (V8).
+ */
+export interface BonusReward {
+  id: string
+  label: string
+  emoji: string
+  /** Seuil : nombre total d'images gagnées depuis le début (tous univers). */
+  threshold: number
+  /** Enfants concernés (absent = tous). */
+  childIds?: string[]
 }
 
 export interface RewardImage {

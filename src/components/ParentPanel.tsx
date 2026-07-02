@@ -1,22 +1,37 @@
 import { useState } from 'react'
-import { ActiveRoutine, ActiveTimer, Child, RoutineTemplate, Screen } from '../types'
+import { ActiveRoutine, ActiveTimer, BonusReward, Child, RoutineTemplate, Screen } from '../types'
 import ProgressBar from './ProgressBar'
 import ChildAvatar from './ChildAvatar'
 import PinSetupOverlay from './PinSetupOverlay'
+import EmojiPicker from './EmojiPicker'
+import ChildTargetPicker from './ChildTargetPicker'
+import PrintSheet from './PrintSheet'
 import { getRewardImagesForUniverse } from '../data/rewardImages'
 import { ownedUniverseIds } from '../data/universeProgress'
+import { totalUnlockedOf } from '../data/bonusRewards'
 import { childTextColor, tint } from '../theme'
-import { Badge, Button, Card, ScreenHeader } from './ui'
+import { Badge, Button, Card, ScreenHeader, TextInput } from './ui'
+
+/** Emojis adaptés aux récompenses réelles (sorties, gourmandises, activités). */
+const BONUS_EMOJIS = [
+  '🍕', '🍦', '🍿', '🧁', '🍩', '🥞', '🍔', '🍬',
+  '🎬', '🎢', '🎪', '🎠', '🏊', '🚲', '🛝', '🏖️',
+  '⚽', '🎳', '🎮', '📖', '🧸', '🎨', '🌟', '🎁',
+]
 
 interface ParentPanelProps {
   children: Child[]
   routineTemplates: RoutineTemplate[]
   activeRoutines: ActiveRoutine[]
   activeTimers: ActiveTimer[]
+  bonusRewards: BonusReward[]
   setCurrentScreen: (screen: Screen) => void
   resetRoutine: (templateId: string) => void
   resetAllRoutines: () => void
   removeReward: (childId: string, imageId: string) => void
+  addBonusReward: (bonus: Omit<BonusReward, 'id'>) => void
+  deleteBonusReward: (bonusId: string) => void
+  markBonusGiven: (childId: string, bonusId: string) => void
   setTimerReturnScreen: (screen: Screen | null) => void
   setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
   parentPin?: string
@@ -32,10 +47,14 @@ export default function ParentPanel({
   routineTemplates,
   activeRoutines,
   activeTimers,
+  bonusRewards,
   setCurrentScreen,
   resetRoutine,
   resetAllRoutines,
   removeReward,
+  addBonusReward,
+  deleteBonusReward,
+  markBonusGiven,
   setTimerReturnScreen,
   setTimerPrefill,
   parentPin,
@@ -43,6 +62,40 @@ export default function ParentPanel({
 }: ParentPanelProps) {
   const [sanctionChildId, setSanctionChildId] = useState<string | null>(null)
   const [showPinSetup, setShowPinSetup] = useState(false)
+  const [printChildId, setPrintChildId] = useState<string | null>(null)
+  const [showBonusForm, setShowBonusForm] = useState(false)
+  const [bonusLabel, setBonusLabel] = useState('')
+  const [bonusEmoji, setBonusEmoji] = useState('🎁')
+  const [bonusThreshold, setBonusThreshold] = useState('')
+  const [bonusTarget, setBonusTarget] = useState<string[] | undefined>(undefined)
+
+  const resetBonusForm = () => {
+    setShowBonusForm(false)
+    setBonusLabel('')
+    setBonusEmoji('🎁')
+    setBonusThreshold('')
+    setBonusTarget(undefined)
+  }
+
+  const bonusThresholdValue = parseInt(bonusThreshold, 10)
+  const bonusFormValid = bonusLabel.trim().length > 0 && Number.isFinite(bonusThresholdValue) && bonusThresholdValue >= 1
+
+  const handleAddBonus = () => {
+    if (!bonusFormValid) return
+    addBonusReward({
+      label: bonusLabel.trim(),
+      emoji: bonusEmoji,
+      threshold: bonusThresholdValue,
+      childIds: bonusTarget && bonusTarget.length > 0 ? bonusTarget : undefined,
+    })
+    resetBonusForm()
+  }
+
+  const handleDeleteBonus = (bonus: BonusReward) => {
+    if (window.confirm(`Supprimer le bon « ${bonus.label} » ?`)) {
+      deleteBonusReward(bonus.id)
+    }
+  }
 
   const handleRemovePin = () => {
     if (window.confirm('Retirer le code ? L\'espace parents s\'ouvrira par appui long seul.')) {
@@ -183,6 +236,134 @@ export default function ParentPanel({
         </div>
       </Card>
 
+      {/* Bons cadeaux — récompenses réelles liées à la collection */}
+      <Card className="p-6 mb-6">
+        <SectionTitle>Bons cadeaux</SectionTitle>
+        <p className="text-sm text-ink-faint mb-2">
+          Une vraie récompense quand la collection grandit (ex. « Soirée pizza » à 20 images).
+          Le compteur ne baisse jamais : un bon gagné reste gagné.
+        </p>
+        <p className="text-xs text-ink-faint mb-4">
+          Images gagnées à ce jour : {children.map(c => `${c.name} ${totalUnlockedOf(c)}`).join(' · ')}
+        </p>
+
+        {bonusRewards.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {bonusRewards.map(bonus => {
+              const targets = children.filter(c => !bonus.childIds || bonus.childIds.includes(c.id))
+              return (
+                <div key={bonus.id} className="border-2 border-line rounded-2xl p-4">
+                  <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                    <p className="font-display font-semibold text-ink text-lg">
+                      {bonus.emoji} {bonus.label}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Badge tone="honey">à {bonus.threshold} images</Badge>
+                      <button
+                        onClick={() => handleDeleteBonus(bonus)}
+                        aria-label={`Supprimer le bon ${bonus.label}`}
+                        className="min-h-11 min-w-11 text-lg text-danger-500 active:scale-90 transition-transform"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {targets.map(child => {
+                      const total = totalUnlockedOf(child)
+                      const claimed = (child.claimedBonuses ?? []).includes(bonus.id)
+                      const remaining = bonus.threshold - total
+                      return (
+                        <div key={child.id} className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-ink">{child.name}</span>
+                          {claimed ? (
+                            <span className="text-sm text-success-600 font-semibold">✓ Remis</span>
+                          ) : remaining <= 0 ? (
+                            <Button variant="success-soft" size="md" onClick={() => markBonusGiven(child.id, bonus.id)}>
+                              🎉 Gagné — marquer remis
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-ink-faint">
+                              encore {remaining} image{remaining > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {showBonusForm ? (
+          <div className="border-2 border-honey-200 rounded-2xl p-4">
+            <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Récompense</p>
+            <TextInput value={bonusLabel} onChange={setBonusLabel} placeholder="Ex : soirée pizza" className="mb-4" />
+            <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Emoji</p>
+            <div className="mb-4">
+              <EmojiPicker value={bonusEmoji} onChange={setBonusEmoji} emojis={BONUS_EMOJIS} />
+            </div>
+            <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">
+              Nombre total d'images à atteindre
+            </p>
+            <input
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={bonusThreshold}
+              onChange={e => setBonusThreshold(e.target.value)}
+              placeholder="Ex : 20"
+              className="w-full border-2 border-line rounded-xl px-4 py-3 text-lg bg-white text-ink placeholder:text-ink-faint/70 focus:border-honey-300 transition-colors mb-4"
+            />
+            {children.length >= 2 && (
+              <>
+                <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">Pour qui ?</p>
+                <div className="mb-4">
+                  <ChildTargetPicker children={children} value={bonusTarget} onChange={setBonusTarget} />
+                </div>
+              </>
+            )}
+            <div className="flex gap-3">
+              <Button variant="primary" size="lg" className="flex-1" disabled={!bonusFormValid} onClick={handleAddBonus}>
+                Ajouter
+              </Button>
+              <Button variant="soft" size="lg" onClick={resetBonusForm}>
+                Annuler
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button variant="honey-soft" size="lg" className="w-full" onClick={() => setShowBonusForm(true)}>
+            ➕ Ajouter un bon cadeau
+          </Button>
+        )}
+      </Card>
+
+      {/* Impression — cartes de collection et autocollants */}
+      <Card className="p-6 mb-6">
+        <SectionTitle>Imprimer la collection</SectionTitle>
+        <p className="text-sm text-ink-faint mb-3">
+          Transformez les images gagnées en vraies cartes de collection (9 par page) ou en
+          planche d'autocollants 35 mm (papier adhésif A4).
+        </p>
+        <div className="flex gap-3 flex-wrap">
+          {children.map(child => (
+            <Button
+              key={child.id}
+              variant="soft"
+              size="lg"
+              className="flex-1"
+              disabled={child.unlockedImages.length === 0}
+              onClick={() => setPrintChildId(child.id)}
+            >
+              🖨️ Collection de {child.name}
+            </Button>
+          ))}
+        </div>
+      </Card>
+
       {/* Minuteur */}
       <Card className="p-6 mb-6">
         <SectionTitle>Minuteur</SectionTitle>
@@ -310,6 +491,20 @@ export default function ParentPanel({
           onCancel={() => setShowPinSetup(false)}
         />
       )}
+
+      {/* Planche d'impression (cartes / autocollants) */}
+      {(() => {
+        if (!printChildId) return null
+        const childIndex = children.findIndex(c => c.id === printChildId)
+        if (childIndex < 0) return null
+        return (
+          <PrintSheet
+            child={children[childIndex]}
+            childIndex={childIndex}
+            onClose={() => setPrintChildId(null)}
+          />
+        )
+      })()}
     </div>
   )
 }

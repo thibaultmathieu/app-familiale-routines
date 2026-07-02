@@ -1,9 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
-import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
+import { ActiveRoutine, ActiveTimer, BonusReward, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines } from '../data/defaultRoutines'
 import { findRewardImage, getRewardImagesForUniverse, legacyUniverseIdForIndex } from '../data/rewardImages'
-import { advanceDayProgress, ownedUniverseIds } from '../data/universeProgress'
+import { advanceDayProgress, localDayKey, ownedUniverseIds } from '../data/universeProgress'
+import { dailyDrawOrder } from '../data/mystery'
+import { totalUnlockedOf } from '../data/bonusRewards'
 import { assetUrl } from '../utils/assetUrl'
 
 export interface PersistedState {
@@ -15,9 +17,11 @@ export interface PersistedState {
   onboardingCompleted?: boolean
   /** Code parents à 4 chiffres (optionnel) — absent = appui long seul. */
   parentPin?: string
+  /** Bons cadeaux configurés par les parents (V8). */
+  bonusRewards?: BonusReward[]
 }
 
-export const CURRENT_SCHEMA_VERSION = 7
+export const CURRENT_SCHEMA_VERSION = 8
 
 // Plafonds anti-accumulation (enfants qui spamment, routines à la volée jamais nettoyées)
 export const MAX_ROUTINE_TEMPLATES = 30
@@ -30,6 +34,7 @@ const initialState: PersistedState = {
   activeTimers: [],
   schemaVersion: CURRENT_SCHEMA_VERSION,
   onboardingCompleted: false,
+  bonusRewards: [],
 }
 
 export function migrateState(state: PersistedState): PersistedState {
@@ -135,6 +140,17 @@ export function migrateState(state: PersistedState): PersistedState {
     })
   }
 
+  // V7→V8 : bons cadeaux — initialise le total cumulé d'images gagnées
+  // (départ = collection actuelle) et la liste des bons déjà remis.
+  if (version < 8) {
+    needsMigration = true
+    children = children.map(child => ({
+      ...child,
+      totalUnlocked: child.totalUnlocked ?? child.unlockedImages.length,
+      claimedBonuses: child.claimedBonuses ?? [],
+    }))
+  }
+
   if (needsMigration) {
     return {
       ...state,
@@ -144,6 +160,7 @@ export function migrateState(state: PersistedState): PersistedState {
       activeRoutines,
       schemaVersion: CURRENT_SCHEMA_VERSION,
       onboardingCompleted: state.onboardingCompleted ?? true,
+      bonusRewards: state.bonusRewards ?? [],
     }
   }
 
@@ -284,9 +301,11 @@ export function useAppState() {
   // Le tirage est calculé AVANT setState (état du rendu courant) : la valeur de retour
   // est fiable, là où un calcul dans l'updater dépendait de l'évaluation eager de React.
   // Le pool est l'UNION de TOUS les univers possédés par l'enfant (pas seulement
-  // l'actif) : un enfant qui a débloqué plusieurs univers reçoit des images des
-  // deux, au hasard. La progression vit dans unlockedImages, donc le cycle ne se
-  // réinitialise qu'une fois toutes les images de tous ses univers obtenues.
+  // l'actif). Le tirage suit l'ordre du jour (dailyDrawOrder) : la prochaine image
+  // est TOUJOURS l'« image mystère » annoncée floutée sur l'accueil — mélange
+  // quotidien déterministe, pondéré par la rareté. La progression vit dans
+  // unlockedImages, donc le cycle ne se réinitialise qu'une fois toutes les
+  // images de tous ses univers obtenues.
   const unlockReward = useCallback((childId: string): RewardImage | null => {
     const childIndex = state.children.findIndex(c => c.id === childId)
     const child = childIndex >= 0 ? state.children[childIndex] : undefined
@@ -307,9 +326,9 @@ export function useAppState() {
     }
 
     const unlockedSet = new Set(currentUnlocked)
-    const available = childImages.filter(img => !unlockedSet.has(img.id))
-    if (available.length === 0) return null
-    const picked = available[Math.floor(Math.random() * available.length)]
+    const picked = dailyDrawOrder(childId, localDayKey(), childImages)
+      .find(img => !unlockedSet.has(img.id))
+    if (!picked) return null
 
     setState(prev => ({
       ...prev,
@@ -319,12 +338,46 @@ export function useAppState() {
               ...c,
               unlockedImages: [...currentUnlocked, picked.id],
               completedCycles: currentCycles,
+              // Total de toujours (bons cadeaux) — ne baisse jamais
+              totalUnlocked: totalUnlockedOf(c) + 1,
             }
           : c
       ),
     }))
     return picked
   }, [state, setState])
+
+  // Bons cadeaux : récompenses réelles configurées par les parents
+  const addBonusReward = useCallback((bonus: Omit<BonusReward, 'id'>) => {
+    setState(prev => ({
+      ...prev,
+      bonusRewards: [...(prev.bonusRewards ?? []), { ...bonus, id: `bonus-${Date.now()}` }],
+    }))
+  }, [setState])
+
+  const deleteBonusReward = useCallback((bonusId: string) => {
+    setState(prev => ({
+      ...prev,
+      bonusRewards: (prev.bonusRewards ?? []).filter(b => b.id !== bonusId),
+      // Purge la trace « remis » chez les enfants pour ne rien laisser d'orphelin
+      children: prev.children.map(c =>
+        c.claimedBonuses?.includes(bonusId)
+          ? { ...c, claimedBonuses: c.claimedBonuses.filter(id => id !== bonusId) }
+          : c
+      ),
+    }))
+  }, [setState])
+
+  const markBonusGiven = useCallback((childId: string, bonusId: string) => {
+    setState(prev => ({
+      ...prev,
+      children: prev.children.map(c =>
+        c.id === childId && !(c.claimedBonuses ?? []).includes(bonusId)
+          ? { ...c, claimedBonuses: [...(c.claimedBonuses ?? []), bonusId] }
+          : c
+      ),
+    }))
+  }, [setState])
 
   const removeReward = useCallback((childId: string, imageId: string) => {
     setState(prev => ({
@@ -525,6 +578,7 @@ export function useAppState() {
 
   return {
     ...state,
+    bonusRewards: state.bonusRewards ?? [],
     children: childrenWithPhotos,
     currentScreen,
     galleryChildId,
@@ -548,6 +602,9 @@ export function useAppState() {
     stopRoutines,
     unlockReward,
     removeReward,
+    addBonusReward,
+    deleteBonusReward,
+    markBonusGiven,
     addRoutine,
     updateRoutine,
     deleteRoutine,

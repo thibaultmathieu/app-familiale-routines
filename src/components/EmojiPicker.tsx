@@ -14,12 +14,14 @@ const EMOJIS = [
 interface EmojiPickerProps {
   value: string
   onChange: (emoji: string) => void
+  /** Liste d'emojis alternative (ex. bons cadeaux) — défaut : tâches/routines. */
+  emojis?: string[]
 }
 
-export default function EmojiPicker({ value, onChange }: EmojiPickerProps) {
+export default function EmojiPicker({ value, onChange, emojis = EMOJIS }: EmojiPickerProps) {
   return (
     <div className="grid grid-cols-8 gap-1">
-      {EMOJIS.map(emoji => (
+      {emojis.map(emoji => (
         <button
           key={emoji}
           type="button"
