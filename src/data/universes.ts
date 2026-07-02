@@ -48,6 +48,18 @@ const UNIVERSE_DEFS: Universe[] = [
     emoji: '🐉',
     description: 'Des petites créatures élémentaires',
   },
+  {
+    id: 'dinosaures',
+    name: 'Dinosaures',
+    emoji: '🦖',
+    description: 'De vrais dinos, plus vrais que nature',
+  },
+  {
+    id: 'papeterie',
+    name: 'Papeterie Rigolote',
+    emoji: '✏️',
+    description: "Des stylos à têtes d'animaux trop mignons",
+  },
 ]
 
 /** Tous les univers à afficher (actifs d'abord, puis annonces). */

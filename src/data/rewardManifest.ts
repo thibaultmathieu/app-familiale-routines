@@ -366,6 +366,128 @@ export const rewardImagesByChild: Record<string, { id: string; src: string }[]> 
       "src": "/rewards/creatures/creatures-030.webp"
     }
   ],
+  "dinosaures": [
+    {
+      "id": "dinosaures-001",
+      "src": "/rewards/dinosaures/dinosaures-001.webp"
+    },
+    {
+      "id": "dinosaures-002",
+      "src": "/rewards/dinosaures/dinosaures-002.webp"
+    },
+    {
+      "id": "dinosaures-003",
+      "src": "/rewards/dinosaures/dinosaures-003.webp"
+    },
+    {
+      "id": "dinosaures-004",
+      "src": "/rewards/dinosaures/dinosaures-004.webp"
+    },
+    {
+      "id": "dinosaures-005",
+      "src": "/rewards/dinosaures/dinosaures-005.webp"
+    },
+    {
+      "id": "dinosaures-006",
+      "src": "/rewards/dinosaures/dinosaures-006.webp"
+    },
+    {
+      "id": "dinosaures-007",
+      "src": "/rewards/dinosaures/dinosaures-007.webp"
+    },
+    {
+      "id": "dinosaures-008",
+      "src": "/rewards/dinosaures/dinosaures-008.webp"
+    },
+    {
+      "id": "dinosaures-009",
+      "src": "/rewards/dinosaures/dinosaures-009.webp"
+    },
+    {
+      "id": "dinosaures-010",
+      "src": "/rewards/dinosaures/dinosaures-010.webp"
+    },
+    {
+      "id": "dinosaures-011",
+      "src": "/rewards/dinosaures/dinosaures-011.webp"
+    },
+    {
+      "id": "dinosaures-012",
+      "src": "/rewards/dinosaures/dinosaures-012.webp"
+    },
+    {
+      "id": "dinosaures-013",
+      "src": "/rewards/dinosaures/dinosaures-013.webp"
+    },
+    {
+      "id": "dinosaures-014",
+      "src": "/rewards/dinosaures/dinosaures-014.webp"
+    },
+    {
+      "id": "dinosaures-015",
+      "src": "/rewards/dinosaures/dinosaures-015.webp"
+    },
+    {
+      "id": "dinosaures-016",
+      "src": "/rewards/dinosaures/dinosaures-016.webp"
+    },
+    {
+      "id": "dinosaures-017",
+      "src": "/rewards/dinosaures/dinosaures-017.webp"
+    },
+    {
+      "id": "dinosaures-018",
+      "src": "/rewards/dinosaures/dinosaures-018.webp"
+    },
+    {
+      "id": "dinosaures-019",
+      "src": "/rewards/dinosaures/dinosaures-019.webp"
+    },
+    {
+      "id": "dinosaures-020",
+      "src": "/rewards/dinosaures/dinosaures-020.webp"
+    },
+    {
+      "id": "dinosaures-021",
+      "src": "/rewards/dinosaures/dinosaures-021.webp"
+    },
+    {
+      "id": "dinosaures-022",
+      "src": "/rewards/dinosaures/dinosaures-022.webp"
+    },
+    {
+      "id": "dinosaures-023",
+      "src": "/rewards/dinosaures/dinosaures-023.webp"
+    },
+    {
+      "id": "dinosaures-024",
+      "src": "/rewards/dinosaures/dinosaures-024.webp"
+    },
+    {
+      "id": "dinosaures-025",
+      "src": "/rewards/dinosaures/dinosaures-025.webp"
+    },
+    {
+      "id": "dinosaures-026",
+      "src": "/rewards/dinosaures/dinosaures-026.webp"
+    },
+    {
+      "id": "dinosaures-027",
+      "src": "/rewards/dinosaures/dinosaures-027.webp"
+    },
+    {
+      "id": "dinosaures-028",
+      "src": "/rewards/dinosaures/dinosaures-028.webp"
+    },
+    {
+      "id": "dinosaures-029",
+      "src": "/rewards/dinosaures/dinosaures-029.webp"
+    },
+    {
+      "id": "dinosaures-030",
+      "src": "/rewards/dinosaures/dinosaures-030.webp"
+    }
+  ],
   "kawaii": [
     {
       "id": "kawaii-001",
@@ -608,6 +730,128 @@ export const rewardImagesByChild: Record<string, { id: string; src: string }[]> 
     {
       "id": "kpop-030",
       "src": "/rewards/kpop/kpop-030.webp"
+    }
+  ],
+  "papeterie": [
+    {
+      "id": "papeterie-001",
+      "src": "/rewards/papeterie/papeterie-001.webp"
+    },
+    {
+      "id": "papeterie-002",
+      "src": "/rewards/papeterie/papeterie-002.webp"
+    },
+    {
+      "id": "papeterie-003",
+      "src": "/rewards/papeterie/papeterie-003.webp"
+    },
+    {
+      "id": "papeterie-004",
+      "src": "/rewards/papeterie/papeterie-004.webp"
+    },
+    {
+      "id": "papeterie-005",
+      "src": "/rewards/papeterie/papeterie-005.webp"
+    },
+    {
+      "id": "papeterie-006",
+      "src": "/rewards/papeterie/papeterie-006.webp"
+    },
+    {
+      "id": "papeterie-007",
+      "src": "/rewards/papeterie/papeterie-007.webp"
+    },
+    {
+      "id": "papeterie-008",
+      "src": "/rewards/papeterie/papeterie-008.webp"
+    },
+    {
+      "id": "papeterie-009",
+      "src": "/rewards/papeterie/papeterie-009.webp"
+    },
+    {
+      "id": "papeterie-010",
+      "src": "/rewards/papeterie/papeterie-010.webp"
+    },
+    {
+      "id": "papeterie-011",
+      "src": "/rewards/papeterie/papeterie-011.webp"
+    },
+    {
+      "id": "papeterie-012",
+      "src": "/rewards/papeterie/papeterie-012.webp"
+    },
+    {
+      "id": "papeterie-013",
+      "src": "/rewards/papeterie/papeterie-013.webp"
+    },
+    {
+      "id": "papeterie-014",
+      "src": "/rewards/papeterie/papeterie-014.webp"
+    },
+    {
+      "id": "papeterie-015",
+      "src": "/rewards/papeterie/papeterie-015.webp"
+    },
+    {
+      "id": "papeterie-016",
+      "src": "/rewards/papeterie/papeterie-016.webp"
+    },
+    {
+      "id": "papeterie-017",
+      "src": "/rewards/papeterie/papeterie-017.webp"
+    },
+    {
+      "id": "papeterie-018",
+      "src": "/rewards/papeterie/papeterie-018.webp"
+    },
+    {
+      "id": "papeterie-019",
+      "src": "/rewards/papeterie/papeterie-019.webp"
+    },
+    {
+      "id": "papeterie-020",
+      "src": "/rewards/papeterie/papeterie-020.webp"
+    },
+    {
+      "id": "papeterie-021",
+      "src": "/rewards/papeterie/papeterie-021.webp"
+    },
+    {
+      "id": "papeterie-022",
+      "src": "/rewards/papeterie/papeterie-022.webp"
+    },
+    {
+      "id": "papeterie-023",
+      "src": "/rewards/papeterie/papeterie-023.webp"
+    },
+    {
+      "id": "papeterie-024",
+      "src": "/rewards/papeterie/papeterie-024.webp"
+    },
+    {
+      "id": "papeterie-025",
+      "src": "/rewards/papeterie/papeterie-025.webp"
+    },
+    {
+      "id": "papeterie-026",
+      "src": "/rewards/papeterie/papeterie-026.webp"
+    },
+    {
+      "id": "papeterie-027",
+      "src": "/rewards/papeterie/papeterie-027.webp"
+    },
+    {
+      "id": "papeterie-028",
+      "src": "/rewards/papeterie/papeterie-028.webp"
+    },
+    {
+      "id": "papeterie-029",
+      "src": "/rewards/papeterie/papeterie-029.webp"
+    },
+    {
+      "id": "papeterie-030",
+      "src": "/rewards/papeterie/papeterie-030.webp"
     }
   ],
   "super-heros": [

@@ -23,13 +23,15 @@ const ROOT = path.resolve(__dirname, '..')
 
 // --- Clé API ---------------------------------------------------------------
 function loadApiKey() {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY
+  // Le coffre local prime : une variable d'environnement GEMINI_API_KEY périmée
+  // peut traîner dans le shell et masquer la clé valide (constaté le 02/07/2026).
   const envPath = 'C:/secrets/keys.env'  // coffre local hors OneDrive (cf. ref-secrets.md)
   if (fs.existsSync(envPath)) {
     const m = fs.readFileSync(envPath, 'utf8').match(/^GEMINI_API_KEY=(.+)$/m)
     if (m) return m[1].trim()
   }
-  console.error('GEMINI_API_KEY introuvable (env ou .env.local)')
+  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY
+  console.error('GEMINI_API_KEY introuvable (C:/secrets/keys.env ou env)')
   process.exit(1)
 }
 const API_KEY = loadApiKey()
@@ -289,6 +291,92 @@ const UNIVERSES = {
       'A dragonfly creature with stained-glass prism wings',
       'A wolf pup creature with a mane of rolling ocean waves',
       'A goat kid creature grazing on a floating island chunk, gravity element',
+    ],
+  },
+
+  dinosaures: {
+    folder: 'Dinosaures',
+    style:
+      'Award-winning wildlife photography, ultra photo-realistic: a living dinosaur photographed in its ' +
+      'natural prehistoric habitat as if by a National Geographic photographer, telephoto lens look, ' +
+      'crisp detail in skin scales and feather texture, beautiful dramatic natural light, true-to-life ' +
+      'colors, realistic anatomy grounded in modern paleontology. Majestic and awe-inspiring yet ' +
+      'perfectly friendly for children: peaceful behavior, no hunting, no gore, no blood, no open jaws ' +
+      'lunging at the camera.',
+    subjects: [
+      'A majestic Tyrannosaurus rex standing on a misty ridge at golden sunrise, calm side profile portrait',
+      'A Triceratops family grazing in a sunlit fern meadow, baby close to its mother',
+      'A feathered Velociraptor tilting its head curiously, iridescent plumage detail',
+      'A towering Brachiosaurus reaching into treetops, low angle against blue sky and clouds',
+      'A Stegosaurus drinking at a calm river at dusk, back plates glowing in warm light',
+      'An armored Ankylosaurus walking through a prehistoric forest clearing, dappled light',
+      'A Parasaurolophus calling at sunset, dramatic rim light on its long crest',
+      'A Spinosaurus wading through a shallow river, sail reflecting in the water',
+      'A tiny dinosaur hatchling emerging from its egg in a fern nest, soft morning light',
+      'A herd of Diplodocus crossing a vast plain under a pink evening sky',
+      'A Pteranodon soaring above ocean cliffs, wings spread wide against the sun',
+      'A baby Triceratops sniffing a prehistoric flower, close-up with a big gentle eye',
+      'Two Pachycephalosaurus facing each other on a rocky hill in morning fog',
+      'A colorful Dilophosaurus with striking double crests standing among giant ferns',
+      'A flock of Gallimimus running across a dusty plain, backlit dust clouds',
+      'A herd of gentle giant Argentinosaurus at a watering hole, sunset reflections',
+      'A Carnotaurus portrait with textured brow horns, calm gaze, stormy sky behind',
+      'A Therizinosaurus peacefully reaching for leaves with its long claws',
+      'A Mosasaurus breaching the ocean surface, water spray frozen in sunlight',
+      'A Plesiosaurus gliding underwater through sunbeams and silver fish',
+      'A Quetzalcoatlus standing tall like a giraffe on an open plain, golden hour',
+      'An Iguanodon standing in a blooming magnolia forest, soft spring light',
+      'A tiny Compsognathus perched on a mossy log, macro wildlife shot',
+      'A Corythosaurus with a colorful crest in a cypress swamp, mirror reflection',
+      'A Maiasaura gently guarding its nest of eggs, tender parental scene',
+      'An Oviraptor with striking plumage brooding its nest among sand dunes',
+      'A Kentrosaurus among red rocks, tail spikes backlit by the low sun',
+      'A young Allosaurus splashing through a puddle after rain, playful energy',
+      'A Protoceratops peeking from behind a sand dune at sunrise, curious look',
+      'A feather-coated Yutyrannus in light snowfall, majestic winter portrait',
+    ],
+  },
+
+  papeterie: {
+    folder: 'Papeterie',
+    style:
+      'Premium e-commerce product photography of completely original cute Italian-style stationery ' +
+      '(original design, not from any existing brand): a single hero product perfectly lit on a soft ' +
+      'pastel seamless studio background, gentle soft shadow, crisp macro detail, glossy smooth ' +
+      'materials, rounded chubby character shapes with tiny happy faces, pastel palette (blush pink, ' +
+      'mint, lilac, butter yellow, sky blue, cream), irresistibly cute and giftable, catalog-quality ' +
+      'lighting.',
+    subjects: [
+      'A mint green gel pen topped with a chubby smiling panda head, resting on a pastel notebook',
+      'A lilac gel pen topped with a sleepy koala head, tiny hearts pattern on the barrel',
+      'A baby pink gel pen topped with a happy unicorn head with a little golden horn',
+      'A sky blue gel pen topped with a round penguin head, standing in a glass pen pot',
+      'A butter yellow gel pen topped with a smiling avocado character',
+      'A peach gel pen topped with a friendly smiling shark head, wave pattern on the barrel',
+      'A pastel rainbow pen shaped like a unicorn with a flowing mane cap',
+      'A coral gel pen topped with a blushing llama head with tiny pompoms',
+      'A white gel pen topped with a chubby cat head, paw prints on the barrel',
+      'A lavender gel pen topped with a baby dinosaur head with tiny soft spikes',
+      'A cream gel pen topped with a round bee character with translucent wings',
+      'A rose gel pen topped with an elegant flamingo head',
+      'A seafoam gel pen topped with a turtle wearing a tiny party hat',
+      'A honey yellow gel pen topped with a round hamster head holding a seed',
+      'A powder blue gel pen topped with a narwhal head with a pearly spiral horn',
+      'A blush pink gel pen topped with a ladybug character with heart-shaped spots',
+      'A fluffy pencil case shaped like a smiling capybara with a pastel zipper',
+      'A set of fruit-shaped erasers with tiny smiling faces — peach, watermelon slice and lemon — arranged on pastel paper',
+      'A notebook with a plush unicorn cover and iridescent page edges, slightly fanned open',
+      'A pastel pink mini stapler shaped like a smiling whale with a tiny bubbles pattern',
+      'Paper clips shaped like tiny colorful cats scattered on a mint desk mat',
+      'A roll of washi tape with a cute cloud and rainbow pattern, partially unrolled',
+      'A pair of kid-safe scissors with a toucan-shaped handle in tropical pastel colors',
+      'A set of highlighters shaped like pastel ice pops standing in a row',
+      'A pencil sharpener shaped like a tiny mint and cream camper van',
+      'A sticky note dispenser shaped like a sleeping fox curled around its notes',
+      'A glue stick with a smiling octopus cap and a lavender body',
+      'A folding ruler with a caterpillar design, each segment a different pastel color',
+      'A backpack charm of a fluffy pompom bunny holding a tiny pencil',
+      'A desk organizer shaped like a pastel castle filled with colorful animal-topped pens',
     ],
   },
 }
