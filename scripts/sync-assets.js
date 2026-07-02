@@ -28,14 +28,10 @@ const childrenDirs = fs.readdirSync(imagesRoot, { withFileTypes: true })
   }))
   .sort((a, b) => a.name.localeCompare(b.name))
 
+// Musiques : dossier source vide depuis le retrait des titres stock (02/07/2026).
+// Le pipeline reste en place pour les futurs titres originaux (Suno) : déposer
+// des .mp3 dans music/ (le nom de fichier devient le titre) puis relancer.
 const musicSourceDir = 'music'
-
-const musicTitles = {
-  '01': 'Somewhere in My Memory',
-  '04': 'Golden',
-  '09': 'What It Sounds Like',
-  '14': 'Setting the Trap',
-}
 
 // --- Images ---
 const rewardManifest = {}
@@ -97,21 +93,16 @@ for (const f of fs.readdirSync(musicDestDir)) {
   fs.unlinkSync(path.join(musicDestDir, f))
 }
 
-const musicFiles = fs.readdirSync(musicSrcDir)
-  .filter(f => f.toLowerCase().endsWith('.mp3'))
-  .sort()
+const musicFiles = fs.existsSync(musicSrcDir)
+  ? fs.readdirSync(musicSrcDir).filter(f => f.toLowerCase().endsWith('.mp3')).sort()
+  : []
 
 const tracks = []
 musicFiles.forEach((file, i) => {
   const num = String(i + 1).padStart(2, '0')
   const newName = `track-${num}.mp3`
   fs.copyFileSync(path.join(musicSrcDir, file), path.join(musicDestDir, newName))
-
-  // Try to extract track number prefix for title lookup
-  const trackNum = file.match(/^(\d+)/)?.[1]
-  const title = (trackNum && musicTitles[trackNum]) || file.replace('.mp3', '')
-
-  tracks.push({ id: `track-${num}`, src: `/music/${newName}`, title })
+  tracks.push({ id: `track-${num}`, src: `/music/${newName}`, title: file.replace(/\.mp3$/i, '') })
 })
 
 // Generate musicManifest.ts
