@@ -3,7 +3,7 @@ import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines } from '../data/defaultRoutines'
 import { findRewardImage, getRewardImagesForUniverse, legacyUniverseIdForIndex } from '../data/rewardImages'
-import { localDayKey, ownedUniverseIds } from '../data/universeProgress'
+import { advanceDayProgress, ownedUniverseIds } from '../data/universeProgress'
 import { assetUrl } from '../utils/assetUrl'
 
 export interface PersistedState {
@@ -210,8 +210,6 @@ export function useAppState() {
 
   const toggleTask = useCallback((routineId: string, taskId: string) => {
     setState(prev => {
-      // Enfant dont la routine vient d'être terminée par ce toggle (progression univers)
-      let completedChildId: string | null = null
       const activeRoutines = prev.activeRoutines.map(ar => {
         if (ar.id !== routineId) return ar
         const task = ar.tasks.find(t => t.taskId === taskId)
@@ -220,7 +218,6 @@ export function useAppState() {
           t.taskId === taskId ? { ...t, done: true } : t
         )
         const allDone = updatedTasks.every(t => t.done)
-        if (allDone) completedChildId = ar.childId
         return {
           ...ar,
           tasks: updatedTasks,
@@ -228,14 +225,9 @@ export function useAppState() {
         }
       })
 
-      let children = prev.children
-      if (completedChildId) {
-        const today = localDayKey()
-        children = prev.children.map(c => {
-          if (c.id !== completedChildId || c.lastRoutineDay === today) return c
-          return { ...c, routineDayCount: (c.routineDayCount ?? 0) + 1, lastRoutineDay: today }
-        })
-      }
+      // Progression d'univers : la journée d'un enfant ne compte que lorsque
+      // toutes ses routines programmées du jour sont terminées (cf. childDayComplete)
+      const children = advanceDayProgress(prev.children, prev.routineTemplates, activeRoutines)
 
       return { ...prev, activeRoutines, children }
     })
@@ -403,16 +395,24 @@ export function useAppState() {
         ...prev,
         routineTemplates: updatedTemplates,
         activeRoutines: updatedActiveRoutines,
+        // L'édition peut compléter une routine → la journée peut devenir complète
+        children: advanceDayProgress(prev.children, updatedTemplates, updatedActiveRoutines),
       }
     })
   }, [setState])
 
   const deleteRoutine = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      routineTemplates: prev.routineTemplates.filter(r => r.id !== id),
-      activeRoutines: prev.activeRoutines.filter(ar => ar.templateId !== id),
-    }))
+    setState(prev => {
+      const routineTemplates = prev.routineTemplates.filter(r => r.id !== id)
+      const activeRoutines = prev.activeRoutines.filter(ar => ar.templateId !== id)
+      return {
+        ...prev,
+        routineTemplates,
+        activeRoutines,
+        // Supprimer la dernière routine du jour restante peut compléter la journée
+        children: advanceDayProgress(prev.children, routineTemplates, activeRoutines),
+      }
+    })
   }, [setState])
 
   const reorderTask = useCallback((routineId: string, taskIndex: number, direction: 'up' | 'down') => {

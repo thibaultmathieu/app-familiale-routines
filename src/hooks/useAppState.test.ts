@@ -595,9 +595,20 @@ describe('useAppState — récompenses', () => {
 // useAppState — progression des univers (déblocage doux)
 // ---------------------------------------------------------------------------
 
+const allDays = [0, 1, 2, 3, 4, 5, 6]
+// Programmées tous les jours : les tests de progression ne dépendent pas du jour d'exécution
+const morningDaily: RoutineTemplate = { ...twoTaskTemplate, scheduledDays: allDays }
+const eveningDaily: RoutineTemplate = {
+  id: 'evening',
+  name: 'Routine du soir',
+  icon: '🌙',
+  scheduledDays: allDays,
+  tasks: [{ id: 'e1', label: 'je me lave les dents', icon: '🪥' }],
+}
+
 describe('useAppState — progression des univers', () => {
-  it('compléter une routine compte un jour, une seule fois par jour', () => {
-    const { result } = setupHook({})
+  it('compléter la seule routine programmée compte un jour, une seule fois par jour', () => {
+    const { result } = setupHook({ routineTemplates: [morningDaily] })
     act(() => result.current.launchRoutine('morning', ['c1']))
     const routineId = result.current.activeRoutines[0].id
 
@@ -611,6 +622,105 @@ describe('useAppState — progression des univers', () => {
     act(() => result.current.resetChildRoutine('c1'))
     act(() => result.current.toggleTask(routineId, 'm1'))
     act(() => result.current.toggleTask(routineId, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+  })
+
+  it('la journée ne compte que quand TOUTES les routines programmées du jour sont terminées (bug Noah)', () => {
+    const { result } = setupHook({ routineTemplates: [morningDaily, eveningDaily] })
+    act(() => result.current.launchRoutine('morning', ['c1']))
+    const morningId = result.current.activeRoutines.find(ar => ar.templateId === 'morning')!.id
+    act(() => result.current.toggleTask(morningId, 'm1'))
+    act(() => result.current.toggleTask(morningId, 'm2'))
+    // Le matin est terminé mais la routine du soir programmée reste à faire
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount ?? 0).toBe(0)
+
+    act(() => result.current.launchRoutine('evening', ['c1']))
+    const eveningId = result.current.activeRoutines.find(ar => ar.templateId === 'evening')!.id
+    act(() => result.current.toggleTask(eveningId, 'e1'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+  })
+
+  it('une mission express seule ne compte pas la journée si une routine programmée reste à faire', () => {
+    const { result } = setupHook({ routineTemplates: [morningDaily] })
+    let missionId = ''
+    act(() => {
+      missionId = result.current.addRoutine({
+        name: 'Mission',
+        icon: '🎯',
+        ephemeral: true,
+        tasks: [{ id: 'x1', label: 'ranger le salon', icon: '🎯' }],
+      })
+    })
+    act(() => result.current.launchRoutine(missionId, ['c1']))
+    const missionInstance = result.current.activeRoutines.find(ar => ar.templateId === missionId)!
+    act(() => result.current.toggleTask(missionInstance.id, 'x1'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount ?? 0).toBe(0)
+
+    act(() => result.current.launchRoutine('morning', ['c1']))
+    const morningInstance = result.current.activeRoutines.find(ar => ar.templateId === 'morning')!
+    act(() => result.current.toggleTask(morningInstance.id, 'm1'))
+    act(() => result.current.toggleTask(morningInstance.id, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+  })
+
+  it("un jour sans routine programmée compte dès qu'une routine est terminée", () => {
+    const onDemand: RoutineTemplate = {
+      id: 'weekend',
+      name: 'Week-end',
+      icon: '🎈',
+      tasks: [{ id: 'w1', label: 'ranger sa chambre', icon: '🎈' }],
+    }
+    const { result } = setupHook({ routineTemplates: [onDemand] })
+    act(() => result.current.launchRoutine('weekend', ['c1']))
+    const id = result.current.activeRoutines[0].id
+    act(() => result.current.toggleTask(id, 'w1'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+  })
+
+  it("une routine terminée hier ne compte pas pour la journée d'aujourd'hui", () => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString()
+    const { result } = setupHook({
+      routineTemplates: [morningDaily, eveningDaily],
+      activeRoutines: [{
+        id: 'morning-c1-old',
+        templateId: 'morning',
+        childId: 'c1',
+        tasks: [{ taskId: 'm1', done: true }, { taskId: 'm2', done: true }],
+        startedAt: yesterday,
+        completedAt: yesterday,
+      }],
+    })
+    act(() => result.current.launchRoutine('evening', ['c1']))
+    const eveningId = result.current.activeRoutines.find(ar => ar.templateId === 'evening')!.id
+    act(() => result.current.toggleTask(eveningId, 'e1'))
+    // Le matin n'a pas été lancé AUJOURD'HUI → journée incomplète
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount ?? 0).toBe(0)
+  })
+
+  it('la journée compte par enfant, indépendamment', () => {
+    const { result } = setupHook({ routineTemplates: [morningDaily] })
+    act(() => result.current.launchRoutine('morning', ['c1', 'c2']))
+    const c1Routine = result.current.activeRoutines.find(ar => ar.childId === 'c1')!
+    act(() => result.current.toggleTask(c1Routine.id, 'm1'))
+    act(() => result.current.toggleTask(c1Routine.id, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+    expect(result.current.children.find(c => c.id === 'c2')!.routineDayCount ?? 0).toBe(0)
+  })
+
+  it("une routine programmée qui ne concerne pas l'enfant n'est pas exigée pour sa journée", () => {
+    const onlyC2: RoutineTemplate = {
+      id: 'piano',
+      name: 'Piano',
+      icon: '🎹',
+      scheduledDays: allDays,
+      tasks: [{ id: 'p1', label: 'répéter le piano', icon: '🎹', childIds: ['c2'] }],
+    }
+    const { result } = setupHook({ routineTemplates: [morningDaily, onlyC2] })
+    act(() => result.current.launchRoutine('morning', ['c1']))
+    const id = result.current.activeRoutines[0].id
+    act(() => result.current.toggleTask(id, 'm1'))
+    act(() => result.current.toggleTask(id, 'm2'))
+    // 'piano' ne concerne que c2 → la journée de c1 est complète sans lui
     expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
   })
 

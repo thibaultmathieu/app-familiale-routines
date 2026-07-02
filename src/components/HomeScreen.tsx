@@ -10,7 +10,7 @@ import UniverseUnlockOverlay from './UniverseUnlockOverlay'
 import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
 import { ACTIVE_UNIVERSES } from '../data/universes'
-import { localDayKey, ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
+import { localDayKey, ownedUniverseIds, pendingUniverseChoices, scheduledTemplatesForDay } from '../data/universeProgress'
 import { tint } from '../theme'
 import { Badge, Button, Card, TextInput } from './ui'
 
@@ -94,10 +94,7 @@ export default function HomeScreen({
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }, [])
 
-  const today = new Date().getDay()
-  const todayRoutines = routineTemplates.filter(r =>
-    r.scheduledDays && r.scheduledDays.length > 0 && r.scheduledDays.includes(today)
-  )
+  const todayRoutines = scheduledTemplatesForDay(routineTemplates)
   const onDemandRoutines = routineTemplates.filter(r =>
     !r.scheduledDays || r.scheduledDays.length === 0
   )

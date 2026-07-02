@@ -157,7 +157,7 @@ export default function GalleryScreen({
           <p className="text-sm font-display font-semibold text-honey-600 mt-1">🎁 Tu as un nouvel univers à choisir !</p>
         ) : daysLeft !== null && daysLeft > 0 ? (
           <p className="text-sm text-ink-faint mt-1">
-            ✨ Plus que {daysLeft} jour{daysLeft > 1 ? 's' : ''} de routines réussies pour débloquer un nouvel univers
+            ✨ Termine toutes tes routines pendant encore {daysLeft} jour{daysLeft > 1 ? 's' : ''} pour débloquer un nouvel univers
           </p>
         ) : null}
       </div>
