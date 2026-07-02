@@ -29,8 +29,9 @@ export default function UniverseSelectScreen({
     <div className="h-full flex flex-col p-6 max-w-2xl mx-auto overflow-y-auto">
       <ScreenHeader className="mb-3" onBack={() => setCurrentScreen('parent')} title="🌌 Univers des récompenses" />
       <p className="text-sm text-ink-faint text-center mb-6">
-        Chaque enfant collectionne les images de ses univers. Il en débloque un nouveau
-        après 2 jours de routines réussies, puis tous les 5 jours. Rien ne se perd en changeant d'univers.
+        Chaque enfant collectionne les images de ses univers. Il en débloque un nouveau après
+        2 journées complètes (toutes les routines du jour terminées), puis tous les 5 jours.
+        Rien ne se perd en changeant d'univers.
       </p>
 
       <div className="space-y-5">
@@ -55,7 +56,7 @@ export default function UniverseSelectScreen({
                 {pending > 0
                   ? `🎁 ${pending > 1 ? `${pending} nouveaux univers gagnés` : 'Nouvel univers gagné'} — votre enfant peut le choisir !`
                   : daysLeft !== null
-                    ? `Prochain univers dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''} de routines réussies`
+                    ? `Prochain univers dans ${daysLeft} journée${daysLeft > 1 ? 's' : ''} de routines complètes`
                     : 'Tous les univers sont débloqués ✨'}
               </p>
 

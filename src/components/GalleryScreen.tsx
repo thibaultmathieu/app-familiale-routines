@@ -6,6 +6,7 @@ import { daysUntilNextUnlock, ownedUniverseIds, pendingUniverseChoices } from '.
 import { rarityOf } from '../data/rarity'
 import { bonusStatusFor } from '../data/bonusRewards'
 import { childTextColor, tint } from '../theme'
+import { dePrefix } from '../utils/frenchName'
 import { ScreenHeader } from './ui'
 
 interface GalleryScreenProps {
@@ -81,7 +82,7 @@ export default function GalleryScreen({
         onBack={handleBack}
         title={
           <>
-            Collection {/^[aàâeéèêiîoôuûyh]/i.test(currentChild.name) ? "d'" : 'de '}
+            Collection {dePrefix(currentChild.name)}
             <span style={{ color: childTextColor(currentChild.color) }}>{currentChild.name}</span>
           </>
         }

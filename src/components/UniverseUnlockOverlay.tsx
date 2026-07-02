@@ -30,7 +30,8 @@ export default function UniverseUnlockOverlay({ child, ownedIds, onPick, onLater
         Tes routines réussies t'ont fait gagner un nouvel univers.<br />Choisis ta nouvelle collection :
       </p>
 
-      <div className={`grid gap-3 mb-6 ${choices.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+      {/* Avec 8 univers le choix peut être long : zone scrollable, l'overlay reste dans l'écran */}
+      <div className={`grid gap-3 mb-6 max-h-[52vh] overflow-y-auto scroll-touch ${choices.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {choices.map(universe => {
           const thumbnail = getRewardImagesForUniverse(universe.id)[0]?.src
           return (

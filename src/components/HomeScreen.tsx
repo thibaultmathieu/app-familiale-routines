@@ -492,7 +492,9 @@ export default function HomeScreen({
                 </div>
                 <div className="text-left min-w-0">
                   <p className="font-display font-semibold text-ink">{child.name}</p>
-                  <p className="text-sm text-ink-faint">{child.unlockedImages.length} images</p>
+                  <p className="text-sm text-ink-faint">
+                    {child.unlockedImages.length} image{child.unlockedImages.length !== 1 ? 's' : ''}
+                  </p>
                   {nextBonus && (
                     <p className="text-xs text-honey-600 font-semibold truncate">
                       {nextBonus.bonus.emoji} Encore {nextBonus.remaining} image{nextBonus.remaining > 1 ? 's' : ''} → {nextBonus.bonus.label}

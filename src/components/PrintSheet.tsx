@@ -4,6 +4,7 @@ import { getRewardImagesForUniverse } from '../data/rewardImages'
 import { getUniverse } from '../data/universes'
 import { ownedUniverseIds } from '../data/universeProgress'
 import { rarityOf } from '../data/rarity'
+import { deName } from '../utils/frenchName'
 import { Button } from './ui'
 
 interface PrintSheetProps {
@@ -39,7 +40,7 @@ export default function PrintSheet({ child, childIndex, onClose }: PrintSheetPro
       <div className="print-hide flex items-center justify-between gap-3 p-4 border-b border-line flex-wrap">
         <div>
           <h2 className="text-xl font-display font-semibold text-ink">
-            🖨️ Collection de {child.name}
+            🖨️ Collection {deName(child.name)}
           </h2>
           <p className="text-sm text-ink-faint">
             {mode === 'cartes'
@@ -98,7 +99,7 @@ export default function PrintSheet({ child, childIndex, onClose }: PrintSheetPro
                           {img.universe ? `${img.universe.emoji} ${img.universe.name}` : 'Collection'}
                         </p>
                         <p className="text-ink-faint" style={{ fontSize: '2.9mm' }}>
-                          {img.rarity === 'legendaire' ? '🌟 Légendaire' : img.rarity === 'rare' ? '✨ Rare' : `Collection de ${child.name}`}
+                          {img.rarity === 'legendaire' ? '🌟 Légendaire' : img.rarity === 'rare' ? '✨ Rare' : `Collection ${deName(child.name)}`}
                         </p>
                       </div>
                     </div>

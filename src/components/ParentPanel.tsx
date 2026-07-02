@@ -10,6 +10,7 @@ import { getRewardImagesForUniverse } from '../data/rewardImages'
 import { ownedUniverseIds } from '../data/universeProgress'
 import { totalUnlockedOf } from '../data/bonusRewards'
 import { childTextColor, tint } from '../theme'
+import { deName } from '../utils/frenchName'
 import { Badge, Button, Card, ScreenHeader, TextInput } from './ui'
 
 /** Emojis adaptés aux récompenses réelles (sorties, gourmandises, activités). */
@@ -358,7 +359,7 @@ export default function ParentPanel({
               disabled={child.unlockedImages.length === 0}
               onClick={() => setPrintChildId(child.id)}
             >
-              🖨️ Collection de {child.name}
+              🖨️ Collection {deName(child.name)}
             </Button>
           ))}
         </div>
