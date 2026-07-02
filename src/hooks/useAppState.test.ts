@@ -6,6 +6,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   MAX_ROUTINE_TEMPLATES,
   MAX_ACTIVE_TIMERS,
+  ONBOARDING_REPLAY_BACKUP_KEY,
   PersistedState,
 } from './useAppState'
 import { RoutineTemplate } from '../types'
@@ -868,6 +869,53 @@ describe('useAppState — progression des univers', () => {
     // Idempotent : ré-ajouter un univers possédé ne crée pas de doublon
     act(() => result.current.addChildUniverse('c1', 'b'))
     expect(result.current.children.find(c => c.id === 'c1')!.unlockedUniverseIds).toEqual(['a', 'b'])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useAppState — test de l'onboarding en bac à sable (replay + restauration)
+// ---------------------------------------------------------------------------
+
+describe('useAppState — revivre l\'onboarding', () => {
+  it('startOnboardingReplay repart comme une installation neuve, la sauvegarde existe', () => {
+    const { result } = setupHook({
+      children: [makeChild('c1', { name: 'Éva', unlockedImages: ['a-001', 'a-002'], totalUnlocked: 2 })],
+    })
+    act(() => result.current.startOnboardingReplay())
+
+    expect(result.current.onboardingCompleted).toBe(false)
+    expect(result.current.children).toHaveLength(0)
+    expect(localStorage.getItem(ONBOARDING_REPLAY_BACKUP_KEY)).not.toBeNull()
+  })
+
+  it('terminer le test restaure intégralement les données réelles (collections comprises)', () => {
+    const { result } = setupHook({
+      children: [makeChild('c1', { name: 'Éva', unlockedImages: ['a-001', 'a-002'], totalUnlocked: 2, claimedBonuses: [] })],
+      bonusRewards: [{ id: 'b1', label: 'Pizza', emoji: '🍕', threshold: 5 }],
+    })
+    act(() => result.current.startOnboardingReplay())
+
+    // Pendant le test : l'utilisateur crée des enfants bac à sable
+    act(() => result.current.addChild({ id: 'sandbox-1', name: 'Test', photo: '', color: '#fff' }))
+    expect(result.current.children).toHaveLength(1)
+
+    act(() => result.current.completeOnboarding())
+
+    // Restauration : l'enfant réel et sa collection sont revenus, le bac à sable a disparu
+    expect(result.current.onboardingCompleted).toBe(true)
+    expect(result.current.children.map(c => c.name)).toEqual(['Éva'])
+    expect(result.current.children[0].unlockedImages).toEqual(['a-001', 'a-002'])
+    expect(result.current.children[0].totalUnlocked).toBe(2)
+    expect(result.current.bonusRewards.map(b => b.label)).toEqual(['Pizza'])
+    expect(localStorage.getItem(ONBOARDING_REPLAY_BACKUP_KEY)).toBeNull()
+    expect(result.current.currentScreen).toBe('home')
+  })
+
+  it('completeOnboarding sans sauvegarde de test garde le comportement normal', () => {
+    const { result } = setupHook({ onboardingCompleted: false })
+    act(() => result.current.completeOnboarding())
+    expect(result.current.onboardingCompleted).toBe(true)
+    expect(result.current.children).toHaveLength(2)
   })
 })
 

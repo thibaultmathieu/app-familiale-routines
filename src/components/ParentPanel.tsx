@@ -35,6 +35,7 @@ interface ParentPanelProps {
   markBonusGiven: (childId: string, bonusId: string) => void
   setTimerReturnScreen: (screen: Screen | null) => void
   setTimerPrefill: (prefill: { label?: string; childIds?: string[] } | null) => void
+  startOnboardingReplay: () => void
   parentPin?: string
   setParentPin: (pin: string | null) => void
 }
@@ -58,6 +59,7 @@ export default function ParentPanel({
   markBonusGiven,
   setTimerReturnScreen,
   setTimerPrefill,
+  startOnboardingReplay,
   parentPin,
   setParentPin,
 }: ParentPanelProps) {
@@ -460,6 +462,30 @@ export default function ParentPanel({
             <p className="text-ink-faint text-sm">Aucune image à retirer</p>
           )
         )}
+      </Card>
+
+      {/* Test de l'onboarding (bac à sable) */}
+      <Card className="p-6 mb-6">
+        <SectionTitle>Tester l'onboarding</SectionTitle>
+        <p className="text-sm text-ink-faint mb-3">
+          Revivez la première ouverture de l'app comme un nouvel utilisateur.
+          À la fin du test, <strong>tout est restauré automatiquement</strong> (enfants,
+          collections, routines, bons) — ce que vous saisissez pendant le test n'est pas conservé.
+        </p>
+        <Button
+          variant="soft"
+          size="lg"
+          className="w-full"
+          onClick={() => {
+            if (window.confirm(
+              "Revivre l'onboarding comme un nouvel utilisateur ?\n\nVos données actuelles seront restaurées automatiquement à la fin du test. Ce que vous saisirez pendant le test ne sera pas conservé."
+            )) {
+              startOnboardingReplay()
+            }
+          }}
+        >
+          🔄 Revivre l'onboarding
+        </Button>
       </Card>
 
       {/* Sauvegarde */}

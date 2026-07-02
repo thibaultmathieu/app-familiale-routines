@@ -27,6 +27,9 @@ export const CURRENT_SCHEMA_VERSION = 8
 export const MAX_ROUTINE_TEMPLATES = 30
 export const MAX_ACTIVE_TIMERS = 6
 
+/** Sauvegarde temporaire de l'état réel pendant un test d'onboarding (bac à sable). */
+export const ONBOARDING_REPLAY_BACKUP_KEY = 'routines-onboarding-replay-backup'
+
 const initialState: PersistedState = {
   children: [],
   routineTemplates: defaultRoutines,
@@ -570,9 +573,41 @@ export function useAppState() {
     }))
   }, [setState])
 
+  // Test de l'onboarding en bac à sable : l'état réel complet est mis de côté,
+  // l'app repart comme une installation neuve, et TOUT est restauré tel quel
+  // à la fin de l'onboarding (les saisies du test ne sont pas conservées).
+  // Abandonner en cours de route ne perd rien : la restauration attend la
+  // prochaine complétion d'onboarding.
+  const startOnboardingReplay = useCallback(() => {
+    localStorage.setItem(
+      ONBOARDING_REPLAY_BACKUP_KEY,
+      JSON.stringify({ state, gearHintSeen: localStorage.getItem('gearHintSeen') })
+    )
+    // Expérience « nouvel utilisateur » complète : hint ⚙️ et brouillons remis à zéro
+    localStorage.removeItem('gearHintSeen')
+    localStorage.removeItem('routines-onboarding-draft')
+    localStorage.removeItem('routines-onboarding-step')
+    setState(initialState)
+    setCurrentScreen('home')
+  }, [state, setState, setCurrentScreen])
+
   const completeOnboarding = useCallback(() => {
+    const stashed = localStorage.getItem(ONBOARDING_REPLAY_BACKUP_KEY)
+    if (stashed) {
+      // Fin d'un test d'onboarding : restauration intégrale de l'état réel
+      localStorage.removeItem(ONBOARDING_REPLAY_BACKUP_KEY)
+      try {
+        const saved = JSON.parse(stashed) as { state: PersistedState; gearHintSeen: string | null }
+        if (saved.gearHintSeen) localStorage.setItem('gearHintSeen', saved.gearHintSeen)
+        setState({ ...saved.state, onboardingCompleted: true })
+        setCurrentScreen('home')
+        return
+      } catch {
+        // Sauvegarde de test illisible : on termine comme un onboarding normal
+      }
+    }
     setState(prev => ({ ...prev, onboardingCompleted: true }))
-  }, [setState])
+  }, [setState, setCurrentScreen])
 
   const setParentPin = useCallback((pin: string | null) => {
     setState(prev => {
@@ -629,6 +664,7 @@ export function useAppState() {
     updateChild,
     addChild,
     removeChild,
+    startOnboardingReplay,
     completeOnboarding,
     setParentPin,
   }
