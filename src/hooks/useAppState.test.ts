@@ -805,6 +805,29 @@ describe('useAppState — progression des univers', () => {
     expect(result.current.children.find(c => c.id === 'c2')!.routineDayCount ?? 0).toBe(0)
   })
 
+  it("réinitialiser une instance de la veille la re-date : la journée d'aujourd'hui peut compter", () => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString()
+    const { result } = setupHook({
+      routineTemplates: [morningDaily],
+      activeRoutines: [{
+        id: 'morning-c1-old',
+        templateId: 'morning',
+        childId: 'c1',
+        tasks: [{ taskId: 'm1', done: true }, { taskId: 'm2', done: true }],
+        startedAt: yesterday,
+        completedAt: yesterday,
+      }],
+    })
+    // Le matin, un parent réinitialise la routine restée de la veille…
+    act(() => result.current.resetRoutine('morning'))
+    const instance = result.current.activeRoutines[0]
+    expect(instance.completedAt).toBeNull()
+    // …l'enfant la refait aujourd'hui : elle compte (startedAt re-daté)
+    act(() => result.current.toggleTask(instance.id, 'm1'))
+    act(() => result.current.toggleTask(instance.id, 'm2'))
+    expect(result.current.children.find(c => c.id === 'c1')!.routineDayCount).toBe(1)
+  })
+
   it("une routine programmée qui ne concerne pas l'enfant n'est pas exigée pour sa journée", () => {
     const onlyC2: RoutineTemplate = {
       id: 'piano',

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Child, Screen } from '../types'
 import ChildAvatar, { DEFAULT_AVATAR_PATH } from './ChildAvatar'
 import { COLOR_PALETTE } from '../theme'
+import { deName } from '../utils/frenchName'
 import { Button, Card, ScreenHeader, TextInput } from './ui'
 
 interface ChildEditorScreenProps {
@@ -158,7 +159,7 @@ export default function ChildEditorScreen({
               /* View mode */
               <div className="flex items-center gap-4">
                 <div className="border-[3px] rounded-full" style={{ borderColor: child.color }}>
-                  <ChildAvatar photo={child.photo} color={child.color} size={56} alt={`Photo de ${child.name}`} />
+                  <ChildAvatar photo={child.photo} color={child.color} size={56} alt={`Photo ${deName(child.name)}`} />
                 </div>
                 <div className="flex-1">
                   <p className="text-lg font-display font-semibold text-ink">{child.name}</p>

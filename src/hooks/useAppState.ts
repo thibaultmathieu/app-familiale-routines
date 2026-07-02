@@ -3,7 +3,7 @@ import { useLocalStorage } from './useLocalStorage'
 import { ActiveRoutine, ActiveTimer, BonusReward, Child, RewardImage, RoutineTemplate, Screen } from '../types'
 import { defaultRoutines } from '../data/defaultRoutines'
 import { findRewardImage, getRewardImagesForUniverse, legacyUniverseIdForIndex } from '../data/rewardImages'
-import { advanceDayProgress, localDayKey, ownedUniverseIds } from '../data/universeProgress'
+import { advanceDayProgress, localDayKey, ownedRewardImages } from '../data/universeProgress'
 import { dailyDrawOrder } from '../data/mystery'
 import { totalUnlockedOf } from '../data/bonusRewards'
 import { assetUrl } from '../utils/assetUrl'
@@ -172,6 +172,19 @@ export function migrateState(state: PersistedState): PersistedState {
   return state
 }
 
+/**
+ * Toute mutation qui peut compléter la journée d'un enfant (tâche cochée,
+ * routine éditée/supprimée/réinitialisée, programme modifié) repasse par ici :
+ * la progression d'univers est recalculée sur l'état RÉSULTANT — l'invariant
+ * vit à un seul endroit, idempotent (garde `lastRoutineDay`).
+ */
+function withDayProgress(next: PersistedState): PersistedState {
+  return {
+    ...next,
+    children: advanceDayProgress(next.children, next.routineTemplates, next.activeRoutines),
+  }
+}
+
 export function useAppState() {
   const [rawState, setState] = useLocalStorage<PersistedState>('routines-familiales', initialState)
   const state = migrateState(rawState)
@@ -244,12 +257,13 @@ export function useAppState() {
 
       // Progression d'univers : la journée d'un enfant ne compte que lorsque
       // toutes ses routines programmées du jour sont terminées (cf. childDayComplete)
-      const children = advanceDayProgress(prev.children, prev.routineTemplates, activeRoutines)
-
-      return { ...prev, activeRoutines, children }
+      return withDayProgress({ ...prev, activeRoutines })
     })
   }, [setState])
 
+  // Réinitialiser = relancer : startedAt repart à maintenant, sinon une
+  // instance de la veille réinitialisée le matin ne compterait jamais pour la
+  // journée (childDayComplete exige une instance lancée aujourd'hui).
   const resetChildRoutine = useCallback((childId: string, templateId?: string) => {
     setState(prev => ({
       ...prev,
@@ -259,6 +273,7 @@ export function useAppState() {
         return {
           ...ar,
           tasks: ar.tasks.map(t => ({ ...t, done: false })),
+          startedAt: new Date().toISOString(),
           completedAt: null,
         }
       }),
@@ -273,6 +288,7 @@ export function useAppState() {
         return {
           ...ar,
           tasks: ar.tasks.map(t => ({ ...t, done: false })),
+          startedAt: new Date().toISOString(),
           completedAt: null,
         }
       }),
@@ -311,7 +327,7 @@ export function useAppState() {
     const child = childIndex >= 0 ? state.children[childIndex] : undefined
     if (!child) return null
 
-    const childImages = ownedUniverseIds(child, childIndex).flatMap(getRewardImagesForUniverse)
+    const childImages = ownedRewardImages(child, childIndex)
     if (childImages.length === 0) return null
 
     const poolIds = new Set(childImages.map(img => img.id))
@@ -411,7 +427,8 @@ export function useAppState() {
 
       // If tasks changed, sync active routine instances
       if (!updates.tasks) {
-        return { ...prev, routineTemplates: updatedTemplates }
+        // Changer les jours programmés peut suffire à compléter la journée
+        return withDayProgress({ ...prev, routineTemplates: updatedTemplates })
       }
 
       const updatedTemplate = updatedTemplates.find(r => r.id === id)
@@ -444,28 +461,24 @@ export function useAppState() {
         }
       })
 
-      return {
+      // L'édition peut compléter une routine → la journée peut devenir complète
+      return withDayProgress({
         ...prev,
         routineTemplates: updatedTemplates,
         activeRoutines: updatedActiveRoutines,
-        // L'édition peut compléter une routine → la journée peut devenir complète
-        children: advanceDayProgress(prev.children, updatedTemplates, updatedActiveRoutines),
-      }
+      })
     })
   }, [setState])
 
   const deleteRoutine = useCallback((id: string) => {
-    setState(prev => {
-      const routineTemplates = prev.routineTemplates.filter(r => r.id !== id)
-      const activeRoutines = prev.activeRoutines.filter(ar => ar.templateId !== id)
-      return {
+    setState(prev =>
+      // Supprimer la dernière routine du jour restante peut compléter la journée
+      withDayProgress({
         ...prev,
-        routineTemplates,
-        activeRoutines,
-        // Supprimer la dernière routine du jour restante peut compléter la journée
-        children: advanceDayProgress(prev.children, routineTemplates, activeRoutines),
-      }
-    })
+        routineTemplates: prev.routineTemplates.filter(r => r.id !== id),
+        activeRoutines: prev.activeRoutines.filter(ar => ar.templateId !== id),
+      })
+    )
   }, [setState])
 
   const reorderTask = useCallback((routineId: string, taskIndex: number, direction: 'up' | 'down') => {

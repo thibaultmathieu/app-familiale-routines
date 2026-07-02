@@ -1,6 +1,5 @@
 import { Child, RewardImage } from '../types'
-import { getRewardImagesForUniverse } from './rewardImages'
-import { localDayKey, ownedUniverseIds } from './universeProgress'
+import { localDayKey, ownedRewardImages } from './universeProgress'
 import { hashString, rarityOf, rarityWeight, seededRandom } from './rarity'
 
 /**
@@ -24,7 +23,7 @@ export function dailyDrawOrder(childId: string, dayKey: string, images: RewardIm
 
 /** Image mystère du jour d'un enfant (null si tout son pool est déjà gagné). */
 export function mysteryImageFor(child: Child, childIndex: number, date: Date = new Date()): RewardImage | null {
-  const pool = ownedUniverseIds(child, childIndex).flatMap(getRewardImagesForUniverse)
+  const pool = ownedRewardImages(child, childIndex)
   if (pool.length === 0) return null
   const unlocked = new Set(child.unlockedImages)
   const order = dailyDrawOrder(child.id, localDayKey(date), pool)

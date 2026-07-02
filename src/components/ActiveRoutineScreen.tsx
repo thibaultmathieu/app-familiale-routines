@@ -12,6 +12,7 @@ import { useSound } from '../hooks/useSound'
 import { ACTIVE_UNIVERSES } from '../data/universes'
 import { ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
 import { childTextColor, tint } from '../theme'
+import { deName } from '../utils/frenchName'
 import { Button, Overlay } from './ui'
 
 interface ActiveRoutineScreenProps {
@@ -121,15 +122,17 @@ export default function ActiveRoutineScreen({
     setCurrentScreen('gallery')
   }, [setGalleryChildId, setGalleryReturnScreen, setCurrentScreen])
 
+  // L'overlay d'expiration n'est rendu que hors célébration (voir le JSX),
+  // mais l'événement est mémorisé quand même : un minuteur qui expire pendant
+  // la célébration (désormais longue) s'affiche dès sa fermeture au lieu
+  // d'être avalé (TimerDisplay ne notifie qu'une seule fois).
   const handleTimerExpired = useCallback((timerId: string) => {
-    // Only show overlay if no celebration is showing
-    if (celebration) return
     const timer = (activeTimers ?? []).find(t => t.id === timerId)
     if (timer) {
       playTimerEnd()
       setExpiredTimer(timer)
     }
-  }, [activeTimers, celebration, playTimerEnd])
+  }, [activeTimers, playTimerEnd])
 
   const handleDismissExpired = useCallback(() => {
     if (expiredTimer) {
@@ -207,7 +210,7 @@ export default function ActiveRoutineScreen({
                     <button
                       onClick={() => openGallery(child.id)}
                       className="w-11 h-11 flex items-center justify-center text-lg opacity-60 active:scale-90 transition-transform"
-                      aria-label={`Voir la collection de ${child.name}`}
+                      aria-label={`Voir la collection ${deName(child.name)}`}
                     >
                       📸
                     </button>

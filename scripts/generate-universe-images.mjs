@@ -6,7 +6,8 @@
  *   node scripts/generate-universe-images.mjs all
  *   node scripts/generate-universe-images.mjs kawaii chiens
  *
- * - Clé API : GEMINI_API_KEY (env) ou .env.local à la racine du repo.
+ * - Clé API : lue dans le coffre local C:/secrets/keys.env (prioritaire),
+ *   sinon variable d'environnement GEMINI_API_KEY.
  * - Sortie : images_rewards/<Dossier>/NN-sujet.webp (1024×1024, q82).
  * - Reprise : une image déjà présente sur disque n'est pas régénérée —
  *   supprimer un fichier raté puis relancer suffit.
@@ -28,7 +29,13 @@ function loadApiKey() {
   const envPath = 'C:/secrets/keys.env'  // coffre local hors OneDrive (cf. ref-secrets.md)
   if (fs.existsSync(envPath)) {
     const m = fs.readFileSync(envPath, 'utf8').match(/^GEMINI_API_KEY=(.+)$/m)
-    if (m) return m[1].trim()
+    if (m) {
+      const vaultKey = m[1].trim()
+      if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== vaultKey) {
+        console.warn('[clé API] variable d\'environnement GEMINI_API_KEY ignorée — le coffre C:/secrets/keys.env prime')
+      }
+      return vaultKey
+    }
   }
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY
   console.error('GEMINI_API_KEY introuvable (C:/secrets/keys.env ou env)')

@@ -141,11 +141,12 @@ export default function CelebrationOverlay({ childName, reward, onClose }: Celeb
               </div>
               {/* Face image */}
               <div
-                className={`absolute inset-0 backface-hidden rounded-3xl overflow-hidden bg-white
-                  ${rarity === 'legendaire' ? 'ring-4 ring-honey-400 animate-legendary-glow' : rarity === 'rare' ? 'ring-4 ring-honey-300' : 'border-4 border-white shadow-raised'}`}
+                className={`absolute inset-0 backface-hidden rounded-3xl bg-white
+                  ${rarity === 'legendaire' ? 'ring-4 ring-honey-400' : rarity === 'rare' ? 'ring-4 ring-honey-300' : 'border-4 border-white shadow-raised'}`}
                 style={{ transform: 'rotateY(180deg)' }}
               >
-                <img src={reward.src} alt="Nouvelle image débloquée" className="w-full h-full object-cover" />
+                {rarity === 'legendaire' && revealed && <div className="legendary-halo" aria-hidden="true" />}
+                <img src={reward.src} alt="Nouvelle image débloquée" className="w-full h-full object-cover rounded-3xl" />
               </div>
             </button>
           </div>

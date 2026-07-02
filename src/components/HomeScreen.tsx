@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { ActiveRoutine, ActiveTimer, BonusReward, RoutineTemplate, Screen, Child } from '../types'
 import ChildAvatar from './ChildAvatar'
 import ChildTargetPicker from './ChildTargetPicker'
@@ -9,8 +9,9 @@ import ParentGate from './ParentGate'
 import UniverseUnlockOverlay from './UniverseUnlockOverlay'
 import { useSound } from '../hooks/useSound'
 import { useTimerTick } from '../hooks/useTimer'
+import { useToday } from '../hooks/useToday'
 import { ACTIVE_UNIVERSES } from '../data/universes'
-import { localDayKey, ownedUniverseIds, pendingUniverseChoices, scheduledTemplatesForDay } from '../data/universeProgress'
+import { familyDayComplete, ownedUniverseIds, pendingUniverseChoices, scheduledTemplatesForDay } from '../data/universeProgress'
 import { mysteryImageFor } from '../data/mystery'
 import { bonusStatusFor } from '../data/bonusRewards'
 import { tint } from '../theme'
@@ -98,7 +99,10 @@ export default function HomeScreen({
     if (longPressTimer.current) clearTimeout(longPressTimer.current)
   }, [])
 
-  const todayRoutines = scheduledTemplatesForDay(routineTemplates)
+  // Jour réactif : la tablette reste allumée — programme, bannière et image
+  // mystère doivent basculer au changement de jour sans rechargement.
+  const today = useToday()
+  const todayRoutines = scheduledTemplatesForDay(routineTemplates, today)
   const onDemandRoutines = routineTemplates.filter(r =>
     !r.scheduledDays || r.scheduledDays.length === 0
   )
@@ -106,22 +110,27 @@ export default function HomeScreen({
   // Group active routines by templateId
   const activeTemplateIds = [...new Set(activeRoutines.map(ar => ar.templateId))]
 
-  // Message « nouvelle journée » : n'apparaît que si TOUTES les routines
-  // programmées du jour ont été lancées aujourd'hui ET terminées. Ferme les
-  // faux positifs qui donnaient l'impression d'un message « collé » :
-  //  - après la seule routine du matin (l'après-midi / le soir restaient à faire) ;
-  //  - sur une simple mission express éphémère terminée (hors `todayRoutines`) ;
-  //  - avec des routines de la veille restées à l'écran un nouveau jour.
-  const todayKey = localDayKey()
-  const startedToday = (ar: ActiveRoutine) => localDayKey(new Date(ar.startedAt)) === todayKey
-  const scheduledInstancesToday = activeRoutines.filter(
-    ar => startedToday(ar) && todayRoutines.some(t => t.id === ar.templateId)
+  // Message « nouvelle journée » : même règle que la progression d'univers —
+  // chaque enfant concerné a terminé toutes ses routines programmées du jour,
+  // lancées aujourd'hui (les missions express et les routines de la veille
+  // ne déclenchent rien).
+  const allRoutinesDone = familyDayComplete(routineTemplates, activeRoutines, children, today)
+
+  // Image mystère du jour par enfant — recalculée seulement quand la
+  // collection ou le jour change (le tri pondéré n'est pas gratuit à 8 univers)
+  const mysteries = useMemo(
+    () =>
+      children
+        .map((child, childIndex) => ({ child, mystery: mysteryImageFor(child, childIndex, today) }))
+        .filter((m): m is { child: Child; mystery: NonNullable<typeof m.mystery> } => m.mystery !== null),
+    [children, today]
   )
-  const allRoutinesDone =
-    todayRoutines.length > 0 &&
-    todayRoutines.every(t => scheduledInstancesToday.some(ar => ar.templateId === t.id)) &&
-    scheduledInstancesToday.length > 0 &&
-    scheduledInstancesToday.every(ar => ar.completedAt != null)
+
+  // Statut des bons cadeaux par enfant (bannières « gagné » + prochain objectif)
+  const bonusByChild = useMemo(
+    () => children.map(child => ({ child, status: bonusStatusFor(child, bonusRewards) })),
+    [children, bonusRewards]
+  )
 
   const handleLaunchFixed = (templateId: string) => {
     // If routine already active, just navigate to it
@@ -204,8 +213,8 @@ export default function HomeScreen({
       )}
 
       {/* Bons cadeaux gagnés — à réclamer auprès d'un parent */}
-      {children.flatMap(child =>
-        bonusStatusFor(child, bonusRewards).reached.map(bonus => (
+      {bonusByChild.flatMap(({ child, status }) =>
+        status.reached.map(bonus => (
           <div key={`bonus-${child.id}-${bonus.id}`} className="mb-6 max-w-3xl mx-auto w-full">
             <Card className="p-5 !border-2 !border-success-200 text-center">
               <p className="text-3xl mb-1" aria-hidden="true">🎁</p>
@@ -271,12 +280,7 @@ export default function HomeScreen({
         )}
 
         {/* Image mystère du jour — la prochaine image à gagner, floutée (suspense !) */}
-        {(() => {
-          const mysteries = children
-            .map((child, childIndex) => ({ child, mystery: mysteryImageFor(child, childIndex) }))
-            .filter((m): m is { child: Child; mystery: NonNullable<typeof m.mystery> } => m.mystery !== null)
-          if (mysteries.length === 0) return null
-          return (
+        {mysteries.length > 0 && (
             <Card className="w-full p-4">
               <p className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">
                 🔮 Image mystère du jour
@@ -308,8 +312,7 @@ export default function HomeScreen({
                 ))}
               </div>
             </Card>
-          )
-        })()}
+        )}
 
         {/* On-demand routines */}
         {onDemandRoutines.length > 0 && (
@@ -478,8 +481,8 @@ export default function HomeScreen({
       <div className="mt-6 max-w-3xl mx-auto w-full">
         <h2 className="text-sm font-bold text-ink-faint uppercase tracking-wide mb-3">Collections</h2>
         <div className="flex gap-4">
-          {children.map(child => {
-            const nextBonus = bonusStatusFor(child, bonusRewards).next
+          {bonusByChild.map(({ child, status }) => {
+            const nextBonus = status.next
             return (
               <button
                 key={child.id}
@@ -493,7 +496,7 @@ export default function HomeScreen({
                 <div className="text-left min-w-0">
                   <p className="font-display font-semibold text-ink">{child.name}</p>
                   <p className="text-sm text-ink-faint">
-                    {child.unlockedImages.length} image{child.unlockedImages.length !== 1 ? 's' : ''}
+                    {child.unlockedImages.length} image{child.unlockedImages.length > 1 ? 's' : ''}
                   </p>
                   {nextBonus && (
                     <p className="text-xs text-honey-600 font-semibold truncate">

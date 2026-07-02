@@ -9,6 +9,10 @@ interface TextInputProps {
   inputRef?: RefObject<HTMLInputElement>
   /** 'bare' : sans bordure (champ dans une rangée déjà encadrée). */
   variant?: 'boxed' | 'bare'
+  /** Champ numérique (clavier numérique sur tablette). */
+  type?: 'text' | 'number'
+  inputMode?: 'text' | 'numeric'
+  min?: number
 }
 
 export default function TextInput({
@@ -19,6 +23,9 @@ export default function TextInput({
   autoFocus,
   inputRef,
   variant = 'boxed',
+  type = 'text',
+  inputMode,
+  min,
 }: TextInputProps) {
   const base = variant === 'boxed'
     ? 'w-full border-2 border-line rounded-xl px-4 py-3 text-lg bg-white text-ink placeholder:text-ink-faint/70 focus:border-honey-300 transition-colors'
@@ -26,7 +33,9 @@ export default function TextInput({
   return (
     <input
       ref={inputRef}
-      type="text"
+      type={type}
+      inputMode={inputMode}
+      min={min}
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}

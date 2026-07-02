@@ -3,7 +3,7 @@ import { Child } from '../types'
 import { getRewardImagesForUniverse } from '../data/rewardImages'
 import { getUniverse } from '../data/universes'
 import { ownedUniverseIds } from '../data/universeProgress'
-import { rarityOf } from '../data/rarity'
+import { RARITY_META, rarityOf } from '../data/rarity'
 import { deName } from '../utils/frenchName'
 import { Button } from './ui'
 
@@ -24,6 +24,7 @@ type PrintMode = 'cartes' | 'stickers'
 export default function PrintSheet({ child, childIndex, onClose }: PrintSheetProps) {
   const [mode, setMode] = useState<PrintMode>('cartes')
 
+  // Groupé par univers possédé (l'objet Universe fournit emoji + nom du pied de carte)
   const images = useMemo(() => {
     const unlockedSet = new Set(child.unlockedImages)
     return ownedUniverseIds(child, childIndex).flatMap(universeId => {
@@ -74,8 +75,8 @@ export default function PrintSheet({ child, childIndex, onClose }: PrintSheetPro
         </div>
       </div>
 
-      {/* Planche */}
-      <div className="flex-1 overflow-y-auto scroll-touch bg-warm-100 print:bg-white p-4">
+      {/* Planche — .print-flow libère la hauteur/overflow à l'impression (multi-pages) */}
+      <div className="print-flow flex-1 overflow-y-auto scroll-touch bg-warm-100 print:bg-white p-4">
         {images.length === 0 ? (
           <p className="print-hide text-center text-ink-faint mt-10">
             {child.name} n'a pas encore gagné d'image — la planche se remplira toute seule !
@@ -99,7 +100,9 @@ export default function PrintSheet({ child, childIndex, onClose }: PrintSheetPro
                           {img.universe ? `${img.universe.emoji} ${img.universe.name}` : 'Collection'}
                         </p>
                         <p className="text-ink-faint" style={{ fontSize: '2.9mm' }}>
-                          {img.rarity === 'legendaire' ? '🌟 Légendaire' : img.rarity === 'rare' ? '✨ Rare' : `Collection ${deName(child.name)}`}
+                          {img.rarity !== 'commune'
+                            ? `${RARITY_META[img.rarity].emoji} ${RARITY_META[img.rarity].label}`
+                            : `Collection ${deName(child.name)}`}
                         </p>
                       </div>
                     </div>

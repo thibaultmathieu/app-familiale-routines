@@ -3,10 +3,10 @@ import { BonusReward, Child, Screen } from '../types'
 import { getRewardImagesForUniverse } from '../data/rewardImages'
 import { ACTIVE_UNIVERSES, getUniverse } from '../data/universes'
 import { daysUntilNextUnlock, ownedUniverseIds, pendingUniverseChoices } from '../data/universeProgress'
-import { rarityOf } from '../data/rarity'
+import { RARITY_META, rarityOf } from '../data/rarity'
 import { bonusStatusFor } from '../data/bonusRewards'
 import { childTextColor, tint } from '../theme'
-import { dePrefix } from '../utils/frenchName'
+import { deName, dePrefix } from '../utils/frenchName'
 import { ScreenHeader } from './ui'
 
 interface GalleryScreenProps {
@@ -138,14 +138,14 @@ export default function GalleryScreen({
                       >
                         {unlocked ? (
                           <>
-                            <img src={image.src} alt={`${universe.name} — image ${index + 1} de la collection de ${currentChild.name}`} className="w-full h-full object-cover rounded-xl" />
+                            <img src={image.src} alt={`${universe.name} — image ${index + 1} de la collection ${deName(currentChild.name)}`} className="w-full h-full object-cover rounded-xl" />
                             {rarity !== 'commune' && (
                               <span
                                 className="absolute top-1 right-1 text-base drop-shadow"
                                 role="img"
-                                aria-label={rarity === 'legendaire' ? 'Image légendaire' : 'Image rare'}
+                                aria-label={`Image ${RARITY_META[rarity].label.toLowerCase()}`}
                               >
-                                {rarity === 'legendaire' ? '🌟' : '✨'}
+                                {RARITY_META[rarity].emoji}
                               </span>
                             )}
                           </>
@@ -153,7 +153,7 @@ export default function GalleryScreen({
                           <>
                             <span className="text-4xl opacity-30" role="img" aria-label="Image encore verrouillée">🔒</span>
                             {rarity === 'legendaire' && (
-                              <span className="absolute top-1 right-1 text-base opacity-60" aria-hidden="true">🌟</span>
+                              <span className="absolute top-1 right-1 text-base opacity-60" aria-hidden="true">{RARITY_META.legendaire.emoji}</span>
                             )}
                           </>
                         )}
@@ -221,7 +221,7 @@ export default function GalleryScreen({
           <div className="w-full h-full flex items-center justify-center">
             <img
               src={fullscreenImage.src}
-              alt={`Image de la collection de ${currentChild.name} en plein écran`}
+              alt={`Image de la collection ${deName(currentChild.name)} en plein écran`}
               className="max-w-[95vw] max-h-[90vh] object-contain"
               draggable={false}
               onClick={e => e.stopPropagation()}

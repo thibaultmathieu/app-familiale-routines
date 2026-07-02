@@ -1,5 +1,5 @@
-import { ActiveRoutine, Child, RoutineTemplate } from '../types'
-import { resolveUniverseId } from './rewardImages'
+import { ActiveRoutine, Child, RewardImage, RoutineTemplate } from '../types'
+import { getRewardImagesForUniverse, resolveUniverseId } from './rewardImages'
 
 /**
  * Progression des univers — gamification douce :
@@ -57,6 +57,25 @@ export function childDayComplete(
 }
 
 /**
+ * Journée complète pour la FAMILLE : tous les enfants concernés par au moins
+ * une routine programmée du jour ont leur journée complète. C'est le prédicat
+ * de la bannière « nouvelle journée » de l'accueil — même règle que la
+ * progression d'univers, agrégée par enfant.
+ */
+export function familyDayComplete(
+  templates: RoutineTemplate[],
+  activeRoutines: ActiveRoutine[],
+  children: Child[],
+  date: Date = new Date()
+): boolean {
+  const scheduled = scheduledTemplatesForDay(templates, date)
+  if (scheduled.length === 0) return false
+  const concerned = children.filter(c => scheduled.some(t => templateAppliesToChild(t, c.id)))
+  if (concerned.length === 0) return false
+  return concerned.every(c => childDayComplete(templates, activeRoutines, c.id, date))
+}
+
+/**
  * Avance `routineDayCount` des enfants dont la journée est complète (une seule
  * fois par jour local, via `lastRoutineDay`). Jamais de retour en arrière :
  * un jour compté reste compté même si un parent réinitialise une routine.
@@ -89,6 +108,15 @@ export function ownedUniverseIds(child: Child, childIndex: number): string[] {
   if (child.unlockedUniverseIds?.length) return child.unlockedUniverseIds
   const resolved = resolveUniverseId(child, childIndex)
   return resolved ? [resolved] : []
+}
+
+/**
+ * Pool de tirage de l'enfant : l'UNION des images de tous ses univers possédés.
+ * Source unique — le tirage (unlockReward), l'image mystère, les sanctions et
+ * l'impression doivent voir exactement le même pool.
+ */
+export function ownedRewardImages(child: Child, childIndex: number): RewardImage[] {
+  return ownedUniverseIds(child, childIndex).flatMap(getRewardImagesForUniverse)
 }
 
 /** Nombre de nouveaux univers que l'enfant peut choisir maintenant. */

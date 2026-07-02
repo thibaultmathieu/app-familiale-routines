@@ -30,6 +30,7 @@ vi.mock('./rewardImages', () => {
 import { rarityOf, rarityWeight, hashString, seededRandom } from './rarity'
 import { dailyDrawOrder, mysteryImageFor } from './mystery'
 import { bonusStatusFor, totalUnlockedOf } from './bonusRewards'
+import { localDayKey } from './universeProgress'
 
 function makeChild(overrides: Partial<Child> = {}): Child {
   return {
@@ -85,7 +86,7 @@ describe('dailyDrawOrder / image mystère', () => {
 
   it("l'image mystère est la première image verrouillée de l'ordre du jour", () => {
     const child = makeChild()
-    const order = dailyDrawOrder('c1', dayKeyToday(), pool).map(i => i.id)
+    const order = dailyDrawOrder('c1', localDayKey(), pool).map(i => i.id)
     expect(mysteryImageFor(child, 0)!.id).toBe(order[0])
 
     // L'image gagnée, le mystère avance à la suivante encore verrouillée
@@ -97,12 +98,6 @@ describe('dailyDrawOrder / image mystère', () => {
     const child = makeChild({ unlockedImages: ['a-001', 'a-002', 'a-003'] })
     expect(mysteryImageFor(child, 0)).toBeNull()
   })
-
-  function dayKeyToday(): string {
-    const d = new Date()
-    const pad = (n: number) => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-  }
 })
 
 describe('bons cadeaux', () => {

@@ -78,8 +78,9 @@ export default function ParentPanel({
     setBonusTarget(undefined)
   }
 
-  const bonusThresholdValue = parseInt(bonusThreshold, 10)
-  const bonusFormValid = bonusLabel.trim().length > 0 && Number.isFinite(bonusThresholdValue) && bonusThresholdValue >= 1
+  // Number() plutôt que parseInt : '1e2' vaut 100 (parseInt tronquerait à 1)
+  const bonusThresholdValue = Number(bonusThreshold)
+  const bonusFormValid = bonusLabel.trim().length > 0 && Number.isInteger(bonusThresholdValue) && bonusThresholdValue >= 1
 
   const handleAddBonus = () => {
     if (!bonusFormValid) return
@@ -309,14 +310,14 @@ export default function ParentPanel({
             <p className="text-xs font-bold text-ink-faint uppercase tracking-wide mb-2">
               Nombre total d'images à atteindre
             </p>
-            <input
+            <TextInput
               type="number"
-              min={1}
               inputMode="numeric"
+              min={1}
               value={bonusThreshold}
-              onChange={e => setBonusThreshold(e.target.value)}
+              onChange={setBonusThreshold}
               placeholder="Ex : 20"
-              className="w-full border-2 border-line rounded-xl px-4 py-3 text-lg bg-white text-ink placeholder:text-ink-faint/70 focus:border-honey-300 transition-colors mb-4"
+              className="mb-4"
             />
             {children.length >= 2 && (
               <>
@@ -451,7 +452,7 @@ export default function ParentPanel({
                   onClick={() => handleRemoveReward(sanctionChildId!, img.id)}
                   className="aspect-square rounded-xl overflow-hidden border-2 border-line hover:border-danger-300 active:scale-95 transition-all"
                 >
-                  <img src={img.src} alt={`Image de la collection de ${sanctionChild.name}`} className="w-full h-full object-cover" />
+                  <img src={img.src} alt={`Image de la collection ${deName(sanctionChild.name)}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
